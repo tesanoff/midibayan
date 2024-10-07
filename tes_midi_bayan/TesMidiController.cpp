@@ -159,9 +159,10 @@ void    TesMIDIController::init(void){
 ///////////////////////////////////////////////////////////////////////////
 // the tick() method
 void    TesMIDIController::tick(void){
+    uint16_t    millis_snapshot = millis();
     // check if we're sending parameters to the synthesizer
     if ( _var.sendingParameters ){
-        if (millis() - _var.sendParamTimer > sendParamInterval){
+        if (millis_snapshot - _var.sendParamTimer > sendParamInterval){
             // send the current parameter
             sendKbdParameter(_var.currentKbd, pgm_read_byte(kbdParameterOrder + _var.currentParameter));
             // check if it was the last parameter
@@ -220,7 +221,7 @@ void    TesMIDIController::tick(void){
     // check if global settings were changed but not yet saved to EEPROM
     if( _var.globalSettingsNotSaved ){
         // check the write timeout
-        if (millis() - _var.globalSettingsSavingTimer > GLOBAL_SETTINGS_SAVING_TIMEOUT){
+        if (millis_snapshot - _var.globalSettingsSavingTimer > GLOBAL_SETTINGS_SAVING_TIMEOUT){
             // it's time to save global settings to EEPROM
             writeGlobalSettingsToEEPROM();
         }

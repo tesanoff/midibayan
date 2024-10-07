@@ -65,7 +65,7 @@ private:
     uint8_t _previous_buffer [ TES_KEYBOARD_CASCADE_SIZE ]; // This is for comparing old and new values
     TesEventQueue   * _eventQueue;                      // the queue to work with
     ////////// for control buttons /////////
-    uint32_t    _hold_timer[TES_NUMBER_OF_CONTROL_BUTTONS];         // The same timers are used for both "Hold" and "Fast Repeat" functions
+    uint16_t    _hold_timer[TES_NUMBER_OF_CONTROL_BUTTONS];         // The same timers are used for both "Hold" and "Fast Repeat" functions
     uint8_t     _ctlButtonState[ (TES_NUMBER_OF_CONTROL_BUTTONS-1) / 4 + 1 ]; // each byte stores states for 4 buttons
                                                                               // 2 bits per button
     uint8_t     _ctlButtonFastRepeatState[ (TES_NUMBER_OF_CONTROL_BUTTONS-1) / 8 + 1 ];     // this bitmap stores "virtual" pressed/released statuses

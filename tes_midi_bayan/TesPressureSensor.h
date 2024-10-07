@@ -32,7 +32,7 @@ private:
     int             filteredValue;          // keeps this value to enable the RA data filter
     uint8_t         lastSentValue;          // the last value sent to the event queue
     TesEventQueue   * _event_queue;
-    uint32_t        _event_timer;           // we send events by a timer
+    uint16_t        _event_timer;           // we send events by a timer
 
     /////////////////////////////////////////////////////////////////////////////////////////////
     // reads raw data from the sensor and converts it to the 0..127 range

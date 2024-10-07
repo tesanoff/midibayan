@@ -131,7 +131,7 @@ void TesLedSet::flashLED(uint8_t led_index){
 // tick method
 void TesLedSet::tick(void){
     // take the current timer value
-    uint32_t millis_snapshot = millis();
+    uint16_t millis_snapshot = millis();
 
     for (int i = 0; i < _num_of_LEDs; i++){
         if ( ledIsBlinking(i) ){

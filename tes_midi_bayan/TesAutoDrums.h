@@ -63,7 +63,7 @@ private:
     TesMIDIOutQueue     * _midi_queue;
     uint8_t             _melodyId;
     bool                _is_playing;
-    uint32_t            _melody_timer;
+    uint16_t            _melody_timer;
     uint8_t             _current_note;
     uint8_t             _tempo;
 

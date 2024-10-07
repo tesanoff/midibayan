@@ -150,7 +150,7 @@ void TesKeyboard::tick(void){
     // analyze and create new events, if required
     processNewData();
 
-    uint32_t    millis_snapshot = millis();
+    uint16_t    millis_snapshot = millis();
     // check control buttons timers if the "hold" or "Fast Repeat" feature is enabled for the button
     for (int i = 0; i < TES_NUMBER_OF_CONTROL_BUTTONS; i++){
         

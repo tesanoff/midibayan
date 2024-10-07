@@ -43,8 +43,10 @@ void    TesMidiUI::init(void){
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // standard tick() method
 void TesMidiUI::tick(void){
+    uint16_t    millis_snapshot = millis();
+
     // check the display update timer
-    if (millis() - _display_update_timer > TES_DISPLAY_UPDATE_PERIOD){
+    if (millis_snapshot - _display_update_timer > TES_DISPLAY_UPDATE_PERIOD){
         // update the display if required
         if ( _flags.display_update_is_required ){
             _oled->update();    // partial update doesn't work for SSH1106 yet :(
@@ -57,7 +59,7 @@ void TesMidiUI::tick(void){
 
     // check user activity
     if (_editor_status.screenMode != screenModeMain){
-        if (millis() - _inactivity_timer > INACTIVITY_PERIOD){
+        if (millis_snapshot - _inactivity_timer > INACTIVITY_PERIOD){
             // switch the screen back to Main Screen
             _editor_status.screenMode = screenModeMain;
             // *** ATTENTION! each time we change screens - we turn off the edit more
@@ -68,7 +70,7 @@ void TesMidiUI::tick(void){
 
     // check preset write confirmation timer
     if (_preset_sm.state == psWriteConfirmation){
-        if (millis() - _preset_sm.writeTimer > presetWriteConfirmationPeriod){
+        if (millis_snapshot - _preset_sm.writeTimer > presetWriteConfirmationPeriod){
             // the user has confirmed writing of the preset
 
             // return back to the normal mode
@@ -83,7 +85,7 @@ void TesMidiUI::tick(void){
 
     // check F-key write confirmation timer
     if (_fkey_sm.state == psWriteConfirmation){
-        if (millis() - _fkey_sm.writeTimer > fKeyWriteConfirmationPeriod){
+        if (millis_snapshot - _fkey_sm.writeTimer > fKeyWriteConfirmationPeriod){
             // the user has confirmed writing of the F-key
 
             // return back to the normal mode
