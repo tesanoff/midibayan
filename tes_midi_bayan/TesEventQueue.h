@@ -64,6 +64,7 @@ private:
     tesEvent    _event[ TES_MAX_QUEUE_SIZE  ];
     uint8_t     _head;
     uint8_t     _tail;
+    uint8_t     _size;
 };
 
 #endif
