@@ -759,6 +759,14 @@ const uint8_t atBanks115[] PROGMEM  = {2, 0, 8};
 const uint8_t atBanks116[] PROGMEM  = {2, 0, 8};
 const uint8_t atBanks117[] PROGMEM  = {2, 0, 8};
 const uint8_t atBanks118[] PROGMEM  = {3, 0, 8, 9};
+const uint8_t atBanks120[] PROGMEM  = {5, 0, 1, 2, 5, 6};
+const uint8_t atBanks121[] PROGMEM  = {2, 0, 1};
+const uint8_t atBanks122[] PROGMEM  = {6, 0, 1, 2, 3, 4, 5};
+const uint8_t atBanks123[] PROGMEM  = {4, 0, 1, 2, 3};
+const uint8_t atBanks124[] PROGMEM  = {6, 0, 1, 2, 3, 4, 5};
+const uint8_t atBanks125[] PROGMEM  = {10, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+const uint8_t atBanks126[] PROGMEM  = {6, 0, 1, 2, 3, 4, 5};
+const uint8_t atBanks127[] PROGMEM  = {4, 0, 1, 2, 3};
 const uint8_t * const  atBanks[128] PROGMEM = {
 //  0     1     2     3     4         5         6         7     8     9     10    11    12         13    14         15
     NULL, NULL, NULL, NULL, atBanks4, atBanks5, atBanks6, NULL, NULL, NULL, NULL, NULL, atBanks12, NULL, atBanks14, atBanks15,
@@ -774,8 +782,8 @@ const uint8_t * const  atBanks[128] PROGMEM = {
     atBanks80, atBanks81, NULL, NULL, NULL, NULL, NULL, NULL, NULL, atBanks89, NULL, NULL, NULL, NULL, NULL, NULL,
 //  96    97    98    99    100   101   102         103   104   105   106   107         108   109   110   111
     NULL, NULL, NULL, NULL, NULL, NULL, atBanks102, NULL, NULL, NULL, NULL, atBanks107, NULL, NULL, NULL, NULL, 
-//  112   113   114   115         116         117         118         119   120   121   122   123   124   125   126   127
-    NULL, NULL, NULL, atBanks115, atBanks116, atBanks117, atBanks118, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL 
+//  112   113   114   115         116         117         118         119   120         121         122         123         124         125         126         127
+    NULL, NULL, NULL, atBanks115, atBanks116, atBanks117, atBanks118, NULL, atBanks120, atBanks121, atBanks122, atBanks123, atBanks124, atBanks125, atBanks126, atBanks127
 };
 
 // A list of drumsets supproted by ATEMP
