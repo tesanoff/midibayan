@@ -5,6 +5,7 @@
 #include "TesMidiUI.h"
 #include "swer.h"
 #include "midi_note_names.h"
+#include "atemp_hw.h"
 
 #define FPSTR(pstr) (const __FlashStringHelper*)(pstr)
 
@@ -486,7 +487,7 @@ void TesMidiUI::setDrumMachineState(uint8_t new_state){
 const char numFormat3R[] PROGMEM = "%3d";    // 3 digits, right alignment
 const char auxFormat1[] PROGMEM = " (%3d)";  // 3 digits, right alignment
 
-const char main_screen_footer[] PROGMEM = "MIDI баян v1.00";
+const char main_screen_footer[] PROGMEM = "MIDI баян v1.01";
 
 // for the header
 #define headerStartPosition 6
