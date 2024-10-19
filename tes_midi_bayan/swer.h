@@ -23,8 +23,10 @@
 #define swerMidiController06    0xCF
 #define swerAutoDrums01         0xD0
 #define swerAutoDrums02         0xD1
-#define swerGUI06               0xCF
-#define swerGUI07               0xD0
+#define swerGUI06               0xD2
+#define swerGUI07               0xD3
+#define swerGUI08               0xD4
+#define swerGUI09               0xD5
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

@@ -18,6 +18,7 @@
 #define screenModeMidiParamEdit     1
 #define screenModeSysParamEdit      2
 #define screenModeDrumsEdit         3
+#define screenModeInstrumentEdit    4
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // constructor
@@ -687,6 +688,25 @@ const char * const  dpParameterNames[dpNumberOfParameters] PROGMEM = {
 const char drums_param_screen_footer[] PROGMEM = "Настройки ударных";
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+// section for the Synth-specific instrument editor
+
+const char ieInstrumentGroupTitle[] PROGMEM = "Группа инструментов:";
+#define ieInstrumentGroupTitlePos   0   // 1st row
+#define ieInstrumentGroupNamePos    1   // just below the title
+
+const char ieInstrumentTitle[] PROGMEM = "Инструмент:";
+#define ieInstrumentTitlePos   3        // 4th row
+#define ieInstrumentNamePos    4        // just below the title
+
+//                                          123456789-123456789-1
+const char ieInstrumentIDsLine[] PROGMEM = "Банк: XXX, Прог.: XXX";
+#define ieInstrumentIDsLinePos  6
+#define ieBankIdColumn      6
+#define ieProgramIdColumn   18
+
+const char instrument_edit_screen_footer[] PROGMEM = "Выбор инструмента";
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 // *** section for ATEMP Synthesizer
 
 // Mapping of banks. Sounds are distributed among banks pretty chaotically, without any visible pattern.
@@ -905,6 +925,11 @@ void TesMidiUI::drawActiveScreen(void){
     case screenModeDrumsEdit:
         drawDrumsParamEditorScreen();
         break;
+    case screenModeInstrumentEdit:
+        drawInstrumentEditorScreen();
+        break;
+    defaut:
+        SWER(swerGUI08);
     }
 }
 
@@ -1057,6 +1082,59 @@ void TesMidiUI::drawDrumsParamEditorScreen(void){
     _oled->fastLineH(54, 3, 124, 1);
     _oled->setCursor( (128 - mb_strlen_P(FPSTR(drums_param_screen_footer))*symbolWidth)/2, 7);
     _oled->print(FPSTR(drums_param_screen_footer));
+
+    _flags.display_update_is_required = true;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+//  Draws the Instrument selector/editor screen
+void TesMidiUI::drawInstrumentEditorScreen(void){
+    // This function can be called in the ATEMP mode only
+    if (_mc->_settings.global.synthType != stAtemp){
+        SWER(swerGUI09);
+    }
+    // Info: the ID of the current Keyboard is in _editor_status.columnIndex (because this screen was called from Parameters Editor)
+    // determine the instrument group and instrument index
+    uint8_t     bank_id = _mc->_settings.preset.kbdParameter[_editor_status.columnIndex][idxBank];
+    uint8_t     program_id = _mc->_settings.preset.kbdParameter[_editor_status.columnIndex][idxProgram];
+    uint8_t     instrument_group = 0;   // TODO
+    uint16_t    instrument_index = 0;   // TODO
+
+    // clear work area
+    _oled->clear();
+
+    // Print the title of Instrument group
+    _oled->setCursor((128 - mb_strlen_P(FPSTR(ieInstrumentGroupTitle))*symbolWidth)/2, ieInstrumentGroupTitlePos);
+    _oled->print(FPSTR(ieInstrumentGroupTitle));
+    _oled->invertText(_editor_status.instrumentSelector == 0);
+    // Print the Instrument group name
+    _oled->setCursor((128 - mb_strlen_P(FPSTR((PGM_P)pgm_read_ptr(atGroupName + instrument_group)))*symbolWidth)/2, ieInstrumentGroupNamePos);
+    _oled->print(FPSTR((PGM_P)pgm_read_ptr(atGroupName + instrument_group)));
+    _oled->invertText(false);
+
+    // Print the title of Instrument
+    _oled->setCursor((128 - mb_strlen_P(FPSTR(ieInstrumentTitle))*symbolWidth)/2, ieInstrumentTitlePos);
+    _oled->print(FPSTR(ieInstrumentTitle));
+    _oled->invertText(_editor_status.instrumentSelector == 1);
+    // Print the Instrument name
+    _oled->setCursor((128 - mb_strlen_P(FPSTR((PGM_P)pgm_read_ptr(atInstrumentName + instrument_index)))*symbolWidth)/2, ieInstrumentNamePos);
+    _oled->print(FPSTR((PGM_P)pgm_read_ptr(atInstrumentName + instrument_index)));
+    _oled->invertText(false);
+
+    // Print instrument IDs
+    _oled->setCursor(0, ieInstrumentIDsLinePos);    // to the very beginning of the line
+    _oled->print(FPSTR(ieInstrumentIDsLine));
+    _oled->setCursor(ieBankIdColumn, ieInstrumentIDsLinePos);
+    // print the Bank ID
+    printFormatted(numFormat3R, bank_id);
+    _oled->setCursor(ieProgramIdColumn, ieInstrumentIDsLinePos);
+    // print the Program ID
+    printFormatted(numFormat3R, program_id);
+
+    // print the bottom
+    _oled->fastLineH(54, 3, 124, 1);
+    _oled->setCursor( (128 - mb_strlen_P(FPSTR(instrument_edit_screen_footer))*symbolWidth)/2, 7);
+    _oled->print(FPSTR(instrument_edit_screen_footer));
 
     _flags.display_update_is_required = true;
 }

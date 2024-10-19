@@ -16,12 +16,16 @@ struct  TesEditorStatus{
         uint8_t topIndex: 4;            // the index of a row which is shown in the top position
         uint8_t columnIndex: 2;         // the number of the selected column
         uint8_t editMode: 1;            // true - the edit mode is active, and arrows change the value
-        uint8_t screenMode: 2;          // 0 - the main screen;
+        uint8_t screenMode: 3;          // 0 - the main screen;
                                         // 1 - MIDI parameters editor
                                         // 2 - system paramenetr editor
                                         // 3 - drums parameters editor
+                                        // 4 - instrument selection
         uint8_t sysParSelector: 3;      // specifies the active system parameter
         uint8_t drumsParSelector: 3;    // specifies the active drums parameter
+        uint8_t instrumentGroupIndex: 5;    // the current group of instruments
+        uint8_t instrumentIndex :9;         // 0 .. 261
+        uint8_t instrumentSelector :1;      // 0 .. 1 (just 2 parameters)
     };
 };
 
@@ -38,6 +42,9 @@ struct  TesFKeyProfile{
         editorStatus.screenMode         = 1;
         editorStatus.sysParSelector     = 0;
         editorStatus.drumsParSelector   = 0;
+        editorStatus.instrumentGroupIndex   = 0;
+        editorStatus.instrumentIndex        = 0;
+        editorStatus.instrumentSelector     = 1;
     }
 };
 
@@ -166,6 +173,10 @@ private:
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //  Draws the Drums parameters editor screen
     void drawDrumsParamEditorScreen(void);
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    //  Draws the Synth-specific Instrument editor screen
+    void drawInstrumentEditorScreen(void);
     
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //  control button event handler to Midi Param Editor more
