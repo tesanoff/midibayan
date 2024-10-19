@@ -1106,7 +1106,7 @@ void TesMidiUI::drawInstrumentEditorScreen(void){
     // Print the title of Instrument group
     _oled->setCursor((128 - mb_strlen_P(FPSTR(ieInstrumentGroupTitle))*symbolWidth)/2, ieInstrumentGroupTitlePos);
     _oled->print(FPSTR(ieInstrumentGroupTitle));
-    _oled->invertText(_editor_status.instrumentSelector == 0);
+    _oled->invertText(_editor_status.instrumentSelector == 0);  // TODO replace inversion with a graphical selector (like in Param Editor)
     // Print the Instrument group name
     _oled->setCursor((128 - mb_strlen_P(FPSTR((PGM_P)pgm_read_ptr(atGroupName + instrument_group)))*symbolWidth)/2, ieInstrumentGroupNamePos);
     _oled->print(FPSTR((PGM_P)pgm_read_ptr(atGroupName + instrument_group)));
@@ -1117,8 +1117,8 @@ void TesMidiUI::drawInstrumentEditorScreen(void){
     _oled->print(FPSTR(ieInstrumentTitle));
     _oled->invertText(_editor_status.instrumentSelector == 1);
     // Print the Instrument name
-    _oled->setCursor((128 - mb_strlen_P(FPSTR((PGM_P)pgm_read_ptr(atInstrumentName + instrument_index)))*symbolWidth)/2, ieInstrumentNamePos);
-    _oled->print(FPSTR((PGM_P)pgm_read_ptr(atInstrumentName + instrument_index)));
+//    _oled->setCursor((128 - mb_strlen_P(FPSTR((PGM_P)pgm_read_ptr(atInstrumentName + instrument_index)))*symbolWidth)/2, ieInstrumentNamePos);
+//    _oled->print(FPSTR((PGM_P)pgm_read_ptr(atInstrumentName + instrument_index)));
     _oled->invertText(false);
 
     // Print instrument IDs

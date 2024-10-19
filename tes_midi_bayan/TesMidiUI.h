@@ -23,9 +23,7 @@ struct  TesEditorStatus{
                                         // 4 - instrument selection
         uint8_t sysParSelector: 3;      // specifies the active system parameter
         uint8_t drumsParSelector: 3;    // specifies the active drums parameter
-        uint8_t instrumentGroupIndex: 5;    // the current group of instruments
-        uint8_t instrumentIndex :9;         // 0 .. 261
-        uint8_t instrumentSelector :1;      // 0 .. 1 (just 2 parameters)
+        uint8_t instrumentSelector :1;  // 0 .. 1 (just 2 parameters)
     };
 };
 
@@ -42,8 +40,6 @@ struct  TesFKeyProfile{
         editorStatus.screenMode         = 1;
         editorStatus.sysParSelector     = 0;
         editorStatus.drumsParSelector   = 0;
-        editorStatus.instrumentGroupIndex   = 0;
-        editorStatus.instrumentIndex        = 0;
         editorStatus.instrumentSelector     = 1;
     }
 };
