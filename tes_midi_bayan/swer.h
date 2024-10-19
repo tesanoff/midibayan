@@ -27,6 +27,8 @@
 #define swerGUI07               0xD3
 #define swerGUI08               0xD4
 #define swerGUI09               0xD5
+#define swerGUI10               0xD6
+#define swerGUI11               0xD7
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

@@ -814,6 +814,83 @@ int mb_strlen_P(const __FlashStringHelper * _source)
     return target;
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Helper function returns the specified sub-string from the large string stored in PROGMEM
+// The large string contains many shorter strings ending with \0
+PGM_P   getSubString_P(PGM_P storage, int16_t index){
+    while (index-- > 0){
+        // skip the current string
+        while(pgm_read_byte(storage++) != 0);
+    }
+    return storage;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Helper function returns a group_id as defined in group_map for program_id
+uint8_t getInstrumentGroupId(const uint8_t * group_map, uint8_t program_id){
+    uint8_t group_id = 0;
+
+    while(pgm_read_byte(group_map + group_id) < program_id){
+        group_id++;
+    }
+
+    return group_id;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Helper function returns the global instrument index (as defined in )
+uint16_t getInstrumentIndex(const uint8_t * const * bank_map, uint8_t bank_id, uint8_t program_id){
+    uint16_t instrument_index = 0;
+
+    // count all instruments BEFORE program_id
+    for(int i=0; i<program_id; i++){
+        // get a bank vector for program 'i'
+        const uint8_t *ptr = pgm_read_ptr(bank_map + i);
+        if (ptr == NULL){
+            // There's only one variation for this program
+            instrument_index += 1;  // counting the only variation of program 'i'
+        }
+        else{
+            // There're variations for program 'i'. The number of variations is stored in the 1st element of the vector.
+            instrument_index += pgm_read_byte(ptr);
+        }
+    }
+
+    // get a bank vector for program_id
+    const uint8_t *ptr = pgm_read_ptr(bank_map + program_id);
+    if (ptr == NULL){
+        // there's only one variation for program_id
+        // there's nothing to add; instrument_index is already pointing to {bank_id}:{program_id}
+        if(bank_id != 0){
+            // if ptr == NULL then the bank_id is expected to be 0
+            SWER(swerGUI10);
+        }
+    }
+    else {
+        // count prior variations of program_id
+        uint8_t N = pgm_read_byte(ptr);
+        bool was_found = false;
+        for(int i=1; i<=N; i++){
+            if (pgm_read_byte(ptr + i) != bank_id){
+                // count this variation
+                instrument_index += 1;
+            }
+            else {
+                // we've got to the specified bank_id
+                // there's nothing to add; instrument_index is already pointing to {bank_id}:{program_id}
+                was_found = true;
+                break;
+            }
+        }
+        if ( !was_found ){
+            // bank_id is not listed for program_id in bank_map
+            SWER(swerGUI11);
+        }
+    }
+
+    return instrument_index;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////
 //  Draws the top line of the screen (shared between Main screen & MIDI Param Editor
 void TesMidiUI::drawKbdHeader(void){
@@ -1097,8 +1174,8 @@ void TesMidiUI::drawInstrumentEditorScreen(void){
     // determine the instrument group and instrument index
     uint8_t     bank_id = _mc->_settings.preset.kbdParameter[_editor_status.columnIndex][idxBank];
     uint8_t     program_id = _mc->_settings.preset.kbdParameter[_editor_status.columnIndex][idxProgram];
-    uint8_t     instrument_group = 0;   // TODO
-    uint16_t    instrument_index = 0;   // TODO
+    uint8_t     instrument_group = getInstrumentGroupId(atGroupMap, program_id);
+    uint16_t    instrument_index = getInstrumentIndex(atBanks, bank_id, program_id);
 
     // clear work area
     _oled->clear();
@@ -1117,8 +1194,9 @@ void TesMidiUI::drawInstrumentEditorScreen(void){
     _oled->print(FPSTR(ieInstrumentTitle));
     _oled->invertText(_editor_status.instrumentSelector == 1);
     // Print the Instrument name
-//    _oled->setCursor((128 - mb_strlen_P(FPSTR((PGM_P)pgm_read_ptr(atInstrumentName + instrument_index)))*symbolWidth)/2, ieInstrumentNamePos);
-//    _oled->print(FPSTR((PGM_P)pgm_read_ptr(atInstrumentName + instrument_index)));
+    PGM_P   str = getSubString_P(atInstrumentNames, instrument_index);
+    _oled->setCursor((128 - mb_strlen_P(FPSTR(str))*symbolWidth)/2, ieInstrumentNamePos);
+    _oled->print(FPSTR(str));
     _oled->invertText(false);
 
     // Print instrument IDs
