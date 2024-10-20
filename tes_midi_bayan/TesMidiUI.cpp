@@ -1261,10 +1261,10 @@ void TesMidiUI::drawInstrumentEditorScreen(void){
     if (_mc->_settings.global.synthType != stAtemp){
         SWER(swerGUI09);
     }
-    // Info: the ID of the current Keyboard is in _editor_status.columnIndex (because this screen was called from Parameters Editor)
+    // Info: the ID of the current Keyboard is in _editor_status.selectorX (because this screen was called from Parameters Editor)
     // determine the instrument group and instrument index
-    uint8_t     bank_id = _mc->_settings.preset.kbdParameter[_editor_status.columnIndex][idxBank];
-    uint8_t     program_id = _mc->_settings.preset.kbdParameter[_editor_status.columnIndex][idxProgram];
+    uint8_t     bank_id = _mc->_settings.preset.kbdParameter[_editor_status.selectorX][idxBank];
+    uint8_t     program_id = _mc->_settings.preset.kbdParameter[_editor_status.selectorX][idxProgram];
     uint8_t     instrument_group = getInstrumentGroupId(atGroupMap, program_id);
     uint16_t    instrument_index = getInstrumentIndex(atBanks, bank_id, program_id);
 
@@ -1451,20 +1451,22 @@ void TesMidiUI::processCtlButtonEventMidiParamEditor(tesEvent *event){
             drawActiveScreen();
             break;
         case ctlButtonOk:
-            // Parameter to be changed: _mc->_settings.preset.kbdParameter[selectorX][topIndex +selectorY]
-            uint8_t parameterIndex = _editor_status.topIndex +_editor_status.selectorY;
-            // There's a special case: Bank & Program for the stAtemp synth.
-            if ((_mc->_settings.global.synthType == stAtemp)
-                    && ((parameterIndex == idxBank) || (parameterIndex == idxProgram))){
-                // invoke a special editor screen
-                _editor_status.screenMode = screenModeInstrumentEdit;
+            {
+                // Parameter to be changed: _mc->_settings.preset.kbdParameter[selectorX][topIndex +selectorY]
+                uint8_t parameterIndex = _editor_status.topIndex +_editor_status.selectorY;
+                // There's a special case: Bank & Program for the stAtemp synth.
+                if ((_mc->_settings.global.synthType == stAtemp)
+                        && ((parameterIndex == idxBank) || (parameterIndex == idxProgram))){
+                    // invoke a special editor screen
+                    _editor_status.screenMode = screenModeInstrumentEdit;
+                }
+                else {
+                    // Toggle edit mode
+                    _editor_status.editMode = ! _editor_status.editMode;
+                }
+                drawActiveScreen();
+                break;
             }
-            else {
-                // Toggle edit mode
-                _editor_status.editMode = ! _editor_status.editMode;
-            }
-            drawActiveScreen();
-            break;
         case ctlButtonMenu:
             // return back to the main screen
             _editor_status.screenMode = screenModeMain;
@@ -1775,25 +1777,11 @@ void TesMidiUI::processCtlButtonEventInstrumentEditor(tesEvent *event){
         case ctlButtonLeft:
         case ctlButtonRight:
             switch(_editor_status.instrumentSelector){
-            case ieInstrumentId:
-                setNextInstrument(
-                        atBanks, 
-                        &(_mc->_settings.preset.kbdParameter[_editor_status.columnIndex][idxBank]),
-                        &(_mc->_settings.preset.kbdParameter[_editor_status.columnIndex][idxProgram]),
-                        (event->buttonId == ctlButtonRight)
-                        );
-                // notify the MIDI controller about the change
-                _mc->processChangedKbdParameter(
-                        _editor_status.columnIndex,
-                        idxBank                     // this will cause sending both idxBank & idxProgram
-                        );
-                // start indicating a "not saved preset", if required
-                indicatePresetChange();
-                break;
             case ieGroupId:
+              {
                 // changing the group (moving to the 1st instrument in the new group)
                 // get the id of the current group
-                uint8_t program_id = _mc->_settings.preset.kbdParameter[_editor_status.columnIndex][idxProgram];
+                uint8_t program_id = _mc->_settings.preset.kbdParameter[_editor_status.selectorX][idxProgram];
                 uint8_t group_id = getInstrumentGroupId(atGroupMap, program_id);
                 if (event->buttonId == ctlButtonLeft){
                     // go to the previous group
@@ -1808,13 +1796,29 @@ void TesMidiUI::processCtlButtonEventInstrumentEditor(tesEvent *event){
                     }
                 }
                 // get the 1st program_id for the new group_id
-                _mc->_settings.preset.kbdParameter[_editor_status.columnIndex][idxProgram] =
+                _mc->_settings.preset.kbdParameter[_editor_status.selectorX][idxProgram] =
                     (group_id == 0) ? 0 : (pgm_read_byte(atGroupMap + group_id -1) + 1);
                 // idxBank for a new group_id is always 0
-                _mc->_settings.preset.kbdParameter[_editor_status.columnIndex][idxBank] = 0;
+                _mc->_settings.preset.kbdParameter[_editor_status.selectorX][idxBank] = 0;
                 // notify the Midi Controller properly about the change
                 _mc->processChangedKbdParameter(
-                        _editor_status.columnIndex,
+                        _editor_status.selectorX,
+                        idxBank                     // this will cause sending both idxBank & idxProgram
+                        );
+                // start indicating a "not saved preset", if required
+                indicatePresetChange();
+                break;
+              }
+            case ieInstrumentId:
+                setNextInstrument(
+                        atBanks, 
+                        &(_mc->_settings.preset.kbdParameter[_editor_status.selectorX][idxBank]),
+                        &(_mc->_settings.preset.kbdParameter[_editor_status.selectorX][idxProgram]),
+                        (event->buttonId == ctlButtonRight)
+                        );
+                // notify the MIDI controller about the change
+                _mc->processChangedKbdParameter(
+                        _editor_status.selectorX,
                         idxBank                     // this will cause sending both idxBank & idxProgram
                         );
                 // start indicating a "not saved preset", if required

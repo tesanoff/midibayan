@@ -14,7 +14,6 @@ struct  TesEditorStatus{
         uint8_t selectorX: 2;           // specifies the active Column (relative to the editor area)
         uint8_t selectorY: 3;           // specifies the active Row (relative to the editor area)
         uint8_t topIndex: 4;            // the index of a row which is shown in the top position
-        uint8_t columnIndex: 2;         // the number of the selected column
         uint8_t editMode: 1;            // true - the edit mode is active, and arrows change the value
         uint8_t screenMode: 3;          // 0 - the main screen;
                                         // 1 - MIDI parameters editor
@@ -35,7 +34,6 @@ struct  TesFKeyProfile{
         editorStatus.selectorX          = 0;
         editorStatus.selectorY          = 0;
         editorStatus.topIndex           = 0;
-        editorStatus.columnIndex        = 0;
         editorStatus.editMode           = true;
         editorStatus.screenMode         = 1;
         editorStatus.sysParSelector     = 0;

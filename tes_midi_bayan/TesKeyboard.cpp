@@ -110,7 +110,7 @@ TesKeyboard::TesKeyboard(TesEventQueue *queue){
     _eventQueue = queue;
 
     // data specific for ctl buttons
-    memset(_hold_timer, 0, sizeof(uint32_t) * TES_NUMBER_OF_CONTROL_BUTTONS);
+    memset(_hold_timer, 0, sizeof(uint16_t) * TES_NUMBER_OF_CONTROL_BUTTONS);
     memset(_ctlButtonState, tesCtlButtonReleased, sizeof(uint8_t) * (TES_NUMBER_OF_CONTROL_BUTTONS - 1) / 4 + 1);
     // _ctlButtonFastRepeatState is not initialized, because it's initialized each time when a control button goes into the FastRepast state.
 
