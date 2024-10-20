@@ -64,7 +64,7 @@ void TesMidiUI::tick(void){
         if (millis_snapshot - _inactivity_timer > INACTIVITY_PERIOD){
             // switch the screen back to Main Screen
             _editor_status.screenMode = screenModeMain;
-            // *** ATTENTION! each time we change screens - we turn off the edit more
+            // *** ATTENTION! each time we change screens - we turn off the edit mode
             _editor_status.editMode = false;
             drawActiveScreen();
         }
@@ -138,7 +138,7 @@ void TesMidiUI::processCtlButtonEvent(tesEvent *event){
                     }
                     else {
                         _editor_status.screenMode = screenModeMidiParamEdit;
-                        // *** ATTENTION! each time we change screens - we turn off the edit more
+                        // *** ATTENTION! each time we change screens - we turn off the edit mode
                         _editor_status.editMode = false;
                     }
                     _inactivity_timer = millis();   // set inactivity timer for a non-Main screen
@@ -207,6 +207,9 @@ void TesMidiUI::processCtlButtonEvent(tesEvent *event){
         break;
     case screenModeDrumsEdit:
         processCtlButtonEventDrumsParamEditor( event );
+        break;
+    case screenModeInstrumentEdit:
+        processCtlButtonEventInstrumentEditor( event );
         break;
     default:
         SWER(swerGUI06);
@@ -690,6 +693,10 @@ const char drums_param_screen_footer[] PROGMEM = "Настройки ударн�
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // section for the Synth-specific instrument editor
 
+// list of parameter IDs
+enum {ieGroupId = 0, ieInstrumentId};
+#define ieNumberOfParameters 2
+
 const char ieInstrumentGroupTitle[] PROGMEM = "Группа инструментов:";
 #define ieInstrumentGroupTitlePos   0   // 1st row
 #define ieInstrumentGroupNamePos    1   // just below the title
@@ -899,6 +906,82 @@ uint16_t getInstrumentIndex(const uint8_t * const * bank_map, uint8_t bank_id, u
     return instrument_index;
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Helper function selects the next Instrument accoring to the provided bank_map and direction
+void setNextInstrument(const uint8_t * const * bank_map, uint8_t * bank_id, uint8_t * program_id, bool forward = true){
+    uint8_t cur_bank = *bank_id;
+    uint8_t cur_program = *program_id;
+
+    uint8_t bank_index = 0xFF;                  // out-of-range value; if it stays the same after search - that means we didn't find the entry in the vector
+    // get a bank vector for program 'i'
+    const uint8_t *ptr = pgm_read_ptr(bank_map + cur_program);
+    // check if we can move to the next bank_id
+    if (ptr != NULL){
+        uint8_t N = pgm_read_byte(ptr);             // the size of the vector
+        for(int i=1; i<=N; i++){
+            if (pgm_read_byte(ptr + i) == cur_bank){
+                // we've got to the specified bank_id
+                bank_index = i;
+                break;
+            }
+        }
+        if (bank_index == 0xFF){
+            // we didn't find a correct entry
+            SWER(swerGUI13);
+        }
+        // *** now, we're sure that bank_index points to the current bank_id in the vector
+        // check if there's a next/previous element in the vector
+        if (forward && (bank_index < N)){
+            // just move to the next bank_id
+            bank_index++;
+        }
+        else if ( !forward && (bank_index > 1)){        // comparing to '1' because this is a vector and [0] contains the length!
+            // just move to the previous bank_id
+            bank_index--;
+        }
+        else {
+            // indicate that we need to switch to another program_id
+            bank_index = 0xFF;
+        }
+    }
+    // check if we already have a new pair of bank_id:program_id
+    if (bank_index != 0xFF){
+        // just set the new bank_id
+        *bank_id = pgm_read_byte(ptr + bank_index);
+        // program_id stays the same in this case
+        // all done
+        return;
+    }
+    // *** So, we have to switch to another program_id
+
+    // first, go to the new program_id
+    if (forward){
+        if(cur_program++ == 127){
+            cur_program = 0;
+        }
+    }
+    else{
+        if(cur_program-- == 0){
+            cur_program = 127;
+        }
+    }
+    // we can already set the new program_id
+    *program_id = cur_program;
+    // *** now, let's find the next bank_id
+    // get a new bank vector
+    ptr = pgm_read_ptr(bank_map + cur_program);
+    if (ptr == NULL){
+        // easy case: the next bank id is 0
+        *bank_id = 0;
+    }
+    else{
+        uint8_t N = pgm_read_byte(ptr);             // the size of the vector
+        // read either the 1st of the last element (depending on the direction)
+        *bank_id = pgm_read_byte(ptr + ((forward)? 1 : N));
+    }
+    // all done; new values were put into *bank_id and *program_id
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////
 //  Draws the top line of the screen (shared between Main screen & MIDI Param Editor
 void TesMidiUI::drawKbdHeader(void){
@@ -958,7 +1041,7 @@ void TesMidiUI::drawMainScreen(void){
         _oled->invertText(false);
     }
     // print the bottom
-    _oled->fastLineH(54, 3, 124, 1);
+    _oled->fastLineH(7*symbolHeight-2, 3, 124, OLED_FILL);
     // If a melody is not played - print a banner
     PGM_P   melodyName  = _mc->_auto_drums.getCurrentMelodyName();
     switch(_mc->_var.drumsMode){
@@ -1106,7 +1189,7 @@ void TesMidiUI::drawSystemParamEditorScreen(void){
     _oled->roundRect(selX1, selY1, selX2, selY2, OLED_STROKE);
 
     // print the bottom
-    _oled->fastLineH(54, 3, 124, 1);
+    _oled->fastLineH(7*symbolHeight-1, 3, 124, OLED_FILL);
     _oled->setCursor( (128 - mb_strlen_P(FPSTR(sys_param_screen_footer))*symbolWidth)/2, 7);
     _oled->print(FPSTR(sys_param_screen_footer));
 
@@ -1164,7 +1247,7 @@ void TesMidiUI::drawDrumsParamEditorScreen(void){
     _oled->roundRect(selX1, selY1, selX2, selY2, OLED_STROKE);
 
     // print the bottom
-    _oled->fastLineH(54, 3, 124, 1);
+    _oled->fastLineH(7*symbolHeight-1, 3, 124, OLED_FILL);
     _oled->setCursor( (128 - mb_strlen_P(FPSTR(drums_param_screen_footer))*symbolWidth)/2, 7);
     _oled->print(FPSTR(drums_param_screen_footer));
 
@@ -1191,7 +1274,7 @@ void TesMidiUI::drawInstrumentEditorScreen(void){
     // Print the title of Instrument group
     _oled->setCursor((128 - mb_strlen_P(FPSTR(ieInstrumentGroupTitle))*symbolWidth)/2, ieInstrumentGroupTitlePos);
     _oled->print(FPSTR(ieInstrumentGroupTitle));
-    _oled->invertText(_editor_status.instrumentSelector == 0);  // TODO replace inversion with a graphical selector (like in Param Editor)
+    _oled->invertText(_editor_status.instrumentSelector == ieGroupId);  // TODO replace inversion with a graphical selector (like in Param Editor)
     // Print the Instrument group name
     _oled->setCursor((128 - mb_strlen_P(FPSTR((PGM_P)pgm_read_ptr(atGroupName + instrument_group)))*symbolWidth)/2, ieInstrumentGroupNamePos);
     _oled->print(FPSTR((PGM_P)pgm_read_ptr(atGroupName + instrument_group)));
@@ -1200,7 +1283,7 @@ void TesMidiUI::drawInstrumentEditorScreen(void){
     // Print the title of Instrument
     _oled->setCursor((128 - mb_strlen_P(FPSTR(ieInstrumentTitle))*symbolWidth)/2, ieInstrumentTitlePos);
     _oled->print(FPSTR(ieInstrumentTitle));
-    _oled->invertText(_editor_status.instrumentSelector == 1);
+    _oled->invertText(_editor_status.instrumentSelector == ieInstrumentId);
     // Print the Instrument name
     PGM_P   str = getSubString_P(atInstrumentNames, instrument_index);
     _oled->setCursor((128 - mb_strlen_P(FPSTR(str))*symbolWidth)/2, ieInstrumentNamePos);
@@ -1210,15 +1293,15 @@ void TesMidiUI::drawInstrumentEditorScreen(void){
     // Print instrument IDs
     _oled->setCursor(0, ieInstrumentIDsLinePos);    // to the very beginning of the line
     _oled->print(FPSTR(ieInstrumentIDsLine));
-    _oled->setCursor(ieBankIdColumn, ieInstrumentIDsLinePos);
+    _oled->setCursor(ieBankIdColumn*symbolWidth, ieInstrumentIDsLinePos);
     // print the Bank ID
     printFormatted(numFormat3R, bank_id);
-    _oled->setCursor(ieProgramIdColumn, ieInstrumentIDsLinePos);
+    _oled->setCursor(ieProgramIdColumn*symbolWidth, ieInstrumentIDsLinePos);
     // print the Program ID
     printFormatted(numFormat3R, program_id);
 
     // print the bottom
-    _oled->fastLineH(54, 3, 124, 1);
+    _oled->fastLineH(7*symbolHeight-1, 3, 124, OLED_FILL);
     _oled->setCursor( (128 - mb_strlen_P(FPSTR(instrument_edit_screen_footer))*symbolWidth)/2, 7);
     _oled->print(FPSTR(instrument_edit_screen_footer));
 
@@ -1226,7 +1309,7 @@ void TesMidiUI::drawInstrumentEditorScreen(void){
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
-//  control button event handler to Midi Param Editor more
+//  control button event handler to Midi Param Editor mode
 void TesMidiUI::processCtlButtonEventMidiParamEditor(tesEvent *event){
     // as this is a Control Button event, event->buttonId already contains Ctl Button ID
     bool    needToClearTheEvent = true; // by default we clear the event
@@ -1368,14 +1451,24 @@ void TesMidiUI::processCtlButtonEventMidiParamEditor(tesEvent *event){
             drawActiveScreen();
             break;
         case ctlButtonOk:
-            // Toggle edit mode
-            _editor_status.editMode = ! _editor_status.editMode;
+            // Parameter to be changed: _mc->_settings.preset.kbdParameter[selectorX][topIndex +selectorY]
+            uint8_t parameterIndex = _editor_status.topIndex +_editor_status.selectorY;
+            // There's a special case: Bank & Program for the stAtemp synth.
+            if ((_mc->_settings.global.synthType == stAtemp)
+                    && ((parameterIndex == idxBank) || (parameterIndex == idxProgram))){
+                // invoke a special editor screen
+                _editor_status.screenMode = screenModeInstrumentEdit;
+            }
+            else {
+                // Toggle edit mode
+                _editor_status.editMode = ! _editor_status.editMode;
+            }
             drawActiveScreen();
             break;
         case ctlButtonMenu:
             // return back to the main screen
             _editor_status.screenMode = screenModeMain;
-            // *** ATTENTION! each time we change screens - we turn off the edit more
+            // *** ATTENTION! each time we change screens - we turn off the edit mode
             _editor_status.editMode = false;
             drawActiveScreen();
             break;
@@ -1486,7 +1579,7 @@ void TesMidiUI::processCtlButtonEventSystemParamEditor(tesEvent *event){
         case ctlButtonMenu:
             // return back to the main screen
             _editor_status.screenMode = screenModeMain;
-            // *** ATTENTION! each time we change screens - we turn off the edit more
+            // *** ATTENTION! each time we change screens - we turn off the edit mode
             _editor_status.editMode = false;
             drawActiveScreen();
             break;
@@ -1633,7 +1726,114 @@ void TesMidiUI::processCtlButtonEventDrumsParamEditor(tesEvent *event){
         case ctlButtonMenu:
             // return back to the main screen
             _editor_status.screenMode = screenModeMain;
-            // *** ATTENTION! each time we change screens - we turn off the edit more
+            // *** ATTENTION! each time we change screens - we turn off the edit mode
+            _editor_status.editMode = false;
+            drawActiveScreen();
+            break;
+        default:
+            // not handled ctl button; don't clear the event
+            needToClearTheEvent = false;
+            break;
+        }
+    default:
+        // not handled ctl button event; don't clear the event
+        needToClearTheEvent = false;
+        break;
+    }
+    if (needToClearTheEvent){
+        event->eventType = tesEmpty;
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+//  control button event handler to Instrument Editor mode
+void TesMidiUI::processCtlButtonEventInstrumentEditor(tesEvent *event){
+    if (_mc->_settings.global.synthType != stAtemp){
+        // this function can be called only for the ATEMP synthesizer
+        SWER(swerGUI12);
+    }
+    // as this is a Control Button event, event->buttonId already contains Ctl Button ID
+    bool    needToClearTheEvent = true; // by default we clear the event
+
+    switch (event->buttonEvent){
+    case tesBeReleased:
+        switch (event->buttonId){
+        case ctlButtonUp:
+            // move up
+            if (_editor_status.instrumentSelector-- == 0){
+                _editor_status.instrumentSelector = ieNumberOfParameters - 1;
+            }
+            drawActiveScreen();
+            break;
+        case ctlButtonDown:
+            // move down
+            if (++_editor_status.instrumentSelector == ieNumberOfParameters){
+                _editor_status.instrumentSelector = 0;
+            }
+            drawActiveScreen();
+            break;
+        case ctlButtonLeft:
+        case ctlButtonRight:
+            switch(_editor_status.instrumentSelector){
+            case ieInstrumentId:
+                setNextInstrument(
+                        atBanks, 
+                        &(_mc->_settings.preset.kbdParameter[_editor_status.columnIndex][idxBank]),
+                        &(_mc->_settings.preset.kbdParameter[_editor_status.columnIndex][idxProgram]),
+                        (event->buttonId == ctlButtonRight)
+                        );
+                // notify the MIDI controller about the change
+                _mc->processChangedKbdParameter(
+                        _editor_status.columnIndex,
+                        idxBank                     // this will cause sending both idxBank & idxProgram
+                        );
+                // start indicating a "not saved preset", if required
+                indicatePresetChange();
+                break;
+            case ieGroupId:
+                // changing the group (moving to the 1st instrument in the new group)
+                // get the id of the current group
+                uint8_t program_id = _mc->_settings.preset.kbdParameter[_editor_status.columnIndex][idxProgram];
+                uint8_t group_id = getInstrumentGroupId(atGroupMap, program_id);
+                if (event->buttonId == ctlButtonLeft){
+                    // go to the previous group
+                    if (group_id-- == 0){
+                        group_id = atNumberOfGroups - 1;
+                    }
+                }
+                else {      // ctlButtonRight
+                    // go to the next group
+                    if (++group_id == atNumberOfGroups){
+                        group_id = 0;
+                    }
+                }
+                // get the 1st program_id for the new group_id
+                _mc->_settings.preset.kbdParameter[_editor_status.columnIndex][idxProgram] =
+                    (group_id == 0) ? 0 : (pgm_read_byte(atGroupMap + group_id -1) + 1);
+                // idxBank for a new group_id is always 0
+                _mc->_settings.preset.kbdParameter[_editor_status.columnIndex][idxBank] = 0;
+                // notify the Midi Controller properly about the change
+                _mc->processChangedKbdParameter(
+                        _editor_status.columnIndex,
+                        idxBank                     // this will cause sending both idxBank & idxProgram
+                        );
+                // start indicating a "not saved preset", if required
+                indicatePresetChange();
+                break;
+            }
+            drawActiveScreen();
+            break;
+        case ctlButtonOk:
+            // return back to the Param Editor screen
+            _editor_status.screenMode = screenModeMidiParamEdit;
+            // *** ATTENTION! each time we change screens - we turn off the edit mode
+            _editor_status.editMode = false;
+            drawActiveScreen();
+            break;
+        case ctlButtonMenu:
+            // return back to the main screen
+            _editor_status.screenMode = screenModeMain;
+            // *** ATTENTION! each time we change screens - we turn off the edit mode
             _editor_status.editMode = false;
             drawActiveScreen();
             break;

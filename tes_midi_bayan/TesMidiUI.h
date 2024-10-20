@@ -187,6 +187,10 @@ private:
     void processCtlButtonEventDrumsParamEditor(tesEvent *event);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
+    //  control button event handler to Instrument Editor more
+    void processCtlButtonEventInstrumentEditor(tesEvent *event);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
     //  Activates the specified preset
     void activatePreset(uint8_t preset_id);
 
