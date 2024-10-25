@@ -1274,21 +1274,34 @@ void TesMidiUI::drawInstrumentEditorScreen(void){
     // Print the title of Instrument group
     _oled->setCursor((128 - mb_strlen_P(FPSTR(ieInstrumentGroupTitle))*symbolWidth)/2, ieInstrumentGroupTitlePos);
     _oled->print(FPSTR(ieInstrumentGroupTitle));
-    _oled->invertText(_editor_status.instrumentSelector == ieGroupId);  // TODO replace inversion with a graphical selector (like in Param Editor)
     // Print the Instrument group name
     _oled->setCursor((128 - mb_strlen_P(FPSTR((PGM_P)pgm_read_ptr(atGroupName + instrument_group)))*symbolWidth)/2, ieInstrumentGroupNamePos);
     _oled->print(FPSTR((PGM_P)pgm_read_ptr(atGroupName + instrument_group)));
-    _oled->invertText(false);
 
     // Print the title of Instrument
     _oled->setCursor((128 - mb_strlen_P(FPSTR(ieInstrumentTitle))*symbolWidth)/2, ieInstrumentTitlePos);
     _oled->print(FPSTR(ieInstrumentTitle));
-    _oled->invertText(_editor_status.instrumentSelector == ieInstrumentId);
     // Print the Instrument name
     PGM_P   str = getSubString_P(atInstrumentNames, instrument_index);
     _oled->setCursor((128 - mb_strlen_P(FPSTR(str))*symbolWidth)/2, ieInstrumentNamePos);
     _oled->print(FPSTR(str));
-    _oled->invertText(false);
+
+    // draw the selector
+    // calculate graphical X and Y
+    uint8_t selX1 = 3*symbolWidth -5;                       // 3 - first column of the text
+    uint8_t selX2 = 17*symbolWidth + symbolWidth +4;        // 17 - last column of the text
+    uint8_t selRow = 0;
+    switch (_editor_status.instrumentSelector ){
+    case ieGroupId:
+        selRow = ieInstrumentGroupNamePos;
+        break;
+    case ieInstrumentId:
+        selRow = ieInstrumentNamePos;
+        break;
+    }
+    uint8_t selY1 = symbolHeight*selRow -1;
+    uint8_t selY2 = symbolHeight*selRow +7;
+    _oled->roundRect(selX1, selY1, selX2, selY2, OLED_STROKE);
 
     // Print instrument IDs
     _oled->setCursor(0, ieInstrumentIDsLinePos);    // to the very beginning of the line
