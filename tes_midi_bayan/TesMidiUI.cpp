@@ -299,6 +299,12 @@ void TesMidiUI::processCtlButtonEvent(tesEvent *event){
                     uint8_t fkey_id = event->buttonId - ctlButtonF1;
                     switch ( _fkey_sm.state ){
                         case psNormal: {
+                            // check if the F-key can be activated now
+                            if((_mc->_settings.global.fkeyProfile[fkey_id].editorStatus.screenMode == screenModeInstrumentEdit)
+                                    && (_mc->_settings.global.synthType != stAtemp)){
+                                // we cannot activate this F-key with the current synth type
+                                break;
+                            }
                             // activate F-key
                             memcpy(&_editor_status, &_mc->_settings.global.fkeyProfile[fkey_id].editorStatus, sizeof(_editor_status));
                             drawActiveScreen();
