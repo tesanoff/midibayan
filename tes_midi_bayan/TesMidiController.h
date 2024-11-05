@@ -172,7 +172,7 @@ public:
 #define SIZE_OF_PRESET_UPDATE_BITMAP    (((NUMBER_OF_KEYBOARDS * NUMBER_OF_KBD_PARAMETERS) -  1) / 8 + 1)
 
 // synthesizer types
-enum    {stGeneralMidi = 0, stAtemp};
+enum    {stGeneralMidi = 0, stAtemp, stProDX};
 
 struct TesMIDIControllerSettings {
    struct TesMIDIControllerGlobalSettings { 

@@ -1,6 +1,6 @@
 #include "TesPressureSensor.h"
 
-#define PRESSURE_EVENT_PERIOD   50      // 20 events per second
+#define PRESSURE_EVENT_PERIOD   25      // 40 events per second
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // constructor
@@ -47,7 +47,7 @@ void TesPressureSensor::tick(void){
 #define pressureSensorPin   A7
 #define centerValue         566     // Pressure raw value when no difference between two inputs
 #define pressureThreshold   20      // raw values below the threshold are translated to 0 (to avoid permanent sending MIDI messages for sub-zero values)
-#define pressureTopValue    350     // max values for "blow" & "suck" are not the same; let's use the lowest one, so that both can reach this value
+#define pressureTopValue    300     // max values for "blow" & "suck" are not the same; let's use the lowest one, so that both can reach this value
                                     // Note: it was 432 before, but I had to push too hard to get the maximum volume, so I decided to make it lower.
 #define PRESS_FILTER        0.6     // Значение фильтра датчика давления. От 0 до 1. Ближе к 1 - слабая фильтрация. Ближе к 0 - сильная фильтрация.
 

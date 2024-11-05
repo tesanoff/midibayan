@@ -570,7 +570,7 @@ const char indPressureSensorLabel[] PROGMEM = "Мех";
 #define indSynthTypePos         13
 const char indSynthTypeLabel0[]     PROGMEM  = "GM";    // General MIDI
 const char indSynthTypeLabel1[]     PROGMEM  = "AT";    // ATemp
-const char indSynthTypeLabel2[]     PROGMEM  = "--";    // not used yet
+const char indSynthTypeLabel2[]     PROGMEM  = "DX";    // Atemp Pro.DX
 const char indSynthTypeLabel3[]     PROGMEM  = "--";    // not used yet
 const char * const  indSynthTypeLabel[] PROGMEM = {
     indSynthTypeLabel0, indSynthTypeLabel1, indSynthTypeLabel2, indSynthTypeLabel3 
@@ -614,10 +614,10 @@ const char parBassOctavesName[]   PROGMEM  = "Октавы в басах";
 // specific data for the Synth Type parameter
 // It shares the same text constants with the respective indicator
 const char * const  parSynthTypeLabel[] PROGMEM = {
-    indSynthTypeLabel0, indSynthTypeLabel1
+    indSynthTypeLabel0, indSynthTypeLabel1, indSynthTypeLabel2
 };
 const char parSynthTypeName[]       PROGMEM  = "Тип синтезатора";
-#define parSynthTypeN           2       // the number of options
+#define parSynthTypeN           3       // the number of options
 
 /////////////////////////////////////////////////////////////////
 // specific data for the Master Volume parameter
@@ -801,6 +801,93 @@ const uint8_t * const  atBanks[128] PROGMEM = {
 
 // A list of drumsets supproted by ATEMP
 const uint8_t atDrumSets[] PROGMEM  = {10, 0, 8, 16, 24, 25, 32, 40, 48, 56, 127};
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// *** section for Pro.DX Synthesizer
+
+const uint8_t dxBanks0[] PROGMEM = {3, 0, 1, 2};
+const uint8_t dxBanks1[] PROGMEM = {2, 0, 8};
+const uint8_t dxBanks3[] PROGMEM = {2, 0, 8};
+const uint8_t dxBanks4[] PROGMEM = {7, 0, 1, 2, 3, 4, 8, 9};
+const uint8_t dxBanks5[] PROGMEM = {5, 0, 1, 2, 8, 9};
+const uint8_t dxBanks6[] PROGMEM = {3, 0, 1, 8};
+const uint8_t dxBanks7[] PROGMEM = {2, 0, 1};
+const uint8_t dxBanks12[] PROGMEM = {2, 0, 1};
+const uint8_t dxBanks14[] PROGMEM = {3, 0, 1, 2};
+const uint8_t dxBanks15[] PROGMEM = {2, 0, 1};
+const uint8_t dxBanks16[] PROGMEM = {8, 0, 1, 2, 8, 9, 16, 33, 40};
+const uint8_t dxBanks17[] PROGMEM = {6, 0, 1, 2, 8, 9, 16};
+const uint8_t dxBanks18[] PROGMEM = {4, 0, 8, 16, 24};
+const uint8_t dxBanks19[] PROGMEM = {7, 0, 1, 19, 3, 4, 5, 8};
+const uint8_t dxBanks21[] PROGMEM = {5, 0, 1, 2, 3, 8};
+const uint8_t dxBanks22[] PROGMEM = {2, 0, 1};
+const uint8_t dxBanks24[] PROGMEM = {8, 0, 1, 2, 8, 16, 24, 32, 40};
+const uint8_t dxBanks25[] PROGMEM = {7, 0, 1, 8, 16, 17, 18, 32};
+const uint8_t dxBanks26[] PROGMEM = {4, 0, 1, 2, 8};
+const uint8_t dxBanks27[] PROGMEM = {4, 0, 1, 2, 3};
+const uint8_t dxBanks29[] PROGMEM = {2, 0, 1};
+const uint8_t dxBanks30[] PROGMEM = {2, 0, 1};
+const uint8_t dxBanks31[] PROGMEM = {2, 0, 1};
+const uint8_t dxBanks32[] PROGMEM = {3, 0, 1, 2};
+const uint8_t dxBanks33[] PROGMEM = {5, 0, 1, 2, 3, 4};
+const uint8_t dxBanks38[] PROGMEM = {9, 0, 1, 2, 3, 4, 5, 6, 7, 8};
+const uint8_t dxBanks39[] PROGMEM = {11, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+const uint8_t dxBanks40[] PROGMEM = {2, 0, 1};
+const uint8_t dxBanks45[] PROGMEM = {2, 0, 1};
+const uint8_t dxBanks47[] PROGMEM = {2, 0, 1};
+const uint8_t dxBanks48[] PROGMEM = {4, 0, 1, 2, 3};
+const uint8_t dxBanks49[] PROGMEM = {2, 0, 1};
+const uint8_t dxBanks50[] PROGMEM = {3, 0, 1, 2};
+const uint8_t dxBanks51[] PROGMEM = {2, 0, 1};
+const uint8_t dxBanks52[] PROGMEM = {3, 0, 1, 2};
+const uint8_t dxBanks53[] PROGMEM = {3, 0, 1, 2};
+const uint8_t dxBanks55[] PROGMEM = {3, 0, 1, 2};
+const uint8_t dxBanks56[] PROGMEM = {3, 0, 1, 2};
+const uint8_t dxBanks58[] PROGMEM = {3, 0, 1, 2};
+const uint8_t dxBanks59[] PROGMEM = {2, 0, 1};
+const uint8_t dxBanks61[] PROGMEM = {6, 0, 1, 2, 3, 8, 16};
+const uint8_t dxBanks62[] PROGMEM = {5, 0, 1, 2, 8, 16};
+const uint8_t dxBanks63[] PROGMEM = {5, 0, 1, 2, 3, 8};
+const uint8_t dxBanks65[] PROGMEM = {3, 0, 1, 2};
+const uint8_t dxBanks66[] PROGMEM = {4, 0, 1, 2, 3};
+const uint8_t dxBanks71[] PROGMEM = {2, 0, 1};
+const uint8_t dxBanks73[] PROGMEM = {2, 0, 1};
+const uint8_t dxBanks74[] PROGMEM = {2, 0, 1};
+const uint8_t dxBanks80[] PROGMEM = {3, 0, 1, 2};
+const uint8_t dxBanks81[] PROGMEM = {3, 0, 1, 8};
+const uint8_t dxBanks88[] PROGMEM = {3, 0, 1, 2};
+const uint8_t dxBanks89[] PROGMEM = {5, 0, 1, 2, 3, 8};
+const uint8_t dxBanks90[] PROGMEM = {2, 0, 1};
+const uint8_t dxBanks91[] PROGMEM = {2, 0, 1};
+const uint8_t dxBanks102[] PROGMEM = {2, 0, 1};
+const uint8_t dxBanks107[] PROGMEM = {2, 0, 1};
+const uint8_t dxBanks114[] PROGMEM = {2, 0, 1};
+const uint8_t dxBanks115[] PROGMEM = {2, 0, 1};
+const uint8_t dxBanks116[] PROGMEM = {2, 0, 1};
+const uint8_t dxBanks117[] PROGMEM = {2, 0, 1};
+const uint8_t dxBanks118[] PROGMEM = {3, 0, 1, 2};
+const uint8_t dxBanks120[] PROGMEM = {5, 0, 1, 2, 3, 4};
+const uint8_t dxBanks121[] PROGMEM = {3, 0, 1, 5};
+const uint8_t dxBanks122[] PROGMEM = {5, 0, 1, 2, 3, 4};
+const uint8_t dxBanks123[] PROGMEM = {4, 0, 1, 2, 3};
+const uint8_t dxBanks124[] PROGMEM = {6, 0, 1, 2, 3, 4, 5};
+const uint8_t dxBanks125[] PROGMEM = {10, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+const uint8_t dxBanks126[] PROGMEM = {6, 0, 1, 2, 3, 4, 5};
+const uint8_t dxBanks127[] PROGMEM = {4, 0, 1, 2, 3};
+const uint8_t * const dxBanks[128] PROGMEM = {
+    dxBanks0, dxBanks1, NULL, dxBanks3, dxBanks4, dxBanks5, dxBanks6, dxBanks7, NULL, NULL, NULL, NULL, dxBanks12, NULL, dxBanks14,
+    dxBanks15, dxBanks16, dxBanks17, dxBanks18, dxBanks19, NULL, dxBanks21, dxBanks22, NULL, dxBanks24, dxBanks25, dxBanks26, dxBanks27,
+    NULL, dxBanks29, dxBanks30, dxBanks31, dxBanks32, dxBanks33, NULL, NULL, NULL, NULL, dxBanks38, dxBanks39, dxBanks40, NULL, NULL, NULL,
+    NULL, dxBanks45, NULL, dxBanks47, dxBanks48, dxBanks49, dxBanks50, dxBanks51, dxBanks52, dxBanks53, NULL, dxBanks55, dxBanks56, NULL,
+    dxBanks58, dxBanks59, NULL, dxBanks61, dxBanks62, dxBanks63, NULL, dxBanks65, dxBanks66, NULL, NULL, NULL, NULL, dxBanks71, NULL,
+    dxBanks73, dxBanks74, NULL, NULL, NULL, NULL, NULL, dxBanks80, dxBanks81, NULL, NULL, NULL, NULL, NULL, NULL, dxBanks88, dxBanks89,
+    dxBanks90, dxBanks91, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, dxBanks102, NULL, NULL, NULL, NULL, dxBanks107,
+    NULL, NULL, NULL, NULL, NULL, NULL, dxBanks114, dxBanks115, dxBanks116, dxBanks117, dxBanks118, NULL, dxBanks120, dxBanks121, dxBanks122,
+    dxBanks123, dxBanks124, dxBanks125, dxBanks126, dxBanks127
+};
+
+// A list of drumsets supproted by Pro.DX
+const uint8_t dxDrumSets[] PROGMEM  = {15, 0, 1, 2, 3, 4, 5, 6, 8, 11, 16, 17, 24, 25, 40, 48};
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////// private methods //////////////////////////////////////////
@@ -1398,7 +1485,8 @@ void TesMidiUI::processCtlButtonEventMidiParamEditor(tesEvent *event){
                 bool    newValueIsOk;   // exit condition from the loop below
                 // Parameter to be changed: _mc->_settings.preset.kbdParameter[selectorX][topIndex +selectorY]
                 uint8_t parameterIndex = _editor_status.topIndex +_editor_status.selectorY;
-                if ((parameterIndex == idxBank) && (_mc->_settings.global.synthType == stAtemp)){
+                if ((parameterIndex == idxBank) 
+                        && ((_mc->_settings.global.synthType == stAtemp) || (_mc->_settings.global.synthType == stProDX))){
                     // Bank ID for Atemp synth - is a special case
                     _mc->_settings.preset.kbdParameter[_editor_status.selectorX][parameterIndex] = getNextAtempBankId(_editor_status.selectorX, (event->buttonId == ctlButtonRight));
                 }
@@ -1661,7 +1749,7 @@ void TesMidiUI::processCtlButtonEventDrumsParamEditor(tesEvent *event){
                 indicatePresetChange();
                 break;
             case dpDrumsetNumber:
-                if( _mc->_settings.global.synthType == stAtemp) {
+                if((_mc->_settings.global.synthType == stAtemp) || (_mc->_settings.global.synthType == stProDX)) {
                     // Drumset ID for Atemp synth - is a special case
                     _mc->_settings.preset.drumsetNumber = getNextAtempDrumsetId( event->buttonId == ctlButtonRight );
                 }
@@ -1902,7 +1990,15 @@ uint8_t TesMidiUI::getNextAtempBankId(uint8_t kbd_id, bool forward){
     uint8_t curProgram = _mc->_settings.preset.kbdParameter[kbd_id][idxProgram];
 
     // get a pointer to the list of available bank IDs for the current program
-    const uint8_t * ptr = pgm_read_ptr(atBanks + curProgram);
+    const uint8_t * ptr = NULL;
+    switch (_mc->_settings.global.synthType){
+    case stAtemp:
+        ptr = pgm_read_ptr(atBanks + curProgram);
+        break;
+    case stProDX:
+        ptr = pgm_read_ptr(dxBanks + curProgram);
+        break;
+    }
     if (ptr == NULL){
         // no other banks available; return the current one
         return curBankId;
@@ -1936,11 +2032,20 @@ uint8_t TesMidiUI::getNextAtempBankId(uint8_t kbd_id, bool forward){
 // Returns the next/previous value for the drumset ID
 // (relative to the current value in _mc->_settings.preset.drumsetNumber)
 uint8_t TesMidiUI::getNextAtempDrumsetId(bool forward){
+    const uint8_t * map = NULL;
+    switch(_mc->_settings.global.synthType){
+    case stAtemp:
+        map = atDrumSets;
+        break;
+    case stProDX:
+        map = dxDrumSets;
+        break;
+    }
     // get the total number of drumsets
-    uint8_t N = pgm_read_byte(atDrumSets);
+    uint8_t N = pgm_read_byte(map);
     // find the index of the current bank
     uint8_t curIndex = 1;
-    while ((curIndex <= N) && (pgm_read_byte(atDrumSets + curIndex) != _mc->_settings.preset.drumsetNumber)){
+    while ((curIndex <= N) && (pgm_read_byte(map + curIndex) != _mc->_settings.preset.drumsetNumber)){
         curIndex++;
     }
     // now, the curIndex points to the current bank ID
@@ -1956,7 +2061,7 @@ uint8_t TesMidiUI::getNextAtempDrumsetId(bool forward){
         }
     }
     // return the new bank id
-    return pgm_read_byte(atDrumSets + curIndex);
+    return pgm_read_byte(map + curIndex);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1965,7 +2070,7 @@ uint8_t TesMidiUI::getNextAtempDrumsetId(bool forward){
 // - Returns True if the bank ID was changed.
 bool TesMidiUI::adjustBankId(uint8_t kbd_id){
     // we do this only for ATEMP synth
-    if (_mc->_settings.global.synthType != stAtemp){
+    if ((_mc->_settings.global.synthType != stAtemp)&&(_mc->_settings.global.synthType != stProDX)){
         // in this case, we never adjust bank id
         return false;
     }
@@ -1976,7 +2081,15 @@ bool TesMidiUI::adjustBankId(uint8_t kbd_id){
     uint8_t new_bank_id = 0;
 
     // get a pointer to the list of available bank IDs for the current program
-    const uint8_t * ptr = pgm_read_ptr(atBanks + curProgram);
+    const uint8_t * ptr = NULL;
+    switch (_mc->_settings.global.synthType){
+    case stAtemp:
+        ptr = pgm_read_ptr(atBanks + curProgram);
+        break;
+    case stProDX:
+        ptr = pgm_read_ptr(dxBanks + curProgram);
+        break;
+    }
     if (ptr == NULL){
         // There's just one available bank id: 0
         // new_bank_id is already set to 0 (above)
