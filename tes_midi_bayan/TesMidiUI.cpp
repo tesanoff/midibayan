@@ -5,7 +5,8 @@
 #include "TesMidiUI.h"
 #include "swer.h"
 #include "midi_note_names.h"
-#include "atemp_hw.h"
+#include "prodx.h"
+//#include "atemp_hw.h"
 
 #define FPSTR(pstr) (const __FlashStringHelper*)(pstr)
 
@@ -301,7 +302,7 @@ void TesMidiUI::processCtlButtonEvent(tesEvent *event){
                         case psNormal: {
                             // check if the F-key can be activated now
                             if((_mc->_settings.global.fkeyProfile[fkey_id].editorStatus.screenMode == screenModeInstrumentEdit)
-                                    && (_mc->_settings.global.synthType != stAtemp)){
+                                    && (_mc->_settings.global.synthType != stProDX)){
                                 // we cannot activate this F-key with the current synth type
                                 break;
                             }
@@ -1351,15 +1352,15 @@ void TesMidiUI::drawDrumsParamEditorScreen(void){
 //  Draws the Instrument selector/editor screen
 void TesMidiUI::drawInstrumentEditorScreen(void){
     // This function can be called in the ATEMP mode only
-    if (_mc->_settings.global.synthType != stAtemp){
+    if (_mc->_settings.global.synthType != stProDX){
         SWER(swerGUI09);
     }
     // Info: the ID of the current Keyboard is in _editor_status.selectorX (because this screen was called from Parameters Editor)
     // determine the instrument group and instrument index
     uint8_t     bank_id = _mc->_settings.preset.kbdParameter[_editor_status.selectorX][idxBank];
     uint8_t     program_id = _mc->_settings.preset.kbdParameter[_editor_status.selectorX][idxProgram];
-    uint8_t     instrument_group = getInstrumentGroupId(atGroupMap, program_id);
-    uint16_t    instrument_index = getInstrumentIndex(atBanks, bank_id, program_id);
+    uint8_t     instrument_group = getInstrumentGroupId(dxGroupMap, program_id);
+    uint16_t    instrument_index = getInstrumentIndex(dxBanks, bank_id, program_id);
 
     // clear work area
     _oled->clear();
@@ -1368,14 +1369,14 @@ void TesMidiUI::drawInstrumentEditorScreen(void){
     _oled->setCursor((128 - mb_strlen_P(FPSTR(ieInstrumentGroupTitle))*symbolWidth)/2, ieInstrumentGroupTitlePos);
     _oled->print(FPSTR(ieInstrumentGroupTitle));
     // Print the Instrument group name
-    _oled->setCursor((128 - mb_strlen_P(FPSTR((PGM_P)pgm_read_ptr(atGroupName + instrument_group)))*symbolWidth)/2, ieInstrumentGroupNamePos);
-    _oled->print(FPSTR((PGM_P)pgm_read_ptr(atGroupName + instrument_group)));
+    _oled->setCursor((128 - mb_strlen_P(FPSTR((PGM_P)pgm_read_ptr(dxGroupName + instrument_group)))*symbolWidth)/2, ieInstrumentGroupNamePos);
+    _oled->print(FPSTR((PGM_P)pgm_read_ptr(dxGroupName + instrument_group)));
 
     // Print the title of Instrument
     _oled->setCursor((128 - mb_strlen_P(FPSTR(ieInstrumentTitle))*symbolWidth)/2, ieInstrumentTitlePos);
     _oled->print(FPSTR(ieInstrumentTitle));
     // Print the Instrument name
-    PGM_P   str = getSubString_P(atInstrumentNames, instrument_index);
+    PGM_P   str = getSubString_P(dxInstrumentNames, instrument_index);
     _oled->setCursor((128 - mb_strlen_P(FPSTR(str))*symbolWidth)/2, ieInstrumentNamePos);
     _oled->print(FPSTR(str));
 
@@ -1561,8 +1562,8 @@ void TesMidiUI::processCtlButtonEventMidiParamEditor(tesEvent *event){
             {
                 // Parameter to be changed: _mc->_settings.preset.kbdParameter[selectorX][topIndex +selectorY]
                 uint8_t parameterIndex = _editor_status.topIndex +_editor_status.selectorY;
-                // There's a special case: Bank & Program for the stAtemp synth.
-                if ((_mc->_settings.global.synthType == stAtemp)
+                // There's a special case: Bank & Program for the stProDX synth.
+                if ((_mc->_settings.global.synthType == stProDX)
                         && ((parameterIndex == idxBank) || (parameterIndex == idxProgram))){
                     // invoke a special editor screen
                     _editor_status.screenMode = screenModeInstrumentEdit;
@@ -1857,7 +1858,7 @@ void TesMidiUI::processCtlButtonEventDrumsParamEditor(tesEvent *event){
 ////////////////////////////////////////////////////////////////////////////////////////////////
 //  control button event handler to Instrument Editor mode
 void TesMidiUI::processCtlButtonEventInstrumentEditor(tesEvent *event){
-    if (_mc->_settings.global.synthType != stAtemp){
+    if (_mc->_settings.global.synthType != stProDX){
         // this function can be called only for the ATEMP synthesizer
         SWER(swerGUI12);
     }
@@ -1889,22 +1890,22 @@ void TesMidiUI::processCtlButtonEventInstrumentEditor(tesEvent *event){
                 // changing the group (moving to the 1st instrument in the new group)
                 // get the id of the current group
                 uint8_t program_id = _mc->_settings.preset.kbdParameter[_editor_status.selectorX][idxProgram];
-                uint8_t group_id = getInstrumentGroupId(atGroupMap, program_id);
+                uint8_t group_id = getInstrumentGroupId(dxGroupMap, program_id);
                 if (event->buttonId == ctlButtonLeft){
                     // go to the previous group
                     if (group_id-- == 0){
-                        group_id = atNumberOfGroups - 1;
+                        group_id = dxNumberOfGroups - 1;
                     }
                 }
                 else {      // ctlButtonRight
                     // go to the next group
-                    if (++group_id == atNumberOfGroups){
+                    if (++group_id == dxNumberOfGroups){
                         group_id = 0;
                     }
                 }
                 // get the 1st program_id for the new group_id
                 _mc->_settings.preset.kbdParameter[_editor_status.selectorX][idxProgram] =
-                    (group_id == 0) ? 0 : (pgm_read_byte(atGroupMap + group_id -1) + 1);
+                    (group_id == 0) ? 0 : (pgm_read_byte(dxGroupMap + group_id -1) + 1);
                 // idxBank for a new group_id is always 0
                 _mc->_settings.preset.kbdParameter[_editor_status.selectorX][idxBank] = 0;
                 // notify the Midi Controller properly about the change
@@ -1918,7 +1919,7 @@ void TesMidiUI::processCtlButtonEventInstrumentEditor(tesEvent *event){
               }
             case ieInstrumentId:
                 setNextInstrument(
-                        atBanks, 
+                        dxBanks, 
                         &(_mc->_settings.preset.kbdParameter[_editor_status.selectorX][idxBank]),
                         &(_mc->_settings.preset.kbdParameter[_editor_status.selectorX][idxProgram]),
                         (event->buttonId == ctlButtonRight)
