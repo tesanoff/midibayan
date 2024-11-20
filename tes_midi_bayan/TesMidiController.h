@@ -166,7 +166,7 @@ public:
 #define idxChorusType       13
 
 #define NUMBER_OF_KBD_PARAMETERS    14
-#define TES_EEPROM_SIGNATURE 0x5A0F  // 0x5Avv, where: 5A - signature, vv - version
+#define TES_EEPROM_SIGNATURE 0x5A10  // 0x5Avv, where: 5A - signature, vv - version
 #define GLOBAL_SETTINGS_SAVING_TIMEOUT  8000    // changes are saved to EEPROM in 8 seconds after the last change
 
 #define SIZE_OF_PRESET_UPDATE_BITMAP    (((NUMBER_OF_KEYBOARDS * NUMBER_OF_KBD_PARAMETERS) -  1) / 8 + 1)

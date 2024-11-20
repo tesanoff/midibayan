@@ -21,6 +21,7 @@ struct  TesEditorStatus{
                                         // 3 - drums parameters editor
                                         // 4 - instrument selection
         uint8_t sysParSelector: 3;      // specifies the active system parameter
+        uint8_t sysParTopIndex: 3;      // the index of a row  which is shown in the top position
         uint8_t drumsParSelector: 3;    // specifies the active drums parameter
         uint8_t instrumentSelector :1;  // 0 .. 1 (just 2 parameters)
     };

@@ -35,7 +35,7 @@
 
 // Metronome 4/4:
 //                                         |~~~~~~~~~~~~~~|          |~~~~~~~~~~~~~|           |~~~~~~~~~~~~~|           |~~~~~~~~~~~~|
-const uint8_t melody0[] PROGMEM = {60, 0, H(_Db2), 8, off(_Db2), 8, L(_Db2), 8, off(_Db2), 8, L(_Db2), 8, off(_Db2), 8, L(_Db2), 8, off(_Db2), 8, 0 };
+const uint8_t melody0[] PROGMEM = {60, 0, L(_Bb1), 8, off(_Bb1), 8, L(_A1), 8, off(_A1), 8, L(_A1), 8, off(_A1), 8, L(_A1), 8, off(_A1), 8, 0 };
 // Metronome 3/4:
 const uint8_t melody1[] PROGMEM = {120, 0, H(_Db2), 8, off(_Db2), 8, L(_Db2), 8, off(_Db2), 8, L(_Db2), 8, off(_Db2), 8,  0 };
 // bit #1

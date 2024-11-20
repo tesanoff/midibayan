@@ -601,7 +601,7 @@ const char * const  parBooleanLabel[] PROGMEM = {
 #define parBooleanN             2       // the number of options
 
 // list of parameter IDs
-enum {parRunningStatusId = 0, parBassOctavesId, parSynthTypeId, parMasterVolumeId, parDrumsChannelId};
+enum {parRunningStatusId = 0, parBassOctavesId, parSynthTypeId, parMasterVolumeId, parDrumsChannelId, parTest1, parTest2};
 
 /////////////////////////////////////////////////////////////////
 // specific data forn the Running Status parameter
@@ -635,13 +635,15 @@ const char parDrumsChannelName[]    PROGMEM  = "Канал ударных";
 
 #define paramEditorFirstRow     1       // we start from this row
 #define paramEditorRows         5       // 5 parameters in total
-#define paramEditorRowIncrement 1       // 0 empty row between parameters
 #define paramEditorNameColumn   0       // where we start printing names
 #define paramEditorValueColumn  17      // where we start printing values
 
-#define parNumberOfParameters   5
+#define parNumberOfParameters   7
+const char parTestName1[]    PROGMEM  = "T1";
+const char parTestName2[]    PROGMEM  = "T2";
 const char * const  parParameterNames[parNumberOfParameters] PROGMEM = {
-    parRunningStatusName, parBassOctavesName, parSynthTypeName, parMasterVolumeName, parDrumsChannelName
+    parRunningStatusName, parBassOctavesName, parSynthTypeName, parMasterVolumeName, parDrumsChannelName,
+    parTestName1, parTestName2
 };
 
 const char sys_param_screen_footer[] PROGMEM = "Настройки системы";
@@ -1244,14 +1246,15 @@ void TesMidiUI::drawSystemParamEditorScreen(void){
     // clear work area
     _oled->clear();
     // print rows in the work area
-    for (int param_number=0; param_number<parNumberOfParameters; param_number++){
-        setTextCursor(paramEditorNameColumn, param_number * paramEditorRowIncrement + paramEditorFirstRow);
-        _oled->print( FPSTR((PGM_P)pgm_read_ptr(parParameterNames + param_number)) );
+    for (int editorRow=0; editorRow<paramEditorRows; editorRow++){
+        setTextCursor(paramEditorNameColumn, editorRow + paramEditorFirstRow);
+        uint8_t currentSystemParameterIndex = editorRow + _editor_status.sysParTopIndex;
+        _oled->print( FPSTR((PGM_P)pgm_read_ptr(parParameterNames + currentSystemParameterIndex)) );
         // print the value
-        setTextCursor(paramEditorValueColumn, param_number * paramEditorRowIncrement + paramEditorFirstRow);
+        setTextCursor(paramEditorValueColumn, editorRow + paramEditorFirstRow);
         // decide text inversion - select the value being edited
-        _oled->invertText(param_number == _editor_status.sysParSelector);
-        switch(param_number){
+        _oled->invertText(editorRow == _editor_status.sysParSelector);
+        switch(editorRow + _editor_status.sysParTopIndex){  // TODO replace with currentSystemParameterIndex later
             case parRunningStatusId:
                 _oled->print( FPSTR((PGM_P)pgm_read_ptr(parBooleanLabel + _mc->_settings.global.runningStatus)) );
                 break;
@@ -1267,6 +1270,14 @@ void TesMidiUI::drawSystemParamEditorScreen(void){
             case parDrumsChannelId:
                 printFormatted(numFormat3R, _mc->_settings.global.drumsMidiChannel);
                 break;
+            case parTest1:
+                // TODO the same value as RS
+                _oled->print( FPSTR((PGM_P)pgm_read_ptr(parBooleanLabel + _mc->_settings.global.runningStatus)) );
+                break;
+            case parTest2:
+                // TODO the same as "bass octaves"
+                _oled->print( FPSTR((PGM_P)pgm_read_ptr(parBooleanLabel + _mc->_settings.global.bassOctavesOn)) );
+                break;
             default:
                 SWER(swerGUI02);
         }
@@ -1278,8 +1289,8 @@ void TesMidiUI::drawSystemParamEditorScreen(void){
     // calculate graphical X and Y
     uint8_t selX1 = paramEditorValueColumn*symbolWidth -3;
     uint8_t selX2 = paramEditorValueColumn*symbolWidth +symbolWidth*3 +1;
-    uint8_t selY1 = symbolHeight*paramEditorFirstRow -1 +_editor_status.sysParSelector*paramEditorRowIncrement*symbolHeight;
-    uint8_t selY2 = symbolHeight*paramEditorFirstRow +7 +_editor_status.sysParSelector*paramEditorRowIncrement*symbolHeight;
+    uint8_t selY1 = symbolHeight*paramEditorFirstRow -1 +_editor_status.sysParSelector*symbolHeight;
+    uint8_t selY2 = symbolHeight*paramEditorFirstRow +7 +_editor_status.sysParSelector*symbolHeight;
     _oled->roundRect(selX1, selY1, selX2, selY2, OLED_STROKE);
 
     // print the bottom
@@ -1608,28 +1619,72 @@ void TesMidiUI::processCtlButtonEventSystemParamEditor(tesEvent *event){
         switch (event->buttonId){
         case ctlButtonUp:
             // move up
-            if( _editor_status.sysParSelector-- == 0){
-                _editor_status.sysParSelector = paramEditorRows - 1;
+            /*
+             *if( _editor_status.sysParSelector-- == 0){
+             *    _editor_status.sysParSelector = paramEditorRows - 1;
+             *}
+             */
+            if(_editor_status.sysParSelector == 0){
+                // the first editor row
+                // Scroll the list down until topIndex == 0
+                if(_editor_status.sysParTopIndex > 0){
+                    // scrolling is done by decrementing the topIndex value
+                    _editor_status.sysParTopIndex--;
+                }
+                else{
+                    // The beginning of the parameter list is reached.
+                    // Navigate to the very end of the list:
+                    // - set sysParTopIndex to parNumberOfParameters  - paramEditorRows
+                    // - set sysParSelector to paramEditorRows-1 as well
+                    _editor_status.sysParTopIndex = parNumberOfParameters - paramEditorRows;
+                    _editor_status.sysParSelector = paramEditorRows - 1;
+                }
+            }
+            else{
+                _editor_status.sysParSelector--;
             }
             drawActiveScreen();
             break;
         case ctlButtonDown:
             // move down
-            if( ++_editor_status.sysParSelector == paramEditorRows){
-                _editor_status.sysParSelector = 0;
+            /*
+             *if( ++_editor_status.sysParSelector == paramEditorRows){
+             *    _editor_status.sysParSelector = 0;
+             *}
+             */
+            if(_editor_status.sysParSelector == (paramEditorRows - 1)){
+                // the last editor row
+                // Scroll the list up until sysParTopIndex+sysParSelector == parNumberOfParameters-1
+                if((_editor_status.sysParTopIndex + _editor_status.sysParSelector) < (parNumberOfParameters - 1)){
+                    // scrolling is done by incrementing the topIndex value
+                    _editor_status.sysParTopIndex++;
+                }
+                else{
+                    // The end of the parameter list is reached.
+                    // Navigate to the beginning of the list:
+                    // - set sysParTopIndex to 0 in order to start from the 1st parameter
+                    // - set sysParSelector to 0 as well
+                    _editor_status.sysParTopIndex = 0;
+                    _editor_status.sysParSelector = 0;
+                }
+            }
+            else{
+                _editor_status.sysParSelector++;
             }
             drawActiveScreen();
             break;
         case ctlButtonLeft:
         case ctlButtonRight:
-            switch(_editor_status.sysParSelector){
+            switch(_editor_status.sysParSelector + _editor_status.sysParTopIndex){
             case parRunningStatusId:
+            case parTest1:  // TODO remove it after debugging
                 // toggle the value
                 _mc->_settings.global.runningStatus = ! _mc->_settings.global.runningStatus;
                 // notify the controller about global settings change
                 _mc->globalSettingsChangeNotification();
                 break;
             case parBassOctavesId:
+            case parTest2: // TODO remove it after debugging
                 // toggle the value
                 _mc->_settings.global.bassOctavesOn = ! _mc->_settings.global.bassOctavesOn;
                 // notify the controller about global settings change
