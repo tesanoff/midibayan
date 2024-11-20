@@ -1254,7 +1254,7 @@ void TesMidiUI::drawSystemParamEditorScreen(void){
         setTextCursor(paramEditorValueColumn, editorRow + paramEditorFirstRow);
         // decide text inversion - select the value being edited
         _oled->invertText(editorRow == _editor_status.sysParSelector);
-        switch(editorRow + _editor_status.sysParTopIndex){  // TODO replace with currentSystemParameterIndex later
+        switch(currentSystemParameterIndex){
             case parRunningStatusId:
                 _oled->print( FPSTR((PGM_P)pgm_read_ptr(parBooleanLabel + _mc->_settings.global.runningStatus)) );
                 break;

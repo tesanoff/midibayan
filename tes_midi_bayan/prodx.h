@@ -372,7 +372,7 @@ const char dxInstrumentNames[] PROGMEM    =
     "Laughing\0"
     "Screaming\0"
     "Punch\0"
-    "Heart Beat\0"
+"13\0" //    "Heart Beat\0"
 "14\0" //    "Footsteps\0"
 "15\0" //    "Gun Shot\0"
 "16\0" //    "Machine  Gun\0"    TODO uncomment this back when we don't need to save memory
