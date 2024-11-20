@@ -32,7 +32,6 @@
 #define swerGUI12               0xD8
 #define swerGUI13               0xD9
 
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Shows an error code on LEDs and goes into an infinite loop,
 // so that the system stops reacting to anything.
