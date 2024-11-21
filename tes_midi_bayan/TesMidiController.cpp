@@ -61,7 +61,7 @@ const uint8_t   kbdParameterDefaultValue[NUMBER_OF_KBD_PARAMETERS] PROGMEM = {
 // sequence of sending Kbd Parameters
 // It looks like the order matters (PC cannot be sent right after "CC 0", i.e. bank change)
 const uint8_t   kbdParameterOrder[NUMBER_OF_KBD_PARAMETERS] PROGMEM = {
-    idxBank, idxChannel, idxVolume, idxVibrato, idxResonance, idxAttak, idxRelease, idxProgram, idxTimbre, idxDecay, idxReverbration, idxChorus, idxReverbType, idxChorusType
+    idxChannel, idxBank, idxVolume, idxVibrato, idxResonance, idxAttak, idxRelease, idxProgram, idxTimbre, idxDecay, idxReverbration, idxChorus, idxReverbType, idxChorusType
 };
 
 
