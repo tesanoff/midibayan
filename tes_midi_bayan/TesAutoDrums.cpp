@@ -69,8 +69,15 @@ const uint8_t melody4[] PROGMEM = {180, 0, H(_C2),  0, H(_Ab2), 8, off(_C2),  0,
                                            H(_Db2), 0, H(_Ab2), 8, off(_Db2), 0, off(_Ab2), 0, H(_Ab2), 8, off(_Ab2), 0,
                                      
                                            0};
+// Lusta Dick
+const uint8_t melody5[] PROGMEM = {90, 0, H(_Bb4), 0, H(_Eb5), 8, off(_Bb4), 0, M(_Bb4), 8, off(_Bb4), 0, M(_Bb4), 8, off(_Bb4), 0, off(_Eb5), 0, M(_Bb4), 0, H(_Eb5), 8, off(_Bb4), 0,
+                                          H(_Bb4), 8, off(_Bb4), 0, M(_Bb4), 8, off(_Bb4), 0, off(_Eb5), 0, M(_Bb4), 0, H(_Eb5), 8, off(_Bb4), 0, M(_Bb4), 8, off(_Bb4), 0,
+                                          H(_Bb4), 8, off(_Bb4), 0, off(_Eb5), 0, M(_Bb4), 0, H(_Eb5), 8, off(_Bb4), 0, M(_Bb4), 8, off(_Bb4), 0, M(_Bb4), 8, off(_Bb4), 0, off(_Eb5), 0, 
+                                          H(_Bb4), 0, H(_Eb5), 8, off(_Bb4), 0, M(_Bb4), 8, off(_Bb4), 0, off(_Eb5), 0, M(_Bb4), 0, H(_Eb5), 8, off(_Bb4), 0, M(_Bb4), 8, off(_Bb4), 0, off(_Eb5), 0,
+                                          0};
+
 const uint8_t * const melody[numberOfMelodies] PROGMEM = {
-    melody0, melody1, melody2, melody3, melody4
+    melody0, melody1, melody2, melody3, melody4, melody5
 };
 
 // Names of melodies
@@ -79,8 +86,9 @@ const char mName1[] PROGMEM  = "Метроном 3/4";
 const char mName2[] PROGMEM  = "Бит #1";
 const char mName3[] PROGMEM  = "Alley Cat";
 const char mName4[] PROGMEM  = "The Cat";
+const char mName5[] PROGMEM  = "Lusta Dick";
 const char * const  melodyName[numberOfMelodies] PROGMEM = {
-    mName0,  mName1,  mName2, mName3, mName4 
+    mName0,  mName1,  mName2, mName3, mName4, mName5
 };
 
 
