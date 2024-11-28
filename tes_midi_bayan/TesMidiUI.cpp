@@ -1192,7 +1192,7 @@ void TesMidiUI::drawActiveScreen(void){
     case screenModeInstrumentEdit:
         drawInstrumentEditorScreen();
         break;
-    defaut:
+    default:
         SWER(swerGUI08);
     }
 }
