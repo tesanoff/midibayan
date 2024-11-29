@@ -374,7 +374,7 @@ void TesMIDIController::processPressureEvent(tesEvent *event){
     }
     // ok, let's process the new value
 
-    setVolume(_var.lastPressureValue);
+    setExpression(_var.lastPressureValue);
 
     // Clear the event. This means that the current event was fully processed and other event handlers
     // should ignore it.
@@ -488,11 +488,8 @@ void TesMIDIController::sendKbdParameter(uint8_t kbdId, uint8_t parameterIndex){
         // send CC 7 <val>
         cmd.midiCommand = mcControlChange;
         cmd.data1 = 7;  // controller number
-        {
-            // the master volume should be taken either from the Pressure Sensor or from the global setting
-            uint8_t master_volume = (_settings.global.pressureSensorOn) ? _var.lastPressureValue : _settings.preset.masterVolume;
-            cmd.data2 = map(master_volume, 0, 127, 0, _settings.preset.kbdParameter[kbdId][parameterIndex]);
-        }
+        // the master volume should be taken the global setting
+        cmd.data2 = map(_settings.preset.masterVolume, 0, 127, 0, _settings.preset.kbdParameter[kbdId][parameterIndex]);
         break;
     case idxVibrato:
         // send CC 1 <val>
@@ -672,6 +669,38 @@ void TesMIDIController::setVolume(uint8_t new_master_volume){
 }
 
 //////////////////////////////////////////////////////////////////////////
+// Sets the Expression value fo all active channels
+// (puts respective MIDI commands into the MIDI-out queue)
+void TesMIDIController::setExpression(uint8_t new_expression){
+    // prepare a MIDI command
+    TesMIDICommand  cmd;
+    cmd.midiCommand     = mcControlChange;
+    cmd.data1           = 11;        // Expression controller
+    /////////// and send it to all active channels
+    // the right keyboard is always active
+    cmd.channelId       = _settings.preset.kbdParameter[kbdRight][idxChannel];
+    // make a proportional change (according to the fixed volume setting for the channel)
+    cmd.data2           = new_expression;
+    _midi_queue.pushCommand(&cmd);
+    if ( _var.freeBassOn ){
+        cmd.channelId       = _settings.preset.kbdParameter[kbdFreeBass][idxChannel];
+        // make a proportional change (according to the fixed volume setting for the channel)
+        cmd.data2           = new_expression;
+        _midi_queue.pushCommand(&cmd);
+    }
+    else {
+        cmd.channelId       = _settings.preset.kbdParameter[kbdBass][idxChannel];
+        // make a proportional change (according to the fixed volume setting for the channel)
+        cmd.data2           = new_expression;
+        _midi_queue.pushCommand(&cmd);
+        // make a proportional change (according to the fixed volume setting for the channel)
+        cmd.data2           = new_expression;
+        cmd.channelId       = _settings.preset.kbdParameter[kbdChord][idxChannel];
+        _midi_queue.pushCommand(&cmd);
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////
 // Sets the volume for the Drums channel (basing on current values of MasterVolume and DrumsVolume
 // (puts respective MIDI commands into the MIDI-out queue)
 void TesMIDIController::setDrumsVolume(void){
@@ -690,10 +719,10 @@ void TesMIDIController::setDrumsVolume(void){
 void TesMIDIController::togglePressureSensor(void){
   // toggle the setting
   _settings.global.pressureSensorOn = ! _settings.global.pressureSensorOn;
-  // The "source of the Master Volume value" has been changed.
-  // So, we need to update active channel's volume according to the new source.
+  // The "source of the Expression value" has been changed.
+  // So, we need to update active channel's expression according to the new source.
 
-  setVolume( _settings.global.pressureSensorOn ? _var.lastPressureValue : _settings.preset.masterVolume );
+  setExpression( _settings.global.pressureSensorOn ? _var.lastPressureValue : TES_DEFAULT_EXPRESSION );
 
   // this is part of global settings
   globalSettingsChangeNotification();

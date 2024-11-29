@@ -15,6 +15,7 @@
 
 // My bayan keyboard is not pressure sensitive. So, we're using the default velocity for all notes.
 #define TES_DEFAULT_VELOCITY 127
+#define TES_DEFAULT_EXPRESSION 127
 
 // The default master volume
 #define TES_DEFAULT_MASTER_VOLUME   70     // middle level
@@ -316,6 +317,11 @@ private:
     // Sets the volume of all actuve MIDI channels according to the specified Master Volume value
     // (puts respective MIDI commands into the MIDI-out queue)
     void setVolume(uint8_t new_master_volume);
+    
+    //////////////////////////////////////////////////////////////////////////
+    // Sets the Expression value fo all active channels
+    // (puts respective MIDI commands into the MIDI-out queue)
+    void setExpression(uint8_t new_expression);
     
     //////////////////////////////////////////////////////////////////////////
     // Sets the volume for the Drums channel (basing on current values of MasterVolume and DrumsVolume

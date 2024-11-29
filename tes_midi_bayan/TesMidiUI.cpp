@@ -1715,10 +1715,8 @@ void TesMidiUI::processCtlButtonEventSystemParamEditor(tesEvent *event){
                         _mc->_settings.preset.masterVolume = 0;
                     }
                 }
-                // set the new Volume if the pressure sensor is off
-                if ( ! _mc->_settings.global.pressureSensorOn ){
-                    _mc->setVolume(_mc->_settings.preset.masterVolume);
-                }
+                // set the new Volume
+                _mc->setVolume(_mc->_settings.preset.masterVolume);
                 // set new Volume for Drums in any case (drums do not depend on Pressure Sensor)
                 _mc->setDrumsVolume();
                 // start indicating a "not saved preset", if required
