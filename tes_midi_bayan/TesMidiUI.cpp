@@ -229,6 +229,7 @@ void TesMidiUI::processCtlButtonEvent(tesEvent *event){
             case ctlButtonPressure: {
                 // toggle Pressure Sensor
                 _mc->togglePressureSensor();
+                indicatePresetChange();
                 drawActiveScreen();
                 // clear the event to indicate it has been fully processed
                 event->eventType = tesEmpty;
@@ -1119,12 +1120,12 @@ void TesMidiUI::drawMainScreen(void){
         // Indicator's logic is different, so, print them onr-by-one (not in a cycle)
         // *** Bass Octaves
         setTextCursor(indBassOctavesPos, indRow);
-        _oled->invertText( _mc->_settings.global.bassOctavesOn );
+        _oled->invertText( _mc->_settings.preset.bassOctavesOn );
         _oled->print(FPSTR(indBassOctavesLabel));
         _oled->invertText(false);
         // *** Pressure Sensor
         setTextCursor(indPressureSensorOnPos, indRow);
-        _oled->invertText( _mc->_settings.global.pressureSensorOn );
+        _oled->invertText( _mc->_settings.preset.pressureSensorOn );
         _oled->print(FPSTR(indPressureSensorLabel));
         _oled->invertText(false);
         // *** Synthesizer Type
@@ -1259,7 +1260,7 @@ void TesMidiUI::drawSystemParamEditorScreen(void){
                 _oled->print( FPSTR((PGM_P)pgm_read_ptr(parBooleanLabel + _mc->_settings.global.runningStatus)) );
                 break;
             case parBassOctavesId:
-                _oled->print( FPSTR((PGM_P)pgm_read_ptr(parBooleanLabel + _mc->_settings.global.bassOctavesOn)) );
+                _oled->print( FPSTR((PGM_P)pgm_read_ptr(parBooleanLabel + _mc->_settings.preset.bassOctavesOn)) );
                 break;
             case parSynthTypeId:
                 _oled->print( FPSTR((PGM_P)pgm_read_ptr(parSynthTypeLabel + _mc->_settings.global.synthType)) );
@@ -1276,7 +1277,7 @@ void TesMidiUI::drawSystemParamEditorScreen(void){
                 break;
             case parTest2:
                 // TODO the same as "bass octaves"
-                _oled->print( FPSTR((PGM_P)pgm_read_ptr(parBooleanLabel + _mc->_settings.global.bassOctavesOn)) );
+                _oled->print( FPSTR((PGM_P)pgm_read_ptr(parBooleanLabel + _mc->_settings.preset.bassOctavesOn)) );
                 break;
             default:
                 SWER(swerGUI02);
@@ -1686,9 +1687,9 @@ void TesMidiUI::processCtlButtonEventSystemParamEditor(tesEvent *event){
             case parBassOctavesId:
             case parTest2: // TODO remove it after debugging
                 // toggle the value
-                _mc->_settings.global.bassOctavesOn = ! _mc->_settings.global.bassOctavesOn;
-                // notify the controller about global settings change
-                _mc->globalSettingsChangeNotification();
+                _mc->_settings.preset.bassOctavesOn = ! _mc->_settings.preset.bassOctavesOn;
+                // notify the controller about preset change
+                indicatePresetChange();
                 break;
             case parSynthTypeId:
                 if (event->buttonId == ctlButtonLeft){

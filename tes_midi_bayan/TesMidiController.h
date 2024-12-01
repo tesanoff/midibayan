@@ -167,7 +167,7 @@ public:
 #define idxChorusType       13
 
 #define NUMBER_OF_KBD_PARAMETERS    14
-#define TES_EEPROM_SIGNATURE 0x5A10  // 0x5Avv, where: 5A - signature, vv - version
+#define TES_EEPROM_SIGNATURE 0x5A11             // 0x5Avv, where: 5A - signature, vv - version
 #define GLOBAL_SETTINGS_SAVING_TIMEOUT  8000    // changes are saved to EEPROM in 8 seconds after the last change
 
 #define SIZE_OF_PRESET_UPDATE_BITMAP    (((NUMBER_OF_KEYBOARDS * NUMBER_OF_KBD_PARAMETERS) -  1) / 8 + 1)
@@ -178,10 +178,8 @@ enum    {stGeneralMidi = 0, stAtemp, stProDX};
 struct TesMIDIControllerSettings {
    struct TesMIDIControllerGlobalSettings { 
         struct {
-            uint8_t     pressureSensorOn: 1;    // true - the pressure sensor is enabled; false - disabled
             uint8_t     runningStatus: 1;       // true - running status enabled; false = disabled
             uint8_t     synthType: 2;           // let's reserve range 0 .. 3
-            uint8_t     bassOctavesOn: 1;       // true - if octaves are allowed for bass keyboard
             uint8_t     activePreset: 3;        // 0 .. 5
             uint8_t     drumsMidiChannel: 4;    // a MIDI channel for drums
         };
@@ -189,6 +187,10 @@ struct TesMIDIControllerSettings {
     } global;
 
     struct TesMIDIControllerPreset {
+        struct {
+            uint8_t     pressureSensorOn: 1;    // true - the pressure sensor is enabled; false - disabled
+            uint8_t     bassOctavesOn: 1;       // true - if octaves are allowed for bass keyboard
+        };
         uint8_t         masterVolume;           // the master volume setting
         uint8_t         drumsVolume;            // volume for drums
         uint8_t         drumsetNumber;          // drumset ID (0..127)

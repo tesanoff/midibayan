@@ -71,14 +71,14 @@ const uint8_t   kbdParameterOrder[NUMBER_OF_KBD_PARAMETERS] PROGMEM = {
 
 TesMIDIControllerSettings::TesMIDIControllerSettings (void){
     // set default values for global parameters
-    global.pressureSensorOn = false;
     global.runningStatus = false;   // ATEMP synth. doesn't work well with RS
     global.synthType = stAtemp;
     global.activePreset = 0;
-    global.bassOctavesOn = true;
     global.drumsMidiChannel = 9;    // I let this hardcode be here, because it's very unlikely that anybody will want to change this default value
 
     // set default values for preset values
+    preset.pressureSensorOn = false;
+    preset.bassOctavesOn = true;
     preset.masterVolume = TES_DEFAULT_MASTER_VOLUME;
     preset.drumsVolume                  = 127;  // it's relative to the master volume
     preset.drumsetNumber                = 0;    // the default drumset
@@ -265,7 +265,7 @@ void TesMIDIController::processButtonEvent(tesEvent *event){
     }
 
     // check if bass octaves are disabled
-    if(  ! _settings.global.bassOctavesOn){
+    if(  ! _settings.preset.bassOctavesOn){
         // check if this is a PRESSED high-bass note
         if ((event->buttonEvent == tesBePressed) && (event->buttonId >= 12) && (event->buttonId < 24)){
             // calculate the respective low-bass note
@@ -369,7 +369,7 @@ void TesMIDIController::processPressureEvent(tesEvent *event){
     _var.lastPressureValue = event->newPressureValue;
 
     // ignore these events if the pressure sensor is turned off globally
-    if( ! _settings.global.pressureSensorOn){
+    if( ! _settings.preset.pressureSensorOn){
         return; // nothing to do here
     }
     // ok, let's process the new value
@@ -718,14 +718,11 @@ void TesMIDIController::setDrumsVolume(void){
 // Toggles the pressure sensor mode (on/off)
 void TesMIDIController::togglePressureSensor(void){
   // toggle the setting
-  _settings.global.pressureSensorOn = ! _settings.global.pressureSensorOn;
+  _settings.preset.pressureSensorOn = ! _settings.preset.pressureSensorOn;
   // The "source of the Expression value" has been changed.
   // So, we need to update active channel's expression according to the new source.
 
-  setExpression( _settings.global.pressureSensorOn ? _var.lastPressureValue : TES_DEFAULT_EXPRESSION );
-
-  // this is part of global settings
-  globalSettingsChangeNotification();
+  setExpression( _settings.preset.pressureSensorOn ? _var.lastPressureValue : TES_DEFAULT_EXPRESSION );
 }
 
 
