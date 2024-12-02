@@ -11,9 +11,13 @@
 
 // "Empty" means there's no event here (it was cleared by an event handler
 // who decided that the event was fully processed and nobody needs it anymore).
-enum {tesEmpty, tesEvButton, tesEvPressure, tesEvControlButton, tesEvFreeBass};
+enum {tesEmpty, tesEvButton, tesEvPressure, tesEvControlButton, tesEvFreeBass, tesEvSystemControl};
 
+// button-related events
 enum {tesBeReleased, tesBePressed, tesBeHold};
+
+// System control messages
+enum {scNoCommand = 0, scEepromReset};
 
 struct tesEvent {
     uint8_t eventType;
@@ -30,6 +34,11 @@ struct tesEvent {
         // tesEvFreeBass
         struct {
             bool    freeBassOn;
+        };
+        // tesEvSystemControl
+        struct {
+            uint8_t command;
+            uint8_t data;
         };
     };
 };

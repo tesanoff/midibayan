@@ -132,13 +132,25 @@ void TesKeyboard::init(void){
     // of the Free Bass switch.
     int chipIndex = freeBassSensorIndex / 8;
     int bitIndex = freeBassSensorIndex % 8;
-    byte freeBassStatus = (_buffer[chipIndex] & ((uint8_t)1 << bitIndex)) >> bitIndex;
+    byte freeBassStatus = (_buffer[chipIndex] >> bitIndex) & (uint8_t)1;
     // compose and send a freeBass event
     tesEvent    event;
     event.eventType = tesEvFreeBass;
     event.freeBassOn = (freeBassStatus == getPressedLevel(freeBassSensorIndex));    // "pressed" means "turned on" in this context
     _eventQueue->pushEvent(&event);
-
+    
+    // check if the "OK" button is pressed
+    uint8_t buttonId = TES_FIRST_CONTROL_BUTTON + ctlButtonOk;
+    chipIndex = buttonId / 8;
+    bitIndex  = buttonId % 8;
+    uint8_t value = (_buffer[chipIndex] >> bitIndex) & (uint8_t)1;
+    if (value == getPressedLevel(buttonId)){
+        // send Eeprom Reset message
+        tesEvent    event;
+        event.eventType = tesEvSystemControl;
+        event.command   = scEepromReset;
+        _eventQueue->pushEvent(&event);
+    }
 }
 
 ///////////////////////////////////////////////////////////

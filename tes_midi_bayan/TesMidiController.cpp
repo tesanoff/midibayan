@@ -120,6 +120,9 @@ void TesMIDIController::processEvent(tesEvent *event){
     case tesEvFreeBass:
         processFreeBassEvent(event);  // call the specific handler of FreeBass switch-related events
         break;
+    case tesEvSystemControl:
+        processSystemControlEvent(event);
+        break;
     }
 }
 
@@ -398,6 +401,33 @@ void TesMIDIController::processFreeBassEvent(tesEvent *event){
     // Clear the event. This means that the current event was fully processed and other event handlers
     // should ignore it.
     event->eventType = tesEmpty;
+}
+
+//////////////////////////////////////////////////////////////////////////
+// This method processes system control events
+void TesMIDIController::processSystemControlEvent(tesEvent *event){
+    // Clear the event. This means that the current event was fully processed and other event handlers
+    // should ignore it.
+    switch (event->command){
+    case scEepromReset:
+        // clear indication of the current active preset
+        _led_set->setLED( _settings.global.activePreset + ledPreset1, 0);   // the assumption is that Led IDs are sorted (like 0, 1, 2, etc.)
+        {
+            // create a brand new copy of settings with default values (yes, that a heavy stack usage)
+            TesMIDIControllerSettings   default_settings;
+            // copy default settings to the current settings
+            memcpy(&_settings, &default_settings, sizeof(_settings));
+        }
+        // now - initialize EEPROM again
+        initializeEEPROM();
+        // indicate the new active preset
+        _led_set->setLED( _settings.global.activePreset + ledPreset1, 1);   // the assumption is that Led IDs are sorted (like 0, 1, 2, etc.)
+        // redraw the screen
+        _ui.processSystemControlEvent(event);
+        // clear the event
+        event->eventType = tesEmpty;
+        break;
+    }
 }
 
 //////////////////////////////////////////////////////////////////////////

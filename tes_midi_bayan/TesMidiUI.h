@@ -123,6 +123,10 @@ public:
     void processFreeBassEvent(tesEvent *event);
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
+    // This method processes system control events
+    void processSystemControlEvent(tesEvent *event);
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////
     // Changes the state of the Drum Machine
     void setDrumMachineState(uint8_t new_state);
 

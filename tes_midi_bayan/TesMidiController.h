@@ -291,6 +291,10 @@ private:
     void processFreeBassEvent(tesEvent *event);
 
     //////////////////////////////////////////////////////////////////////////
+    // This method processes system control events
+    void processSystemControlEvent(tesEvent *event);
+
+    //////////////////////////////////////////////////////////////////////////
     // the class gets to know about changes of Keyboard-specific Parameters via this method
     void processChangedKbdParameter(uint8_t kbdId, uint8_t changedParameter);
 

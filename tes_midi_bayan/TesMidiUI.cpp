@@ -394,6 +394,17 @@ void TesMidiUI::processFreeBassEvent(tesEvent *event){
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
+// This method processes system control events
+void TesMidiUI::processSystemControlEvent(tesEvent *event){
+    switch(event->command){
+    case scEepromReset:
+        // just re-draw the screen
+        drawActiveScreen();
+        break;
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////
 // Changes the state of the Drum Machine
 void TesMidiUI::setDrumMachineState(uint8_t new_state){
     if (new_state == _mc->_var.drumsMode){
