@@ -801,6 +801,8 @@ void TesMIDIController::readPresetFromEEPROM(uint8_t preset_id){
     int address = eepromBaseAddress + sizeof(_settings.global) + preset_id * sizeof(_settings.preset);
     // read the preset settings
     EEPROM.get(address, new_preset);
+    // check if the "source of expression" has changed
+    bool    need_to_update_expression   = new_preset.pressureSensorOn != _settings.preset.pressureSensorOn;
     // Special case: if the Master Volume values differ, then we need to send volume parameters anyway.
     if (_settings.preset.masterVolume != new_preset.masterVolume) {
         // set "volume" values in the old preset to "impossible" 0xFF value, so that
@@ -823,6 +825,9 @@ void TesMIDIController::readPresetFromEEPROM(uint8_t preset_id){
     }
     // replace the old preset with the new one
     memcpy(&_settings.preset, &new_preset, sizeof(new_preset));
+    if (need_to_update_expression) {
+        setExpression( _settings.preset.pressureSensorOn ? _var.lastPressureValue : TES_DEFAULT_EXPRESSION );
+    }
 }
 
 //////////////////////////////////////////////////////////////////////////
