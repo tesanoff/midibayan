@@ -709,21 +709,17 @@ void TesMIDIController::setExpression(uint8_t new_expression){
     /////////// and send it to all active channels
     // the right keyboard is always active
     cmd.channelId       = _settings.preset.kbdParameter[kbdRight][idxChannel];
-    // make a proportional change (according to the fixed volume setting for the channel)
     cmd.data2           = new_expression;
     _midi_queue.pushCommand(&cmd);
     if ( _var.freeBassOn ){
         cmd.channelId       = _settings.preset.kbdParameter[kbdFreeBass][idxChannel];
-        // make a proportional change (according to the fixed volume setting for the channel)
         cmd.data2           = new_expression;
         _midi_queue.pushCommand(&cmd);
     }
     else {
         cmd.channelId       = _settings.preset.kbdParameter[kbdBass][idxChannel];
-        // make a proportional change (according to the fixed volume setting for the channel)
         cmd.data2           = new_expression;
         _midi_queue.pushCommand(&cmd);
-        // make a proportional change (according to the fixed volume setting for the channel)
         cmd.data2           = new_expression;
         cmd.channelId       = _settings.preset.kbdParameter[kbdChord][idxChannel];
         _midi_queue.pushCommand(&cmd);
@@ -869,6 +865,9 @@ void TesMIDIController::sendCurrentPresetToSynthesizer(uint8_t kbd_map, bool opt
 
     // Always set the drums volume right away (it's just one MIDI cmd)
     setDrumsVolume();
+
+    // Always set the Expression
+    setExpression( _settings.preset.pressureSensorOn ? _var.lastPressureValue : TES_DEFAULT_EXPRESSION );
 
     // *** prepare for sending parameters for kbd channels
 
