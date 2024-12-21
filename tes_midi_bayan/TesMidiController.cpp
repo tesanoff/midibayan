@@ -570,16 +570,52 @@ void TesMIDIController::sendKbdParameter(uint8_t kbdId, uint8_t parameterIndex){
         cmd.data2 = _settings.preset.kbdParameter[kbdId][parameterIndex];
         break;
     case idxReverbType:
-        // send CC 80 <val>
-        cmd.midiCommand = mcControlChange;
-        cmd.data1 = 80;  // controller number
-        cmd.data2 = _settings.preset.kbdParameter[kbdId][parameterIndex];
+        /*
+         *if (_settings.global.synthType == stProDX){
+         *    // send a long SYSEX command in a Raw mode
+         *    // F0H 41H 00H 42H 12H 40H 01H 30H vv xx F7H
+         *    cmd.payload[0] = 0xF0; cmd.payload[1] = 0x41; cmd.payload[2] = 0x00;
+         *    _midi_queue.pushCommand(&cmd);
+         *    cmd.payload[0] = 0x42; cmd.payload[1] = 0x12; cmd.payload[2] = 0x40;
+         *    _midi_queue.pushCommand(&cmd);
+         *    cmd.payload[0] = 0x01; cmd.payload[1] = 0x30; cmd.payload[2] = _settings.preset.kbdParameter[kbdId][parameterIndex];
+         *    _midi_queue.pushCommand(&cmd);
+         *    cmd.payload[0] = 0x00; cmd.payload[1] = 0xF7; cmd.payload[2] = 0x00;
+         *    // the last payload will be sent below
+         *}
+         *else {
+         */
+            // send CC 80 <val>
+            cmd.midiCommand = mcControlChange;
+            cmd.data1 = 80;  // controller number
+            cmd.data2 = _settings.preset.kbdParameter[kbdId][parameterIndex];
+        /*
+         *}
+         */
         break;
     case idxChorusType:
-        // send CC 81 <val>
-        cmd.midiCommand = mcControlChange;
-        cmd.data1 = 81;  // controller number
-        cmd.data2 = _settings.preset.kbdParameter[kbdId][parameterIndex];
+        /*
+         *if (_settings.global.synthType == stProDX){
+         *    // send a long SYSEX command in a Raw mode
+         *    // F0H 41H 00H 42H 12H 40H 01H 38H vv xx F7H
+         *    cmd.payload[0] = 0xF0; cmd.payload[1] = 0x41; cmd.payload[2] = 0x00;
+         *    _midi_queue.pushCommand(&cmd);
+         *    cmd.payload[0] = 0x42; cmd.payload[1] = 0x12; cmd.payload[2] = 0x40;
+         *    _midi_queue.pushCommand(&cmd);
+         *    cmd.payload[0] = 0x01; cmd.payload[1] = 0x38; cmd.payload[2] = _settings.preset.kbdParameter[kbdId][parameterIndex];
+         *    _midi_queue.pushCommand(&cmd);
+         *    cmd.payload[0] = 0x00; cmd.payload[1] = 0xF7; cmd.payload[2] = 0x00;
+         *    // the last payload will be sent below
+         *}
+         *else {
+         */
+            // send CC 81 <val>
+            cmd.midiCommand = mcControlChange;
+            cmd.data1 = 81;  // controller number
+            cmd.data2 = _settings.preset.kbdParameter[kbdId][parameterIndex];
+        /*
+         *}
+         */
         break;
     default:
         SWER(swerMidiController04);
