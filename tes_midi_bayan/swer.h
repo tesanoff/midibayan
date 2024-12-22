@@ -6,31 +6,32 @@
 // reserved values for SWERs
 // The higher 4 bits are set to '1' in order to make obvious that an error code is displayed on LEDs.
 // Otherwise, the user may think that LEDs just indicate active pre-sets (for numbers like 1, 2, 4, etc).
-#define swerMidiController01    0xC1
-#define swerEventQueue01        0xC2
-#define swerMidiController02    0xC3
-#define swerKeyboard01          0xC4
-#define swerKeyboard02          0xC5
-#define swerLedSet01            0xC6
-#define swerGUI01               0xC7
-#define swerMidiController03    0xC8
-#define swerMidiController04    0xC9
-#define swerGUI02               0xCA
-#define swerMidiController05    0xCB
-#define swerGUI03               0xCC
-#define swerGUI04               0xCD
-#define swerGUI05               0xCE
-#define swerMidiController06    0xCF
-#define swerAutoDrums01         0xD0
-#define swerAutoDrums02         0xD1
-#define swerGUI06               0xD2
-#define swerGUI07               0xD3
-#define swerGUI08               0xD4
-#define swerGUI09               0xD5
-#define swerGUI10               0xD6
-#define swerGUI11               0xD7
-#define swerGUI12               0xD8
-#define swerGUI13               0xD9
+#define swerMidiController01    0x81
+#define swerEventQueue01        0x82
+#define swerMidiController02    0x83
+#define swerKeyboard01          0x84
+#define swerKeyboard02          0x85
+#define swerLedSet01            0x86
+#define swerGUI01               0x87
+#define swerMidiController03    0x88
+#define swerMidiController04    0x89
+#define swerGUI02               0x8A
+#define swerMidiController05    0x8B
+#define swerGUI03               0x8C
+#define swerGUI04               0x8D
+#define swerGUI05               0x8E
+#define swerMidiController06    0x8F
+#define swerAutoDrums01         0x90
+#define swerAutoDrums02         0x91
+#define swerGUI06               0x92
+#define swerGUI07               0x93
+#define swerGUI08               0x94
+#define swerGUI09               0x95
+#define swerGUI10               0x96
+#define swerGUI11               0x97
+#define swerGUI12               0x98
+#define swerGUI13               0x99
+#define swerMidiController07    0x9A
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Shows an error code on LEDs and goes into an infinite loop,

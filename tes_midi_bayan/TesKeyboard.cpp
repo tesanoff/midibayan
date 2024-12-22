@@ -75,10 +75,10 @@ const PROGMEM uint8_t   tesButtonPressedLevels[] = {
 // We configure the HW right here, because there's no sense to do that somewhere else.
 // Anyway, if the HW configuration changes - the code is to be adjusted as well.
 
-#define latchPin    9
+#define latchPin    7
 #define clockPin    8
-#define dataPinR    7       // Right keyboard and Control Panel
-#define dataPinL    6       // Left keyboard & FreeBass sensor
+#define dataPinR    14      // Right keyboard and Control Panel
+#define dataPinL    15      // Left keyboard & FreeBass sensor
 
 #define longCascadeSize         11      // 5 right-front + 3 right-back + 3 control panel
 #define shortCascadeSize        7       // just left keyboard

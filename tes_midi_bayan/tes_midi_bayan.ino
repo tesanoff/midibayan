@@ -16,9 +16,9 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 // The LED set stuff
 //
-#define ledLatchPin     10    // Pin connected to ST_CP of 74HC595
-#define ledClockPin     11    // Pin connected to SH_CP of 74HC595
-#define ledDataPin      12    // Pin connected to DS of 74HC595
+#define ledLatchPin     2     // Pin connected to ST_CP of 74HC595
+#define ledClockPin     3     // Pin connected to SH_CP of 74HC595
+#define ledDataPin      6     // Pin connected to DS of 74HC595
 TesLedSet ledSet(ledLatchPin, ledClockPin, ledDataPin, 9);
 
 
@@ -49,11 +49,18 @@ void    SWER(uint8_t   error_code){
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 void setup() {
-#ifdef TES_REAL_MIDI_PORT
-    Serial.begin(31250);    // standard MIDI baud rate
-#else
+    Serial1.begin(31250);    // standard MIDI baud rate
+    while(!Serial1)
+        ;
+#ifdef TES_MIDI_DEBUG
     Serial.begin(9600);
+    while(!Serial)
+        ;
 #endif
+
+    // we're setting this here, because the i2c intgerface is used not only by the display in this version;
+    // so this setting is common now
+    Wire.setClock(800000L); // Maximum speed
 
     // Init the LED panel
     ledSet.reset();

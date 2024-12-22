@@ -5,7 +5,7 @@
 #include "TesKeyboard.h"
 #include "TesMidiController.h"
 #include "swer.h"
-#include <EEPROM.h>
+#include "eeprom24.h"
 
 //////////////////////////////////////////
 // Mapping between buttons and notes.
@@ -25,18 +25,18 @@
 const PROGMEM uint8_t noteMap[TES_NUMBER_OF_ALL_MUSIC_BUTTONS] = {
 // Left keyboard
 // #0-----------Contr.----------------#6    #7--------------------------------Big------------------------#18
-    _F1, _Gb1, _G1, _Ab1, _A1, _Bb1, _B1,    _C2, _Db2, _D2, _Eb2, _E2, _F2, _Gb2, _G2, _Ab2, _A2, _Bb2, _B2,
+    F1, Gb1, G1, Ab1, A1, Bb1, B1,    C2, Db2, D2, Eb2, E2, F2, Gb2, G2, Ab2, A2, Bb2, B2,
 // #19----------------------------Small-------------------------#30     #31---------------------------1st----------------------------#42
-    _C3, _Db3, _D3, _Eb3, _E3, _F3, _Gb3, _G3, _Ab3, _A3, _Bb3, _B3,     _C4, _Db4, _D4, _Eb4, _E4, _F4, _Gb4, _G4, _Ab4, _A4, _Bb4, _B4,
+    C3, Db3, D3, Eb3, E3, F3, Gb3, G3, Ab3, A3, Bb3, B3,     C4, Db4, D4, Eb4, E4, F4, Gb4, G4, Ab4, A4, Bb4, B4,
 // #43----------------------2nd------------------#51
-    _C5, _Db5, _D5, _Eb5, _E5, _F5, _Gb5, _G5, _Ab5,
+    C5, Db5, D5, Eb5, E5, F5, Gb5, G5, Ab5,
 // Right keyboard
 // #52-Big-#53   #54-------------------------Small----------------------------#65   #66---------------------------1st----------------------------#77
-    _Bb2, _B2,   _C3, _Db3, _D3, _Eb3, _E3, _F3, _Gb3, _G3, _Ab3, _A3, _Bb3, _B3,   _C4, _Db4, _D4, _Eb4, _E4, _F4, _Gb4, _G4, _Ab4, _A4, _Bb4, _B4,
+    Bb2, B2,   C3, Db3, D3, Eb3, E3, F3, Gb3, G3, Ab3, A3, Bb3, B3,   C4, Db4, D4, Eb4, E4, F4, Gb4, G4, Ab4, A4, Bb4, B4,
 // #78--------------------2nd-----------------------------------#89     #90------------------------3rd------------------------------#101
-    _C5, _Db5, _D5, _Eb5, _E5, _F5, _Gb5, _G5, _Ab5, _A5, _Bb5, _B5,     _C6, _Db6, _D6, _Eb6, _E6, _F6, _Gb6, _G6, _Ab6, _A6, _Bb6, _B6,
+    C5, Db5, D5, Eb5, E5, F5, Gb5, G5, Ab5, A5, Bb5, B5,     C6, Db6, D6, Eb6, E6, F6, Gb6, G6, Ab6, A6, Bb6, B6,
 // #102--------4th-------#106
-    _C7, _Db7, _D7, _Eb7, _E7
+    C7, Db7, D7, Eb7, E7
 };
 
 
@@ -82,9 +82,9 @@ TesMIDIControllerSettings::TesMIDIControllerSettings (void){
     preset.masterVolume = TES_DEFAULT_MASTER_VOLUME;
     preset.drumsVolume                  = 127;  // it's relative to the master volume
     preset.drumsetNumber                = 0;    // the default drumset
-    preset.drumSoundForBass             = _C2;  // std kick drum
+    preset.drumSoundForBass             = C2;  // std kick drum
     preset.drumSoundForBassVelocity     = 127;  // max velocity
-    preset.drumSoundForChord            = _Ab2; // pedal Hi-Hat
+    preset.drumSoundForChord            = Ab2; // pedal Hi-Hat
     preset.drumSoundForChordVelocity    = 127;  // max velocity
     // set default values for everything except MIDI channels
     for(int i=1; i<NUMBER_OF_KBD_PARAMETERS; i++){
@@ -138,8 +138,7 @@ void TesMIDIController::processEvent(tesEvent *event){
 // Should be called from setup()
 void    TesMIDIController::init(void){
     // check if we have data in the EEPROM
-    uint16_t    signature;
-    EEPROM.get(signatureAddress, signature);
+    uint16_t    signature = EEPROM.readUint16(signatureAddress);
     if (signature == TES_EEPROM_SIGNATURE){
         // we have data in EEPROM; now read it
         readGlobalSettingsFromEEPROM();
@@ -644,30 +643,60 @@ void TesMIDIController::sendDrumsSettings(void){
 // Sends a MIDI command to MIDI-out port
 void TesMIDIController::sendMIDICommand(TesMIDICommand *cmd){
     static uint8_t  previousStatusByte  = 0;
-#ifndef TES_REAL_MIDI_PORT
+#ifdef TES_MIDI_DEBUG
     Serial.println("=====");
 #endif
-    if ( !_settings.global.runningStatus || (previousStatusByte != cmd->statusByte) ){
-#ifdef TES_REAL_MIDI_PORT
-        Serial.write(cmd->statusByte);
-#else
-        Serial.println(cmd->statusByte, HEX);
-#endif
-        previousStatusByte = cmd->statusByte;
+    static bool rawMode = false;
+    if ( !rawMode ){
+        // check if the current command starts the raw mode
+        rawMode = (cmd->statusByte == 0xF0);
     }
-#ifdef TES_REAL_MIDI_PORT
-    Serial.write(cmd->payload[1]);
-#else
-    Serial.println(cmd->payload[1], HEX);
+
+    // check for the raw mode again, as it could also be set earlier (in previous calls)
+    if ( rawMode ){
+        // send the payload until we see 0xF7
+        for(int i=0; i<TES_MIDI_COMMAND_MAX_LENGTH; i++ ){
+            // we send the byte anyway first
+            Serial1.write(cmd->payload[i]);
+#ifdef TES_MIDI_DEBUG
+            Serial.print(cmd->payload[i], HEX);
+            Serial.print(" ");
 #endif
-    if ( (cmd->midiCommand != mcProgramChange) && (cmd->midiCommand != mcChannelPressure) ) {
-#ifdef TES_REAL_MIDI_PORT
-        Serial.write(cmd->payload[2]);
-#else
-        Serial.println(cmd->payload[2], HEX);
-#endif
+            // now we check if this was the last byte in a raw sequence
+            if (cmd->payload[i] == 0xF7){
+                // turn the raw mode off
+                rawMode = false;
+                // stop sending
+                // that was the last byte
+                break;
+            }
+        }
     }
-#ifndef TES_REAL_MIDI_PORT
+    else {
+        // send a normal MIDI command
+        if ( !_settings.global.runningStatus || (previousStatusByte != cmd->statusByte) ){
+            Serial1.write(cmd->statusByte);
+#ifdef  TES_MIDI_DEBUG
+            Serial.print(cmd->statusByte, HEX);
+            Serial.print(" ");
+#endif
+            previousStatusByte = cmd->statusByte;
+        }
+        Serial1.write(cmd->payload[1]);
+#ifdef  TES_MIDI_DEBUG
+        Serial.print(cmd->payload[1], HEX);
+        Serial.print(" ");
+#endif
+        if ( (cmd->midiCommand != mcProgramChange) && (cmd->midiCommand != mcChannelPressure) ) {
+            Serial1.write(cmd->payload[2]);
+#ifdef  TES_MIDI_DEBUG
+            Serial.print(cmd->payload[2], HEX);
+            Serial.print(" ");
+#endif
+        }
+    }
+#ifdef  TES_MIDI_DEBUG
+    Serial.println("");
     Serial.flush();
 #endif
 
@@ -792,7 +821,6 @@ void TesMIDIController::togglePressureSensor(void){
 //////////////////////////////////////////////////////////////////////////
 // Initializes the EEPROM
 void TesMIDIController::initializeEEPROM(void){
-
     // write the global settings
     writeGlobalSettingsToEEPROM();
 
@@ -803,24 +831,27 @@ void TesMIDIController::initializeEEPROM(void){
     }
 
     // write the signature (into the pre-defined address)
-    uint16_t    signature = TES_EEPROM_SIGNATURE;
-    EEPROM.put(signatureAddress, signature);
+    if( !EEPROM.writeUint16(signatureAddress, (uint16_t)TES_EEPROM_SIGNATURE) ){
+        SWER(swerMidiController07);
+    }
 }
 
 //////////////////////////////////////////////////////////////////////////
 // Reads Global Settings from the EEPROM
 void TesMIDIController::readGlobalSettingsFromEEPROM(void){
     // read the global settings
-    int address = eepromBaseAddress;
-    EEPROM.get(address, _settings.global);
+    if (sizeof(_settings.global) != EEPROM.read(eepromBaseAddress, &_settings.global, sizeof(_settings.global))){
+        SWER(swerMidiController07);
+    }
 }
 
 //////////////////////////////////////////////////////////////////////////
 // Writes Global Settings to the EEPROM
 void TesMIDIController::writeGlobalSettingsToEEPROM(void){
     // write the global settings
-    int address = eepromBaseAddress;
-    EEPROM.put(address, _settings.global);
+    if(sizeof(_settings.global) != EEPROM.update(eepromBaseAddress, &_settings.global, sizeof(_settings.global))){
+        SWER(swerMidiController07);
+    }
     // reset the "not saved" flag
     _var.globalSettingsNotSaved = 0;
 }
@@ -832,7 +863,9 @@ void TesMIDIController::readPresetFromEEPROM(uint8_t preset_id){
     // calculate the EEPROM address
     int address = eepromBaseAddress + sizeof(_settings.global) + preset_id * sizeof(_settings.preset);
     // read the preset settings
-    EEPROM.get(address, new_preset);
+    if (sizeof(new_preset) != EEPROM.read(address, &new_preset, sizeof(new_preset))){
+        SWER(swerMidiController07);
+    }
     // check if the "source of expression" has changed
     bool    need_to_update_expression   = new_preset.pressureSensorOn != _settings.preset.pressureSensorOn;
     // Special case: if the Master Volume values differ, then we need to send volume parameters anyway.
@@ -868,7 +901,9 @@ void TesMIDIController::writePresetToEEPROM(uint8_t preset_id){
     // calculate the EEPROM address
     int address = eepromBaseAddress + sizeof(_settings.global) + preset_id * sizeof(_settings.preset);
     // write the preset settings
-    EEPROM.put(address, _settings.preset);
+    if(sizeof(_settings.preset) != EEPROM.update(address, &_settings.preset, sizeof(_settings.preset))){
+        SWER(swerMidiController07);
+    }
     // reset the "not saved" flag
     _var.currentPresetNotSaved = 0;
 }

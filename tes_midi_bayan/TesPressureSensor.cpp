@@ -44,7 +44,8 @@ void TesPressureSensor::tick(void){
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
 // configuration parameters for pressure sensor
-#define pressureSensorPin   A7
+#define pressureSensorPin   28
+// TODO revise the 3 values below
 #define centerValue         566     // Pressure raw value when no difference between two inputs
 #define pressureThreshold   20      // raw values below the threshold are translated to 0 (to avoid permanent sending MIDI messages for sub-zero values)
 #define pressureTopValue    300     // max values for "blow" & "suck" are not the same; let's use the lowest one, so that both can reach this value

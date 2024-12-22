@@ -8,8 +8,6 @@
 #include "prodx.h"
 //#include "atemp_hw.h"
 
-#define FPSTR(pstr) (const __FlashStringHelper*)(pstr)
-
 // period for updating the display (it takes too much time to update it in each work cycle)
 #define TES_DISPLAY_UPDATE_PERIOD   (1000 / 3)
 
@@ -37,7 +35,6 @@ TesMidiUI::TesMidiUI(GyverOLED<SSH1106_128x64> * oled, TesMIDIController * mc, T
 void    TesMidiUI::init(void){
     // initialize the display
     _oled->init();
-    Wire.setClock(800000L); // Maximum speed
 
     // draw the active screen
     drawActiveScreen();
@@ -676,8 +673,8 @@ const char dpDrumsetNumberName[]    PROGMEM  = "Набор звуков";
 /////////////////////////////////////////////////////////////////
 // specific data for the Drum Sound for Bass parameter
 const char dpDrumSoundForBassName[]    PROGMEM  = "Звук для баса";
-#define dpDrumSoundForBassMinValue _F1      // this is a MIDI note
-#define dpDrumSoundForBassMaxValue _E7      // this is a MIDI note
+#define dpDrumSoundForBassMinValue F1      // this is a MIDI note
+#define dpDrumSoundForBassMaxValue E7      // this is a MIDI note
 
 /////////////////////////////////////////////////////////////////
 // specific data for the Drum Sound for Bass Velocity parameter
@@ -687,8 +684,8 @@ const char dpDrumSoundForBassVelocityName[]    PROGMEM  = "     его сила"
 /////////////////////////////////////////////////////////////////
 // specific data for the Drum Sound for Chord parameter
 const char dpDrumSoundForChordName[]    PROGMEM  = "Звук д. аккорда";
-#define dpDrumSoundForChordMinValue _F1      // this is a MIDI note
-#define dpDrumSoundForChordMaxValue _E7      // this is a MIDI note
+#define dpDrumSoundForChordMinValue F1      // this is a MIDI note
+#define dpDrumSoundForChordMaxValue E7      // this is a MIDI note
 
 /////////////////////////////////////////////////////////////////
 // specific data for the Drum Sound for Chord Velocity parameter
@@ -914,25 +911,25 @@ const uint8_t dxDrumSets[] PROGMEM  = {15, 0, 1, 2, 3, 4, 5, 6, 8, 11, 16, 17, 2
 // состоящей из букв английского и русского алфавитов, цифр, общепринятых символов...
 
 //int mb_strlen_P(PGM_P _source)
-int mb_strlen_P(const __FlashStringHelper * _source)
+int mb_strlen_P(const char * _source)
 {
-    PGM_P p = reinterpret_cast<PGM_P>(_source);
+    const char * p = _source;
 
     int target = 0;
     unsigned char n;
 
-    n = pgm_read_byte(p++);
+    n = *p++;
     while (n != 0) {
         if (n >= 0xBF){
             switch (n) {
             case 0xD0:
             case 0xD1:
-                n = pgm_read_byte(p++);
+                n = *p++;
                 break;
             }
         }
         target = target + 1;
-        n = pgm_read_byte(p++);
+        n = *p++;
     }
     return target;
 }
@@ -968,7 +965,7 @@ uint16_t getInstrumentIndex(const uint8_t * const * bank_map, uint8_t bank_id, u
     // count all instruments BEFORE program_id
     for(int i=0; i<program_id; i++){
         // get a bank vector for program 'i'
-        const uint8_t *ptr = pgm_read_ptr(bank_map + i);
+        const uint8_t *ptr = bank_map[i];
         if (ptr == NULL){
             // There's only one variation for this program
             instrument_index += 1;  // counting the only variation of program 'i'
@@ -980,7 +977,7 @@ uint16_t getInstrumentIndex(const uint8_t * const * bank_map, uint8_t bank_id, u
     }
 
     // get a bank vector for program_id
-    const uint8_t *ptr = pgm_read_ptr(bank_map + program_id);
+    const uint8_t *ptr = bank_map[program_id];
     if (ptr == NULL){
         // there's only one variation for program_id
         // there's nothing to add; instrument_index is already pointing to {bank_id}:{program_id}
@@ -1022,7 +1019,7 @@ void setNextInstrument(const uint8_t * const * bank_map, uint8_t * bank_id, uint
 
     uint8_t bank_index = 0xFF;                  // out-of-range value; if it stays the same after search - that means we didn't find the entry in the vector
     // get a bank vector for program 'i'
-    const uint8_t *ptr = pgm_read_ptr(bank_map + cur_program);
+    const uint8_t *ptr = bank_map[cur_program];
     // check if we can move to the next bank_id
     if (ptr != NULL){
         uint8_t N = pgm_read_byte(ptr);             // the size of the vector
@@ -1077,7 +1074,7 @@ void setNextInstrument(const uint8_t * const * bank_map, uint8_t * bank_id, uint
     *program_id = cur_program;
     // *** now, let's find the next bank_id
     // get a new bank vector
-    ptr = pgm_read_ptr(bank_map + cur_program);
+    ptr = bank_map[cur_program];
     if (ptr == NULL){
         // easy case: the next bank id is 0
         *bank_id = 0;
@@ -1098,12 +1095,12 @@ void TesMidiUI::drawKbdHeader(void){
         true,                                       // always highlight right keyboard
         ( ! _mc->_var.freeBassOn),             // bass keyboard - opposite to the Free Bass mode
         ( ! _mc->_var.freeBassOn),             // chord keyboard - opposite to the Free Bass mode
-        _mc->_var.freeBassOn,                  // free bass keyboard - same as the Free Bass mode
+        (bool)_mc->_var.freeBassOn                   // free bass keyboard - same as the Free Bass mode
     };
     for(int i=0; i<headerSections; i++){
         setTextCursor(headerStartPosition + i*headerIncrement, 0);
         _oled->invertText(headerHighlight[i]);
-        _oled->print( FPSTR((PGM_P)pgm_read_ptr(headerSection + i)) );
+        _oled->print(headerSection[i]);
     }
     // turn inversion off
     _oled->invertText(false);
@@ -1119,7 +1116,7 @@ void TesMidiUI::drawMainScreen(void){
     // print 3 top parameters
     for(int idx=0; idx<3; idx++){
         setTextCursor(0, idx+1);
-        _oled->print( FPSTR((PGM_P)pgm_read_ptr(parLabel + idx)) );
+        _oled->print(parLabel[idx]);
         // print parameters here
         for(int kbd=0; kbd<4; kbd++){
             setTextCursor(6 + kbd*4, idx+1);
@@ -1132,16 +1129,16 @@ void TesMidiUI::drawMainScreen(void){
         // *** Bass Octaves
         setTextCursor(indBassOctavesPos, indRow);
         _oled->invertText( _mc->_settings.preset.bassOctavesOn );
-        _oled->print(FPSTR(indBassOctavesLabel));
+        _oled->print(indBassOctavesLabel);
         _oled->invertText(false);
         // *** Pressure Sensor
         setTextCursor(indPressureSensorOnPos, indRow);
         _oled->invertText( _mc->_settings.preset.pressureSensorOn );
-        _oled->print(FPSTR(indPressureSensorLabel));
+        _oled->print(indPressureSensorLabel);
         _oled->invertText(false);
         // *** Synthesizer Type
         setTextCursor(indSynthTypePos, indRow);
-        _oled->print( FPSTR((PGM_P)pgm_read_ptr(indSynthTypeLabel + _mc->_settings.global.synthType)) );
+        _oled->print(indSynthTypeLabel[_mc->_settings.global.synthType]);
         // *** Running Status
         setTextCursor(indRunningStatusPos, indRow);
         _oled->invertText( _mc->_settings.global.runningStatus );
@@ -2059,10 +2056,10 @@ uint8_t TesMidiUI::getNextAtempBankId(uint8_t kbd_id, bool forward){
     const uint8_t * ptr = NULL;
     switch (_mc->_settings.global.synthType){
     case stAtemp:
-        ptr = pgm_read_ptr(atBanks + curProgram);
+        ptr = atBanks[curProgram];
         break;
     case stProDX:
-        ptr = pgm_read_ptr(dxBanks + curProgram);
+        ptr = dxBanks[curProgram];
         break;
     }
     if (ptr == NULL){
@@ -2150,10 +2147,10 @@ bool TesMidiUI::adjustBankId(uint8_t kbd_id){
     const uint8_t * ptr = NULL;
     switch (_mc->_settings.global.synthType){
     case stAtemp:
-        ptr = pgm_read_ptr(atBanks + curProgram);
+        ptr = atBanks[curProgram];
         break;
     case stProDX:
-        ptr = pgm_read_ptr(dxBanks + curProgram);
+        ptr = dxBanks[curProgram];
         break;
     }
     if (ptr == NULL){

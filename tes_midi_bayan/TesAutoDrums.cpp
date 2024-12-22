@@ -35,48 +35,48 @@
 
 // Metronome 4/4:
 //                                         |~~~~~~~~~~~~~~|          |~~~~~~~~~~~~~|           |~~~~~~~~~~~~~|           |~~~~~~~~~~~~|
-const uint8_t melody0[] PROGMEM = {60, 0, L(_Bb1), 8, off(_Bb1), 8, L(_A1), 8, off(_A1), 8, L(_A1), 8, off(_A1), 8, L(_A1), 8, off(_A1), 8, 0 };
+const uint8_t melody0[] PROGMEM = {60, 0, L(Bb1), 8, off(Bb1), 8, L(A1), 8, off(A1), 8, L(A1), 8, off(A1), 8, L(A1), 8, off(A1), 8, 0 };
 // Metronome 3/4:
-const uint8_t melody1[] PROGMEM = {120, 0, H(_Db2), 8, off(_Db2), 8, L(_Db2), 8, off(_Db2), 8, L(_Db2), 8, off(_Db2), 8,  0 };
+const uint8_t melody1[] PROGMEM = {120, 0, H(Db2), 8, off(Db2), 8, L(Db2), 8, off(Db2), 8, L(Db2), 8, off(Db2), 8,  0 };
 // bit #1
-const uint8_t melody2[] PROGMEM = {120, 0, H(_C2),  0, H(_Ab2), 8, off(_Ab2), 0, off(_C2),  0, H(_Ab2), 8, off(_Ab2), 0,
-                                           H(_Db2), 0, H(_Ab2), 8, off(_Ab2), 0, off(_Db2), 0, H(_Ab2), 16, H(_C2), 16, off(_Ab2), 0, off(_C2), 0,
-                                           H(_C2),  0, H(_Ab2), 8, off(_Ab2), 0, off(_C2),  0, H(_Bb2), 8, off(_Bb2), 0,
-                                           H(_Db2), 0, H(_Ab2), 8, off(_Ab2), 0, off(_Db2), 0, H(_Ab2), 8, off(_Ab2), 0,
+const uint8_t melody2[] PROGMEM = {120, 0, H(C2),  0, H(Ab2), 8, off(Ab2), 0, off(C2),  0, H(Ab2), 8, off(Ab2), 0,
+                                           H(Db2), 0, H(Ab2), 8, off(Ab2), 0, off(Db2), 0, H(Ab2), 16, H(C2), 16, off(Ab2), 0, off(C2), 0,
+                                           H(C2),  0, H(Ab2), 8, off(Ab2), 0, off(C2),  0, H(Bb2), 8, off(Bb2), 0,
+                                           H(Db2), 0, H(Ab2), 8, off(Ab2), 0, off(Db2), 0, H(Ab2), 8, off(Ab2), 0,
                                            0};
 // Alley Cat
-const uint8_t melody3[] PROGMEM = {70, 0, H(_C2), 0, H(_Gb2), 16, off(_Gb2), 16, off(_C2), 0, H(_Gb2), 16, off(_Gb2), 32, H(_Gb2), 32, off(_Gb2), 0,
-                                          H(_Db2), 0, H(_Gb2), 16, off(_Gb2), 16, off(_Db2), 0, H(_Gb2), 16, off(_Gb2), 32, H(_Gb2), 32, off(_Gb2), 0,  0};
+const uint8_t melody3[] PROGMEM = {70, 0, H(C2), 0, H(Gb2), 16, off(Gb2), 16, off(C2), 0, H(Gb2), 16, off(Gb2), 32, H(Gb2), 32, off(Gb2), 0,
+                                          H(Db2), 0, H(Gb2), 16, off(Gb2), 16, off(Db2), 0, H(Gb2), 16, off(Gb2), 32, H(Gb2), 32, off(Gb2), 0,  0};
 // The Cat (Jimmy Smith)
-const uint8_t melody4[] PROGMEM = {180, 0, H(_C2),  0, H(_Ab2), 8, off(_C2),  0, off(_Ab2), 0, H(_Ab2), 8, off(_Ab2), 0,
-                                           H(_Db2), 0, H(_Ab2), 8, off(_Db2), 0, off(_Ab2), 0, H(_Ab2), 8, off(_Ab2), 0,
-                                           H(_Ab2), 8, off(_Ab2), 0, H(_Ab2), 24, H(_Db2), 12, off(_Ab2), 0, off(_Db2), 0,
-                                           H(_Ab2), 8, off(_Ab2), 0, H(_Ab2), 8, off(_Ab2), 0,
+const uint8_t melody4[] PROGMEM = {180, 0, H(C2),  0, H(Ab2), 8, off(C2),  0, off(Ab2), 0, H(Ab2), 8, off(Ab2), 0,
+                                           H(Db2), 0, H(Ab2), 8, off(Db2), 0, off(Ab2), 0, H(Ab2), 8, off(Ab2), 0,
+                                           H(Ab2), 8, off(Ab2), 0, H(Ab2), 24, H(Db2), 12, off(Ab2), 0, off(Db2), 0,
+                                           H(Ab2), 8, off(Ab2), 0, H(Ab2), 8, off(Ab2), 0,
                                      
-                                           H(_C2),  0, H(_Ab2), 8, off(_C2),  0, off(_Ab2), 0, H(_Ab2), 8, off(_Ab2), 0,
-                                           H(_Db2), 0, H(_Ab2), 8, off(_Db2), 0, off(_Ab2), 0, H(_Ab2), 8, off(_Ab2), 0,
-                                           H(_Ab2), 8, off(_Ab2), 0, H(_Ab2), 24, H(_Db2), 12, off(_Ab2), 0, off(_Db2), 0,
-                                           H(_Ab2), 8, off(_Ab2), 0, H(_Ab2), 8, off(_Ab2), 0,
+                                           H(C2),  0, H(Ab2), 8, off(C2),  0, off(Ab2), 0, H(Ab2), 8, off(Ab2), 0,
+                                           H(Db2), 0, H(Ab2), 8, off(Db2), 0, off(Ab2), 0, H(Ab2), 8, off(Ab2), 0,
+                                           H(Ab2), 8, off(Ab2), 0, H(Ab2), 24, H(Db2), 12, off(Ab2), 0, off(Db2), 0,
+                                           H(Ab2), 8, off(Ab2), 0, H(Ab2), 8, off(Ab2), 0,
                                      
-                                           H(_C2),  0, H(_Ab2), 8, off(_C2),  0, off(_Ab2), 0, H(_Ab2), 8, off(_Ab2), 0,
-                                           H(_Db2), 0, H(_Ab2), 8, off(_Db2), 0, off(_Ab2), 0, H(_Ab2), 8, off(_Ab2), 0,
-                                           H(_Ab2), 8, off(_Ab2), 0, H(_Ab2), 24, H(_Db2), 12, off(_Ab2), 0,
-                                           H(_Ab2), 24, off(_Db2), 12, off(_Ab2), 0, H(_Ab2), 8, off(_Ab2), 0,
+                                           H(C2),  0, H(Ab2), 8, off(C2),  0, off(Ab2), 0, H(Ab2), 8, off(Ab2), 0,
+                                           H(Db2), 0, H(Ab2), 8, off(Db2), 0, off(Ab2), 0, H(Ab2), 8, off(Ab2), 0,
+                                           H(Ab2), 8, off(Ab2), 0, H(Ab2), 24, H(Db2), 12, off(Ab2), 0,
+                                           H(Ab2), 24, off(Db2), 12, off(Ab2), 0, H(Ab2), 8, off(Ab2), 0,
                                      
-                                           H(_Db2), 0, H(_Ab2), 8, off(_Db2), 0, off(_Ab2), 0, H(_Ab2), 8, off(_Ab2), 0,
-                                           H(_Ab2), 8, off(_Ab2), 0, H(_Ab2), 24, H(_Db2), 12, off(_Ab2), 0,
-                                           H(_Ab2), 24, off(_Db2), 12, off(_Ab2), 0, H(_Bb2), 8, off(_Bb2), 0,
-                                           H(_Db2), 0, H(_Ab2), 8, off(_Db2), 0, off(_Ab2), 0, H(_Ab2), 8, off(_Ab2), 0,
+                                           H(Db2), 0, H(Ab2), 8, off(Db2), 0, off(Ab2), 0, H(Ab2), 8, off(Ab2), 0,
+                                           H(Ab2), 8, off(Ab2), 0, H(Ab2), 24, H(Db2), 12, off(Ab2), 0,
+                                           H(Ab2), 24, off(Db2), 12, off(Ab2), 0, H(Bb2), 8, off(Bb2), 0,
+                                           H(Db2), 0, H(Ab2), 8, off(Db2), 0, off(Ab2), 0, H(Ab2), 8, off(Ab2), 0,
                                      
                                            0};
 // Lusta Dick
-const uint8_t melody5[] PROGMEM = {90, 0, H(_Bb4), 0, H(_Eb5), 8, off(_Bb4), 0, M(_Bb4), 8, off(_Bb4), 0, M(_Bb4), 8, off(_Bb4), 0, off(_Eb5), 0, M(_Bb4), 0, H(_Eb5), 8, off(_Bb4), 0,
-                                          H(_Bb4), 8, off(_Bb4), 0, M(_Bb4), 8, off(_Bb4), 0, off(_Eb5), 0, M(_Bb4), 0, H(_Eb5), 8, off(_Bb4), 0, M(_Bb4), 8, off(_Bb4), 0,
-                                          H(_Bb4), 8, off(_Bb4), 0, off(_Eb5), 0, M(_Bb4), 0, H(_Eb5), 8, off(_Bb4), 0, M(_Bb4), 8, off(_Bb4), 0, M(_Bb4), 8, off(_Bb4), 0, off(_Eb5), 0, 
-                                          H(_Bb4), 0, H(_Eb5), 8, off(_Bb4), 0, M(_Bb4), 8, off(_Bb4), 0, off(_Eb5), 0, M(_Bb4), 0, H(_Eb5), 8, off(_Bb4), 0, M(_Bb4), 8, off(_Bb4), 0, off(_Eb5), 0,
+const uint8_t melody5[] PROGMEM = {90, 0, H(Bb4), 0, H(Eb5), 8, off(Bb4), 0, M(Bb4), 8, off(Bb4), 0, M(Bb4), 8, off(Bb4), 0, off(Eb5), 0, M(Bb4), 0, H(Eb5), 8, off(Bb4), 0,
+                                          H(Bb4), 8, off(Bb4), 0, M(Bb4), 8, off(Bb4), 0, off(Eb5), 0, M(Bb4), 0, H(Eb5), 8, off(Bb4), 0, M(Bb4), 8, off(Bb4), 0,
+                                          H(Bb4), 8, off(Bb4), 0, off(Eb5), 0, M(Bb4), 0, H(Eb5), 8, off(Bb4), 0, M(Bb4), 8, off(Bb4), 0, M(Bb4), 8, off(Bb4), 0, off(Eb5), 0, 
+                                          H(Bb4), 0, H(Eb5), 8, off(Bb4), 0, M(Bb4), 8, off(Bb4), 0, off(Eb5), 0, M(Bb4), 0, H(Eb5), 8, off(Bb4), 0, M(Bb4), 8, off(Bb4), 0, off(Eb5), 0,
                                           0};
 
-const uint8_t * const melody[numberOfMelodies] PROGMEM = {
+const uint8_t * const melody[numberOfMelodies] = {
     melody0, melody1, melody2, melody3, melody4, melody5
 };
 
@@ -100,7 +100,7 @@ TesAutoDrums::TesAutoDrums(TesMIDIOutQueue * midi_queue){
     // setup the default melody
     _melodyId = 0;      // the default melody ID
     // get a pointer to the melody
-    uint8_t * melody_p = pgm_read_ptr(melody + _melodyId);
+    uint8_t * melody_p = (uint8_t *)melody[_melodyId];
     // get the default tempo
     _tempo = pgm_read_byte(melody_p);
 }
@@ -110,7 +110,7 @@ TesAutoDrums::TesAutoDrums(TesMIDIOutQueue * midi_queue){
 void    TesAutoDrums::start(void){
     _is_playing = true;
     // get a pointer to the melody
-    uint8_t * melody_p = pgm_read_ptr(melody + _melodyId);
+    uint8_t * melody_p = (uint8_t *)melody[_melodyId];
     // set the drumset
     TesMIDICommand  cmd;
     cmd.channelId = drumsChannel;
@@ -167,7 +167,7 @@ void TesAutoDrums::setMelodyId(uint8_t melody_id){
 
     _melodyId = melody_id;
     // get a pointer to the melody
-    uint8_t * melody_p = pgm_read_ptr(melody + _melodyId);
+    uint8_t * melody_p = (uint8_t *)melody[_melodyId];
     // get the default tempo
     _tempo = pgm_read_byte(melody_p);
 }
@@ -184,7 +184,7 @@ void TesAutoDrums::setNextMelodyId(void){
         _melodyId = 0;
     }
     // get a pointer to the melody
-    uint8_t * melody_p = pgm_read_ptr(melody + _melodyId);
+    uint8_t * melody_p = (uint8_t *)melody[_melodyId];
     // get the default tempo
     _tempo = pgm_read_byte(melody_p);
 }
@@ -201,7 +201,7 @@ void TesAutoDrums::setPreviousMelodyId(void){
         _melodyId = numberOfMelodies - 1;
     }
     // get a pointer to the melody
-    uint8_t * melody_p = pgm_read_ptr(melody + _melodyId);
+    uint8_t * melody_p = (uint8_t *)melody[_melodyId];
     // get the default tempo
     _tempo = pgm_read_byte(melody_p);
 }
@@ -237,7 +237,7 @@ void    TesAutoDrums::tick(void){
     }
 
     // get a pointer to the melody
-    uint8_t * melody_p = pgm_read_ptr(melody + _melodyId);
+    uint8_t * melody_p = (uint8_t *)melody[_melodyId];
     // calculate the period of the whole tact
     uint32_t  tact_period = (long)1000 * 4 * (long)60 / _tempo;
     // get the current note command, so that we chan check whether it is "On" or "Off"
@@ -273,7 +273,7 @@ void    TesAutoDrums::tick(void){
 // plays the next note (the index of the next note is in _next_note)
 void    TesAutoDrums::playCurrentNote(void){
     // get a pointer to the melody
-    uint8_t * melody_p = pgm_read_ptr(melody +_melodyId);
+    uint8_t * melody_p = (uint8_t *)melody[_melodyId];
     // get the current note
     EncodedNote eNote;
     eNote.rawNote = pgm_read_byte(melody_p + _current_note);

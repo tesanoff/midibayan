@@ -8,7 +8,7 @@
 #include "TesAutoDrums.h"
 #include "swer.h"
 
-#define TES_REAL_MIDI_PORT
+#define TES_MIDI_DEBUG
 
 /////////////////////////////////////////////////////////////
 // auxiliary stuff
