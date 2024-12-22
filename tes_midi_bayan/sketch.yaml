@@ -1,1 +1,2 @@
-default_fqbn: GyverCore:avr:nano:boot=old,serial=gyverUart
+default_fqbn: rp2040:rp2040:waveshare_rp2040_zero
+
