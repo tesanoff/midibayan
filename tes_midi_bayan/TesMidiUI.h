@@ -155,8 +155,8 @@ private:
     void setTextCursor(uint8_t X, uint8_t Y);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    //  prints a number according to the specified format string located in PROGMEM
-    void printFormatted(PGM_P format, uint8_t value);
+    //  prints a number according to the specified format string
+    void printFormatted(const char * format, uint8_t value);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //  Draws the active screen

@@ -35,20 +35,20 @@
 
 // Metronome 4/4:
 //                                         |~~~~~~~~~~~~~~|          |~~~~~~~~~~~~~|           |~~~~~~~~~~~~~|           |~~~~~~~~~~~~|
-const uint8_t melody0[] PROGMEM = {60, 0, L(Bb1), 8, off(Bb1), 8, L(A1), 8, off(A1), 8, L(A1), 8, off(A1), 8, L(A1), 8, off(A1), 8, 0 };
+const uint8_t melody0[]         = {60, 0, L(Bb1), 8, off(Bb1), 8, L(A1), 8, off(A1), 8, L(A1), 8, off(A1), 8, L(A1), 8, off(A1), 8, 0 };
 // Metronome 3/4:
-const uint8_t melody1[] PROGMEM = {120, 0, H(Db2), 8, off(Db2), 8, L(Db2), 8, off(Db2), 8, L(Db2), 8, off(Db2), 8,  0 };
+const uint8_t melody1[]         = {120, 0, H(Db2), 8, off(Db2), 8, L(Db2), 8, off(Db2), 8, L(Db2), 8, off(Db2), 8,  0 };
 // bit #1
-const uint8_t melody2[] PROGMEM = {120, 0, H(C2),  0, H(Ab2), 8, off(Ab2), 0, off(C2),  0, H(Ab2), 8, off(Ab2), 0,
+const uint8_t melody2[]         = {120, 0, H(C2),  0, H(Ab2), 8, off(Ab2), 0, off(C2),  0, H(Ab2), 8, off(Ab2), 0,
                                            H(Db2), 0, H(Ab2), 8, off(Ab2), 0, off(Db2), 0, H(Ab2), 16, H(C2), 16, off(Ab2), 0, off(C2), 0,
                                            H(C2),  0, H(Ab2), 8, off(Ab2), 0, off(C2),  0, H(Bb2), 8, off(Bb2), 0,
                                            H(Db2), 0, H(Ab2), 8, off(Ab2), 0, off(Db2), 0, H(Ab2), 8, off(Ab2), 0,
                                            0};
 // Alley Cat
-const uint8_t melody3[] PROGMEM = {70, 0, H(C2), 0, H(Gb2), 16, off(Gb2), 16, off(C2), 0, H(Gb2), 16, off(Gb2), 32, H(Gb2), 32, off(Gb2), 0,
+const uint8_t melody3[]         = {70, 0, H(C2), 0, H(Gb2), 16, off(Gb2), 16, off(C2), 0, H(Gb2), 16, off(Gb2), 32, H(Gb2), 32, off(Gb2), 0,
                                           H(Db2), 0, H(Gb2), 16, off(Gb2), 16, off(Db2), 0, H(Gb2), 16, off(Gb2), 32, H(Gb2), 32, off(Gb2), 0,  0};
 // The Cat (Jimmy Smith)
-const uint8_t melody4[] PROGMEM = {180, 0, H(C2),  0, H(Ab2), 8, off(C2),  0, off(Ab2), 0, H(Ab2), 8, off(Ab2), 0,
+const uint8_t melody4[]         = {180, 0, H(C2),  0, H(Ab2), 8, off(C2),  0, off(Ab2), 0, H(Ab2), 8, off(Ab2), 0,
                                            H(Db2), 0, H(Ab2), 8, off(Db2), 0, off(Ab2), 0, H(Ab2), 8, off(Ab2), 0,
                                            H(Ab2), 8, off(Ab2), 0, H(Ab2), 24, H(Db2), 12, off(Ab2), 0, off(Db2), 0,
                                            H(Ab2), 8, off(Ab2), 0, H(Ab2), 8, off(Ab2), 0,
@@ -70,7 +70,7 @@ const uint8_t melody4[] PROGMEM = {180, 0, H(C2),  0, H(Ab2), 8, off(C2),  0, of
                                      
                                            0};
 // Lusta Dick
-const uint8_t melody5[] PROGMEM = {90, 0, H(Bb4), 0, H(Eb5), 8, off(Bb4), 0, M(Bb4), 8, off(Bb4), 0, M(Bb4), 8, off(Bb4), 0, off(Eb5), 0, M(Bb4), 0, H(Eb5), 8, off(Bb4), 0,
+const uint8_t melody5[]         = {90, 0, H(Bb4), 0, H(Eb5), 8, off(Bb4), 0, M(Bb4), 8, off(Bb4), 0, M(Bb4), 8, off(Bb4), 0, off(Eb5), 0, M(Bb4), 0, H(Eb5), 8, off(Bb4), 0,
                                           H(Bb4), 8, off(Bb4), 0, M(Bb4), 8, off(Bb4), 0, off(Eb5), 0, M(Bb4), 0, H(Eb5), 8, off(Bb4), 0, M(Bb4), 8, off(Bb4), 0,
                                           H(Bb4), 8, off(Bb4), 0, off(Eb5), 0, M(Bb4), 0, H(Eb5), 8, off(Bb4), 0, M(Bb4), 8, off(Bb4), 0, M(Bb4), 8, off(Bb4), 0, off(Eb5), 0, 
                                           H(Bb4), 0, H(Eb5), 8, off(Bb4), 0, M(Bb4), 8, off(Bb4), 0, off(Eb5), 0, M(Bb4), 0, H(Eb5), 8, off(Bb4), 0, M(Bb4), 8, off(Bb4), 0, off(Eb5), 0,
@@ -81,14 +81,13 @@ const uint8_t * const melody[numberOfMelodies] = {
 };
 
 // Names of melodies
-const char mName0[] PROGMEM  = "Метроном 4/4";
-const char mName1[] PROGMEM  = "Метроном 3/4";
-const char mName2[] PROGMEM  = "Бит #1";
-const char mName3[] PROGMEM  = "Alley Cat";
-const char mName4[] PROGMEM  = "The Cat";
-const char mName5[] PROGMEM  = "Lusta Dick";
-const char * const  melodyName[numberOfMelodies] PROGMEM = {
-    mName0,  mName1,  mName2, mName3, mName4, mName5
+const char * const  melodyName[numberOfMelodies] = {
+    "Метроном 4/4",
+    "Метроном 3/4",
+    "Бит #1",
+    "Alley Cat",
+    "The Cat",
+    "Lusta Dick"
 };
 
 
@@ -207,9 +206,9 @@ void TesAutoDrums::setPreviousMelodyId(void){
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
-// Returns a PROGMEM string with the current melody name
-PGM_P   TesAutoDrums::getCurrentMelodyName(void){
-    return (PGM_P)pgm_read_ptr(melodyName + _melodyId);
+// Returns a string with the current melody name
+const char *    TesAutoDrums::getCurrentMelodyName(void){
+    return melodyName[_melodyId];
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////

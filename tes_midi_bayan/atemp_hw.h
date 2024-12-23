@@ -1,6 +1,6 @@
 /*
  *
- * This file contains PROGMEM constants for custom selection of musical instruments
+ * This file contains constants for custom selection of musical instruments
  * available in the ATEMP HW synthesizer.
  *
  */
@@ -9,33 +9,29 @@
 #define _ATEMP_HW_H
 
 // groups of instruments
-const char atGroupName0[] PROGMEM   = "Pianos";
-const char atGroupName1[] PROGMEM   = "El. Pianos";
-const char atGroupName2[] PROGMEM   = "Keyboards";
-const char atGroupName3[] PROGMEM   = "Percussion";
-const char atGroupName4[] PROGMEM   = "Organs";
-const char atGroupName5[] PROGMEM   = "Guitars";
-const char atGroupName6[] PROGMEM   = "Basses";
-const char atGroupName7[] PROGMEM   = "Strings";
-const char atGroupName8[] PROGMEM   = "Orchestral";
-const char atGroupName9[] PROGMEM   = "Brass";
-const char atGroupName10[] PROGMEM  = "Sax Wood";
-const char atGroupName11[] PROGMEM  = "Leads";
-const char atGroupName12[] PROGMEM  = "Pads";
-const char atGroupName13[] PROGMEM  = "SFX";
-const char atGroupName14[] PROGMEM  = "Ethnic";
-const char atGroupName15[] PROGMEM  = "Tone Drums";
-const char atGroupName16[] PROGMEM  = "Sounds";
 //
 #define atNumberOfGroups    17
-//
-const char * const  atGroupName[atNumberOfGroups] PROGMEM = {
-    atGroupName0, atGroupName1, atGroupName2, atGroupName3, atGroupName4, atGroupName5, atGroupName6, atGroupName7, 
-    atGroupName8, atGroupName9, atGroupName10, atGroupName11, atGroupName12, atGroupName13, atGroupName14, atGroupName15, 
-    atGroupName16
+const char * const  atGroupName[atNumberOfGroups] = {
+    "Pianos",
+    "El. Pianos",
+    "Keyboards",
+    "Percussion",
+    "Organs",
+    "Guitars",
+    "Basses",
+    "Strings",
+    "Orchestral",
+    "Brass",
+    "Sax Wood",
+    "Leads",
+    "Pads",
+    "SFX",
+    "Ethnic",
+    "Tone Drums",
+    "Sounds"
 };
 // Last Program ID for each group
-const uint8_t atGroupMap[atNumberOfGroups] PROGMEM = {
+const uint8_t atGroupMap[atNumberOfGroups] = {
     3,           // Фортепиано
     5,          // Электронные пианино
     8,         // Клавишные
@@ -56,7 +52,7 @@ const uint8_t atGroupMap[atNumberOfGroups] PROGMEM = {
 };
 
 // All Instrument names
-const char atInstrumentNames[] PROGMEM    =
+const char atInstrumentNames[] =
     "Grand Piano\0"
     "Bright Piano\0"
     "(El Grd) Piano\0"

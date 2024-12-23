@@ -49,8 +49,8 @@ public:
     void setPreviousMelodyId(void);
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
-    // Returns a PROGMEM string with the current melody name
-    PGM_P   getCurrentMelodyName(void);
+    // Returns a string with the current melody name
+    const char *    getCurrentMelodyName(void);
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
     // Returns true is a melody is playing

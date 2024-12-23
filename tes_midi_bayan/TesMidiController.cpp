@@ -22,7 +22,7 @@
 // configure music buttons
 // This class (TesMidiController) receives "music button IDs" from 0 to 106; this class coesn't care about physical implementation, it deals with just music button IDs.
 #include "midi_note_names.h"    // the list is too large to put it right here
-const PROGMEM uint8_t noteMap[TES_NUMBER_OF_ALL_MUSIC_BUTTONS] = {
+const uint8_t noteMap[TES_NUMBER_OF_ALL_MUSIC_BUTTONS] = {
 // Left keyboard
 // #0-----------Contr.----------------#6    #7--------------------------------Big------------------------#18
     F1, Gb1, G1, Ab1, A1, Bb1, B1,    C2, Db2, D2, Eb2, E2, F2, Gb2, G2, Ab2, A2, Bb2, B2,
@@ -41,7 +41,7 @@ const PROGMEM uint8_t noteMap[TES_NUMBER_OF_ALL_MUSIC_BUTTONS] = {
 
 
 // default values for MIDI parameters
-const uint8_t   kbdParameterDefaultValue[NUMBER_OF_KBD_PARAMETERS] PROGMEM = {
+const uint8_t   kbdParameterDefaultValue[NUMBER_OF_KBD_PARAMETERS] = {
     0,      // MIDI Channel
     0,      // Bank             - default
     0,      // Program          - Grand Piano
@@ -60,7 +60,7 @@ const uint8_t   kbdParameterDefaultValue[NUMBER_OF_KBD_PARAMETERS] PROGMEM = {
 
 // sequence of sending Kbd Parameters
 // It looks like the order matters (PC cannot be sent right after "CC 0", i.e. bank change)
-const uint8_t   kbdParameterOrder[NUMBER_OF_KBD_PARAMETERS] PROGMEM = {
+const uint8_t   kbdParameterOrder[NUMBER_OF_KBD_PARAMETERS] = {
     idxChannel, idxBank, idxVolume, idxVibrato, idxResonance, idxAttak, idxRelease, idxProgram, idxTimbre, idxDecay, idxReverbration, idxChorus, idxReverbType, idxChorusType
 };
 

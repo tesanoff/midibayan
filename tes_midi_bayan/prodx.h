@@ -1,6 +1,6 @@
 /*
  *
- * This file contains PROGMEM constants for custom selection of musical instruments
+ * This file contains constants for custom selection of musical instruments
  * available in the ATEMP Pro.DX synthesizer.
  *
  */
@@ -9,35 +9,31 @@
 #define _PRODX_H
 
 // groups of instruments
-const char dxGroupName0[]  PROGMEM  = "Pianos";
-const char dxGroupName1[]  PROGMEM  = "El Pianos";
-const char dxGroupName2[]  PROGMEM  = "Chrom Perc";
-const char dxGroupName3[]  PROGMEM  = "Organs";
-const char dxGroupName4[]  PROGMEM  = "Guitars";
-const char dxGroupName5[]  PROGMEM  = "El Guitars";
-const char dxGroupName6[]  PROGMEM  = "Bass";
-const char dxGroupName7[]  PROGMEM  = "Synth Bass";
-const char dxGroupName8[]  PROGMEM  = "Strings";
-const char dxGroupName9[]  PROGMEM  = "Ensemble";
-const char dxGroupName10[] PROGMEM  = "Brass";
-const char dxGroupName11[] PROGMEM  = "Reed";
-const char dxGroupName12[] PROGMEM  = "Winds";
-const char dxGroupName13[] PROGMEM  = "Leads";
-const char dxGroupName14[] PROGMEM  = "Pads";
-const char dxGroupName15[] PROGMEM  = "EFX";
-const char dxGroupName16[] PROGMEM  = "Ethnic";
-const char dxGroupName17[] PROGMEM  = "Drum Perc";
-const char dxGroupName18[] PROGMEM  = "Sounds";
 //
 #define dxNumberOfGroups    19
-//
-const char * const  dxGroupName[dxNumberOfGroups] PROGMEM = {
-    dxGroupName0, dxGroupName1, dxGroupName2, dxGroupName3, dxGroupName4, dxGroupName5, dxGroupName6, dxGroupName7, 
-    dxGroupName8, dxGroupName9, dxGroupName10, dxGroupName11, dxGroupName12, dxGroupName13, dxGroupName14, dxGroupName15, 
-    dxGroupName16, dxGroupName17, dxGroupName18
+const char * const  dxGroupName[dxNumberOfGroups] = {
+    "Pianos",
+    "El Pianos",
+    "Chrom Perc",
+    "Organs",
+    "Guitars",
+    "El Guitars",
+    "Bass",
+    "Synth Bass",
+    "Strings",
+    "Ensemble",
+    "Brass",
+    "Reed",
+    "Winds",
+    "Leads",
+    "Pads",
+    "EFX",
+    "Ethnic",
+    "Drum Perc",
+    "Sounds"
 };
 // Last Program ID for each group
-const uint8_t dxGroupMap[dxNumberOfGroups] PROGMEM = {
+const uint8_t dxGroupMap[dxNumberOfGroups] = {
     3, // Pianos
     5, // El Pianos
     15, // Chrom Perc
@@ -59,7 +55,7 @@ const uint8_t dxGroupMap[dxNumberOfGroups] PROGMEM = {
     127  // Sounds
 };
 // All Instrument names
-const char dxInstrumentNames[] PROGMEM    =
+const char dxInstrumentNames[] =
     "Concert Grand\0"
     "Classic Grand\0"
     "Pop Grand\0"

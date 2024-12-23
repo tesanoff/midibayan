@@ -30,8 +30,8 @@
 // This is configured here, in the bitmap below.
 // 1 - "hold" is enabled
 // 0 - "hold is disabled
-//                                                    7       0   15      8    23     16
-const PROGMEM uint8_t   tesCtlButtonHoldBitmap[] = { 0b00110000, 0b11111111, 0b00000111};
+//                                           7       0   15      8    23     16
+const uint8_t   tesCtlButtonHoldBitmap[] = { 0b00110000, 0b11111111, 0b00000111};
 
 // Control buttons are not equal again: some of them may have the "fast repeat" function, some of them may not.
 // This is configured here, in the bitmap below.
@@ -39,8 +39,8 @@ const PROGMEM uint8_t   tesCtlButtonHoldBitmap[] = { 0b00110000, 0b11111111, 0b0
 // 0 - "fast repeat" is disabled
 //
 // WARNING: don't be an idiot! Do not turn "Hold" and "Fast Repeat" features for the same button simultaneiously!
-//                                                           7      0   15      8    23     16
-const PROGMEM uint8_t   tesCtlButtonFastRepeatBitmap[] = { 0b00001111, 0b00000000, 0b00110000};
+//                                                 7      0   15      8    23     16
+const uint8_t   tesCtlButtonFastRepeatBitmap[] = { 0b00001111, 0b00000000, 0b00110000};
 
 // internal states of control buttons
 enum {tesCtlButtonReleased = 0, tesCtlButtonPressed, tesCtlButtonHold, tesCtlButtonFastRepeat};
@@ -53,7 +53,7 @@ enum {tesCtlButtonReleased = 0, tesCtlButtonPressed, tesCtlButtonHold, tesCtlBut
 // different implementation too.
 //
 // This is implemented as a bitmap. The number of bits is equal to the number of buttons.
-const PROGMEM uint8_t   tesButtonPressedLevels[] = {
+const uint8_t   tesButtonPressedLevels[] = {
 // Right keyboard:
 //    7      0    15     8    23     16   31     24   39     32   47     40   55     48   63     56
     0b00000000, 0b00000000, 0b00000000, 0b00000000, 0b00000000, 0b00000000, 0b00000000, 0b00000000,
@@ -449,7 +449,7 @@ void TesKeyboard::processNewData(void){
 // Unused global indices are translated into 0xFC.
 //
 
-const PROGMEM uint8_t   globalButtonMap[] = {
+const uint8_t   globalButtonMap[] = {
 // Right keyboard 1st & 2nd rows:
     52,  54, 55,  57, 58,  60, 61,  63, 64,  66, 67,  69, 70,  72, 73,  75, 76,  78, 79,  81, 82,  84, 85,  87, 88,  90, 91,
     93, 94,  96, 97,  99, 100,  102, 103,  105, 106,  0xFC, 0xFC, 0xFC,

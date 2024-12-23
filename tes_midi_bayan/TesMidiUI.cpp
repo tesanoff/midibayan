@@ -504,66 +504,59 @@ void TesMidiUI::setDrumMachineState(uint8_t new_state){
 
 #define maxFormatDescriptorLength   8
 #define maxFormattedStringLength    8
-const char numFormat3R[] PROGMEM = "%3d";    // 3 digits, right alignment
-const char auxFormat1[] PROGMEM = " (%3d)";  // 3 digits, right alignment
+const char numFormat3R[] = "%3d";       // 3 digits, right alignment
+const char auxFormat1[]  = " (%3d)";    // 3 digits, right alignment
 
-const char main_screen_footer[] PROGMEM = "MIDI баян v1.01";
+const char main_screen_footer[] = "MIDI баян v2.00b";
 
 // for the header
 #define headerStartPosition 6
 #define headerIncrement     4
 #define headerSections      4
-const char headerSection0[]  PROGMEM  = "Пр.";
-const char headerSection1[]  PROGMEM  = "Бас";
-const char headerSection2[]  PROGMEM  = "Акк";
-const char headerSection3[]  PROGMEM  = "Выб";
-const char * const  headerSection[] PROGMEM = {
-    headerSection0, headerSection1, headerSection2, headerSection3
+const char * const  headerSection[] = {
+    "Пр.",
+    "Бас",
+    "Акк",
+    "Выб"
 };
 
 #define theNumberOfMidiParameters   14
 // labels for Kbd Parameters
-const char parLabel0[]  PROGMEM  = "Канал";
-const char parLabel1[]  PROGMEM  = "Банк";
-const char parLabel2[]  PROGMEM  = "Инстр.";
-const char parLabel3[]  PROGMEM  = "Громк.";
-const char parLabel4[]  PROGMEM  = "Вибр.";
-const char parLabel5[]  PROGMEM  = "Рез-с";
-const char parLabel6[]  PROGMEM  = "Атака";
-const char parLabel7[]  PROGMEM  = "Спад";
-const char parLabel8[]  PROGMEM  = "Тембр";
-const char parLabel9[]  PROGMEM  = "Затух.";
-const char parLabel10[] PROGMEM  = "Ревер.";
-const char parLabel11[] PROGMEM  = "Хорус";
-const char parLabel12[] PROGMEM  = "Р. тип";
-const char parLabel13[] PROGMEM  = "Х. тип";
-const char * const  parLabel[theNumberOfMidiParameters] PROGMEM = {
-    parLabel0,  parLabel1,  parLabel2,  parLabel3,  parLabel4,
-    parLabel5,  parLabel6,  parLabel7,  parLabel8,  parLabel9, 
-    parLabel10, parLabel11, parLabel12, parLabel13
+const char * const  parLabel[theNumberOfMidiParameters] = {
+    "Канал",
+    "Банк",
+    "Инстр.",
+    "Громк.",
+    "Вибр.",
+    "Рез-с",
+    "Атака",
+    "Спад",
+    "Тембр",
+    "Затух.",
+    "Ревер.",
+    "Хорус",
+    "Р. тип",
+    "Х. тип"
 };
 // Hints for Kbd Parameters
-const char parHint0[]  PROGMEM  = "MIDI канал";
-const char parHint1[]  PROGMEM  = "Банк инструментов";
-const char parHint2[]  PROGMEM  = "Номер инструмента";
-const char parHint3[]  PROGMEM  = "Громкость канала";
-const char parHint4[]  PROGMEM  = "Вибрато";
-const char parHint5[]  PROGMEM  = "Резонанс";
-const char parHint6[]  PROGMEM  = "Атака";
-const char parHint7[]  PROGMEM  = "Спад";
-const char parHint8[]  PROGMEM  = "Тембр";
-const char parHint9[]  PROGMEM  = "Затухание";
-const char parHint10[] PROGMEM  = "Ревербрация";
-const char parHint11[] PROGMEM  = "Хорус";
-const char parHint12[] PROGMEM  = "Тип ревербрации";
-const char parHint13[] PROGMEM  = "Тип хоруса";
-const char * const  parHint[theNumberOfMidiParameters] PROGMEM = {
-    parHint0,  parHint1,  parHint2,  parHint3,  parHint4,
-    parHint5,  parHint6,  parHint7,  parHint8,  parHint9, 
-    parHint10, parHint11, parHint12, parHint13
+const char * const  parHint[theNumberOfMidiParameters] = {
+    "MIDI канал",
+    "Банк инструментов",
+    "Номер инструмента",
+    "Громкость канала",
+    "Вибрато",
+    "Резонанс",
+    "Атака",
+    "Спад",
+    "Тембр",
+    "Затухание",
+    "Ревербрация",
+    "Хорус",
+    "Тип ревербрации",
+    "Тип хоруса"
 };
 // Maximum possible values for Kbd Parameters
-const uint8_t parMaxValue[theNumberOfMidiParameters] PROGMEM = {
+const uint8_t parMaxValue[theNumberOfMidiParameters] = {
     15, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 7, 7
 };
 
@@ -572,22 +565,21 @@ const uint8_t parMaxValue[theNumberOfMidiParameters] PROGMEM = {
 #define indNumber               4   // the number of implemented indicators for now
 
 #define indBassOctavesPos       1
-const char indBassOctavesLabel[] PROGMEM = "Окт";
+const char indBassOctavesLabel[] = "Окт";
 
 #define indPressureSensorOnPos  7
-const char indPressureSensorLabel[] PROGMEM = "Мех";
+const char indPressureSensorLabel[] = "Мех";
 
 #define indSynthTypePos         13
-const char indSynthTypeLabel0[]     PROGMEM  = "GM";    // General MIDI
-const char indSynthTypeLabel1[]     PROGMEM  = "AT";    // ATemp
-const char indSynthTypeLabel2[]     PROGMEM  = "DX";    // Atemp Pro.DX
-const char indSynthTypeLabel3[]     PROGMEM  = "--";    // not used yet
-const char * const  indSynthTypeLabel[] PROGMEM = {
-    indSynthTypeLabel0, indSynthTypeLabel1, indSynthTypeLabel2, indSynthTypeLabel3 
+const char * const  indSynthTypeLabel[] = {
+    "GM",    // General MIDI
+    "AT",    // ATemp
+    "DX",    // Atemp Pro.DX
+    "--"     // not used yet
 };
 
 #define indRunningStatusPos     18
-const char indRunningStatusLabel[] PROGMEM = "RS";
+const char indRunningStatusLabel[] = "RS";
 
 #define editorFirstRow  1
 #define editorRows      6           // the last row is reserved for hints
@@ -602,10 +594,9 @@ const char indRunningStatusLabel[] PROGMEM = "RS";
 enum {parBoolean, parNumber, parList};
 
 // universal data for boolean parameters
-const char parBooleanLabel0[]     PROGMEM  = "Нет";
-const char parBooleanLabel1[]     PROGMEM  = "Да";
-const char * const  parBooleanLabel[] PROGMEM = {
-    parBooleanLabel0, parBooleanLabel1
+const char * const  parBooleanLabel[] = {
+    "Нет",
+    "Да"
 };
 #define parBooleanN             2       // the number of options
 
@@ -614,29 +605,27 @@ enum {parRunningStatusId = 0, parBassOctavesId, parSynthTypeId, parMasterVolumeI
 
 /////////////////////////////////////////////////////////////////
 // specific data forn the Running Status parameter
-const char parRunningStatusName[]   PROGMEM  = "Running Status";
+const char parRunningStatusName[]   = "Running Status";
 
 /////////////////////////////////////////////////////////////////
 // specific data forn the Bass Octaves parameter
-const char parBassOctavesName[]   PROGMEM  = "Октавы в басах";
+const char parBassOctavesName[]   = "Октавы в басах";
 
 /////////////////////////////////////////////////////////////////
 // specific data for the Synth Type parameter
 // It shares the same text constants with the respective indicator
-const char * const  parSynthTypeLabel[] PROGMEM = {
-    indSynthTypeLabel0, indSynthTypeLabel1, indSynthTypeLabel2
-};
-const char parSynthTypeName[]       PROGMEM  = "Тип синтезатора";
+const char * const * parSynthTypeLabel = indSynthTypeLabel;    // shares the same set of constants
+const char parSynthTypeName[]       = "Тип синтезатора";
 #define parSynthTypeN           3       // the number of options
 
 /////////////////////////////////////////////////////////////////
 // specific data for the Master Volume parameter
-const char parMasterVolumeName[]    PROGMEM  = "Общая громкость";
+const char parMasterVolumeName[]    = "Общая громкость";
 #define parMasterVolumeMaxValue 127
 
 /////////////////////////////////////////////////////////////////
 // specific data for the Drums Channel parameter
-const char parDrumsChannelName[]    PROGMEM  = "Канал ударных";
+const char parDrumsChannelName[]    = "Канал ударных";
 #define parDrumsChannelMaxValue 15
 
 /////////////////////////////////////////////////////////////////
@@ -648,48 +637,48 @@ const char parDrumsChannelName[]    PROGMEM  = "Канал ударных";
 #define paramEditorValueColumn  17      // where we start printing values
 
 #define parNumberOfParameters   7
-const char parTestName1[]    PROGMEM  = "T1";
-const char parTestName2[]    PROGMEM  = "T2";
-const char * const  parParameterNames[parNumberOfParameters] PROGMEM = {
+const char parTestName1[]    = "T1"; // TODO remove test labels after debugging
+const char parTestName2[]    = "T2"; //
+const char * const  parParameterNames[parNumberOfParameters] = {
     parRunningStatusName, parBassOctavesName, parSynthTypeName, parMasterVolumeName, parDrumsChannelName,
     parTestName1, parTestName2
 };
 
-const char sys_param_screen_footer[] PROGMEM = "Настройки системы";
+const char sys_param_screen_footer[] = "Настройки системы";
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // section for the editor of drums parameters
 
 /////////////////////////////////////////////////////////////////
 // specific data for the Master Volume parameter
-const char dpDrumsVolumeName[]    PROGMEM  = "Громк. ударных";
+const char dpDrumsVolumeName[]    = "Громк. ударных";
 #define dpDrumsVolumeMaxValue 127
 
 /////////////////////////////////////////////////////////////////
 // specific data for the Drumset Number parameter
-const char dpDrumsetNumberName[]    PROGMEM  = "Набор звуков";
+const char dpDrumsetNumberName[]    = "Набор звуков";
 #define dpDrumsetNumberMaxValue 127
 
 /////////////////////////////////////////////////////////////////
 // specific data for the Drum Sound for Bass parameter
-const char dpDrumSoundForBassName[]    PROGMEM  = "Звук для баса";
+const char dpDrumSoundForBassName[]    = "Звук для баса";
 #define dpDrumSoundForBassMinValue F1      // this is a MIDI note
 #define dpDrumSoundForBassMaxValue E7      // this is a MIDI note
 
 /////////////////////////////////////////////////////////////////
 // specific data for the Drum Sound for Bass Velocity parameter
-const char dpDrumSoundForBassVelocityName[]    PROGMEM  = "     его сила";
+const char dpDrumSoundForBassVelocityName[]    = "     его сила";
 #define dpDrumSoundForBassVelocityMaxValue 127
 
 /////////////////////////////////////////////////////////////////
 // specific data for the Drum Sound for Chord parameter
-const char dpDrumSoundForChordName[]    PROGMEM  = "Звук д. аккорда";
+const char dpDrumSoundForChordName[]    = "Звук д. аккорда";
 #define dpDrumSoundForChordMinValue F1      // this is a MIDI note
 #define dpDrumSoundForChordMaxValue E7      // this is a MIDI note
 
 /////////////////////////////////////////////////////////////////
 // specific data for the Drum Sound for Chord Velocity parameter
-const char dpDrumSoundForChordVelocityName[]    PROGMEM  = "       его сила";
+const char dpDrumSoundForChordVelocityName[]    = "       его сила";
 #define dpDrumSoundForChordVelocityMaxValue 127
 
 /////////////////////////////////////////////////////////////////
@@ -702,11 +691,11 @@ const char dpDrumSoundForChordVelocityName[]    PROGMEM  = "       его сил
 #define dpEditorValueColumn  17      // where we start printing values
 
 #define dpNumberOfParameters   6
-const char * const  dpParameterNames[dpNumberOfParameters] PROGMEM = {
+const char * const  dpParameterNames[dpNumberOfParameters] = {
     dpDrumsVolumeName, dpDrumsetNumberName, dpDrumSoundForBassName, dpDrumSoundForBassVelocityName, dpDrumSoundForChordName, dpDrumSoundForChordVelocityName
 };
 
-const char drums_param_screen_footer[] PROGMEM = "Настройки ударных";
+const char drums_param_screen_footer[] = "Настройки ударных";
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // section for the Synth-specific instrument editor
@@ -715,21 +704,21 @@ const char drums_param_screen_footer[] PROGMEM = "Настройки ударн�
 enum {ieGroupId = 0, ieInstrumentId};
 #define ieNumberOfParameters 2
 
-const char ieInstrumentGroupTitle[] PROGMEM = "Группа инструментов:";
+const char ieInstrumentGroupTitle[] = "Группа инструментов:";
 #define ieInstrumentGroupTitlePos   0   // 1st row
 #define ieInstrumentGroupNamePos    1   // just below the title
 
-const char ieInstrumentTitle[] PROGMEM = "Инструмент:";
+const char ieInstrumentTitle[] = "Инструмент:";
 #define ieInstrumentTitlePos   3        // 4th row
 #define ieInstrumentNamePos    4        // just below the title
 
-//                                          123456789-123456789-1
-const char ieInstrumentIDsLine[] PROGMEM = "Банк: XXX, Прог.: XXX";
+//                                  123456789-123456789-1
+const char ieInstrumentIDsLine[] = "Банк: XXX, Прог.: XXX";
 #define ieInstrumentIDsLinePos  6
 #define ieBankIdColumn      6
 #define ieProgramIdColumn   18
 
-const char instrument_edit_screen_footer[] PROGMEM = "Выбор инструмента";
+const char instrument_edit_screen_footer[] = "Выбор инструмента";
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // *** section for ATEMP Synthesizer
@@ -737,62 +726,62 @@ const char instrument_edit_screen_footer[] PROGMEM = "Выбор инструм�
 // Mapping of banks. Sounds are distributed among banks pretty chaotically, without any visible pattern.
 // We want to be able to skip banks which do not contain sounds. So, this is a mapping where we have a list of non-empty banks for each program (PC 0..127)
 // If only "General MIDI" sound is available for a program, then a respective pointer is NULL. Otherwise, it points to a vector of bank IDs.
-const uint8_t atBanks4[] PROGMEM  = {7, 0, 8, 9, 16, 24, 25, 126};
-const uint8_t atBanks5[] PROGMEM  = {6, 0, 8, 9, 16, 24, 126};
-const uint8_t atBanks6[] PROGMEM  = {2, 0, 8};
-const uint8_t atBanks12[] PROGMEM  = {2, 0, 16};
-const uint8_t atBanks14[] PROGMEM  = {3, 0, 8, 9};
-const uint8_t atBanks15[] PROGMEM  = {2, 0, 1};
-const uint8_t atBanks16[] PROGMEM  = {8, 0, 1, 8, 9, 16, 33, 40, 126};
-const uint8_t atBanks17[] PROGMEM  = {5, 0, 1, 8, 9, 126};
-const uint8_t atBanks18[] PROGMEM  = {4, 0, 8, 16, 24};
-const uint8_t atBanks19[] PROGMEM  = {2, 0, 8};
-const uint8_t atBanks21[] PROGMEM  = {2, 0, 8};
-const uint8_t atBanks24[] PROGMEM  = {4, 0, 8, 16, 24};
-const uint8_t atBanks25[] PROGMEM  = {7, 0, 7, 8, 9, 16, 32, 126};
-const uint8_t atBanks26[] PROGMEM  = {2, 0, 8};
-const uint8_t atBanks27[] PROGMEM  = {4, 0, 8, 9, 126};
-const uint8_t atBanks28[] PROGMEM  = {2, 0, 8};
-const uint8_t atBanks29[] PROGMEM  = {2, 0, 126};
-const uint8_t atBanks30[] PROGMEM  = {2, 0, 8};
-const uint8_t atBanks31[] PROGMEM  = {3, 0, 8, 16};
-const uint8_t atBanks36[] PROGMEM  = {2, 0, 126};
-const uint8_t atBanks38[] PROGMEM  = {6, 0, 8, 9, 10, 16, 126};
-const uint8_t atBanks39[] PROGMEM  = {10, 0, 1, 2, 3, 8, 16, 17, 18, 19, 126};
-const uint8_t atBanks48[] PROGMEM  = {2, 0, 8};
-const uint8_t atBanks49[] PROGMEM  = {2, 0, 10};
-const uint8_t atBanks50[] PROGMEM  = {2, 0, 8};
-const uint8_t atBanks55[] PROGMEM  = {3, 0, 8, 9};
-const uint8_t atBanks56[] PROGMEM  = {5, 0, 1, 8, 24, 126};
-const uint8_t atBanks59[] PROGMEM  = {3, 0, 1, 126};
-const uint8_t atBanks61[] PROGMEM  = {3, 0, 8, 16};
-const uint8_t atBanks62[] PROGMEM  = {2, 0, 8};
-const uint8_t atBanks63[] PROGMEM  = {2, 0, 8};
-const uint8_t atBanks64[] PROGMEM  = {2, 0, 126};
-const uint8_t atBanks65[] PROGMEM  = {3, 0, 8, 126};
-const uint8_t atBanks66[] PROGMEM  = {2, 0, 8};
-const uint8_t atBanks67[] PROGMEM  = {2, 0, 126};
-const uint8_t atBanks69[] PROGMEM  = {2, 0, 126};
-const uint8_t atBanks70[] PROGMEM  = {2, 0, 126};
-const uint8_t atBanks71[] PROGMEM  = {2, 0, 8};
-const uint8_t atBanks80[] PROGMEM  = {3, 0, 1, 8};
-const uint8_t atBanks81[] PROGMEM  = {2, 0, 1};
-const uint8_t atBanks89[] PROGMEM  = {2, 0, 3};
-const uint8_t atBanks102[] PROGMEM  = {2, 0, 2};
-const uint8_t atBanks107[] PROGMEM  = {2, 0, 8};
-const uint8_t atBanks115[] PROGMEM  = {2, 0, 8};
-const uint8_t atBanks116[] PROGMEM  = {2, 0, 8};
-const uint8_t atBanks117[] PROGMEM  = {2, 0, 8};
-const uint8_t atBanks118[] PROGMEM  = {3, 0, 8, 9};
-const uint8_t atBanks120[] PROGMEM  = {5, 0, 1, 2, 5, 6};
-const uint8_t atBanks121[] PROGMEM  = {2, 0, 1};
-const uint8_t atBanks122[] PROGMEM  = {6, 0, 1, 2, 3, 4, 5};
-const uint8_t atBanks123[] PROGMEM  = {4, 0, 1, 2, 3};
-const uint8_t atBanks124[] PROGMEM  = {6, 0, 1, 2, 3, 4, 5};
-const uint8_t atBanks125[] PROGMEM  = {10, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-const uint8_t atBanks126[] PROGMEM  = {6, 0, 1, 2, 3, 4, 5};
-const uint8_t atBanks127[] PROGMEM  = {4, 0, 1, 2, 3};
-const uint8_t * const  atBanks[128] PROGMEM = {
+const uint8_t atBanks4[]  = {7, 0, 8, 9, 16, 24, 25, 126};
+const uint8_t atBanks5[]  = {6, 0, 8, 9, 16, 24, 126};
+const uint8_t atBanks6[]  = {2, 0, 8};
+const uint8_t atBanks12[] = {2, 0, 16};
+const uint8_t atBanks14[] = {3, 0, 8, 9};
+const uint8_t atBanks15[] = {2, 0, 1};
+const uint8_t atBanks16[] = {8, 0, 1, 8, 9, 16, 33, 40, 126};
+const uint8_t atBanks17[] = {5, 0, 1, 8, 9, 126};
+const uint8_t atBanks18[] = {4, 0, 8, 16, 24};
+const uint8_t atBanks19[] = {2, 0, 8};
+const uint8_t atBanks21[] = {2, 0, 8};
+const uint8_t atBanks24[] = {4, 0, 8, 16, 24};
+const uint8_t atBanks25[] = {7, 0, 7, 8, 9, 16, 32, 126};
+const uint8_t atBanks26[] = {2, 0, 8};
+const uint8_t atBanks27[] = {4, 0, 8, 9, 126};
+const uint8_t atBanks28[] = {2, 0, 8};
+const uint8_t atBanks29[] = {2, 0, 126};
+const uint8_t atBanks30[] = {2, 0, 8};
+const uint8_t atBanks31[] = {3, 0, 8, 16};
+const uint8_t atBanks36[] = {2, 0, 126};
+const uint8_t atBanks38[] = {6, 0, 8, 9, 10, 16, 126};
+const uint8_t atBanks39[] = {10, 0, 1, 2, 3, 8, 16, 17, 18, 19, 126};
+const uint8_t atBanks48[] = {2, 0, 8};
+const uint8_t atBanks49[] = {2, 0, 10};
+const uint8_t atBanks50[] = {2, 0, 8};
+const uint8_t atBanks55[] = {3, 0, 8, 9};
+const uint8_t atBanks56[] = {5, 0, 1, 8, 24, 126};
+const uint8_t atBanks59[] = {3, 0, 1, 126};
+const uint8_t atBanks61[] = {3, 0, 8, 16};
+const uint8_t atBanks62[] = {2, 0, 8};
+const uint8_t atBanks63[] = {2, 0, 8};
+const uint8_t atBanks64[] = {2, 0, 126};
+const uint8_t atBanks65[] = {3, 0, 8, 126};
+const uint8_t atBanks66[] = {2, 0, 8};
+const uint8_t atBanks67[] = {2, 0, 126};
+const uint8_t atBanks69[] = {2, 0, 126};
+const uint8_t atBanks70[] = {2, 0, 126};
+const uint8_t atBanks71[] = {2, 0, 8};
+const uint8_t atBanks80[] = {3, 0, 1, 8};
+const uint8_t atBanks81[] = {2, 0, 1};
+const uint8_t atBanks89[] = {2, 0, 3};
+const uint8_t atBanks102[] = {2, 0, 2};
+const uint8_t atBanks107[] = {2, 0, 8};
+const uint8_t atBanks115[] = {2, 0, 8};
+const uint8_t atBanks116[] = {2, 0, 8};
+const uint8_t atBanks117[] = {2, 0, 8};
+const uint8_t atBanks118[] = {3, 0, 8, 9};
+const uint8_t atBanks120[] = {5, 0, 1, 2, 5, 6};
+const uint8_t atBanks121[] = {2, 0, 1};
+const uint8_t atBanks122[] = {6, 0, 1, 2, 3, 4, 5};
+const uint8_t atBanks123[] = {4, 0, 1, 2, 3};
+const uint8_t atBanks124[] = {6, 0, 1, 2, 3, 4, 5};
+const uint8_t atBanks125[] = {10, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+const uint8_t atBanks126[] = {6, 0, 1, 2, 3, 4, 5};
+const uint8_t atBanks127[] = {4, 0, 1, 2, 3};
+const uint8_t * const  atBanks[128] = {
 //  0     1     2     3     4         5         6         7     8     9     10    11    12         13    14         15
     NULL, NULL, NULL, NULL, atBanks4, atBanks5, atBanks6, NULL, NULL, NULL, NULL, NULL, atBanks12, NULL, atBanks14, atBanks15,
 //  16         17         18         19         20    21         22    23    24         25         26         27         28         29         30         31
@@ -812,81 +801,81 @@ const uint8_t * const  atBanks[128] PROGMEM = {
 };
 
 // A list of drumsets supproted by ATEMP
-const uint8_t atDrumSets[] PROGMEM  = {10, 0, 8, 16, 24, 25, 32, 40, 48, 56, 127};
+const uint8_t atDrumSets[] = {10, 0, 8, 16, 24, 25, 32, 40, 48, 56, 127};
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // *** section for Pro.DX Synthesizer
 
-const uint8_t dxBanks0[] PROGMEM = {3, 0, 1, 2};
-const uint8_t dxBanks1[] PROGMEM = {2, 0, 8};
-const uint8_t dxBanks3[] PROGMEM = {2, 0, 8};
-const uint8_t dxBanks4[] PROGMEM = {7, 0, 1, 2, 3, 4, 8, 9};
-const uint8_t dxBanks5[] PROGMEM = {5, 0, 1, 2, 8, 9};
-const uint8_t dxBanks6[] PROGMEM = {3, 0, 1, 8};
-const uint8_t dxBanks7[] PROGMEM = {2, 0, 1};
-const uint8_t dxBanks12[] PROGMEM = {2, 0, 1};
-const uint8_t dxBanks14[] PROGMEM = {3, 0, 1, 2};
-const uint8_t dxBanks15[] PROGMEM = {2, 0, 1};
-const uint8_t dxBanks16[] PROGMEM = {8, 0, 1, 2, 8, 9, 16, 33, 40};
-const uint8_t dxBanks17[] PROGMEM = {6, 0, 1, 2, 8, 9, 16};
-const uint8_t dxBanks18[] PROGMEM = {4, 0, 8, 16, 24};
-const uint8_t dxBanks19[] PROGMEM = {7, 0, 1, 19, 3, 4, 5, 8};
-const uint8_t dxBanks21[] PROGMEM = {5, 0, 1, 2, 3, 8};
-const uint8_t dxBanks22[] PROGMEM = {2, 0, 1};
-const uint8_t dxBanks24[] PROGMEM = {8, 0, 1, 2, 8, 16, 24, 32, 40};
-const uint8_t dxBanks25[] PROGMEM = {7, 0, 1, 8, 16, 17, 18, 32};
-const uint8_t dxBanks26[] PROGMEM = {4, 0, 1, 2, 8};
-const uint8_t dxBanks27[] PROGMEM = {4, 0, 1, 2, 3};
-const uint8_t dxBanks29[] PROGMEM = {2, 0, 1};
-const uint8_t dxBanks30[] PROGMEM = {2, 0, 1};
-const uint8_t dxBanks31[] PROGMEM = {2, 0, 1};
-const uint8_t dxBanks32[] PROGMEM = {3, 0, 1, 2};
-const uint8_t dxBanks33[] PROGMEM = {5, 0, 1, 2, 3, 4};
-const uint8_t dxBanks38[] PROGMEM = {9, 0, 1, 2, 3, 4, 5, 6, 7, 8};
-const uint8_t dxBanks39[] PROGMEM = {11, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
-const uint8_t dxBanks40[] PROGMEM = {2, 0, 1};
-const uint8_t dxBanks45[] PROGMEM = {2, 0, 1};
-const uint8_t dxBanks47[] PROGMEM = {2, 0, 1};
-const uint8_t dxBanks48[] PROGMEM = {4, 0, 1, 2, 3};
-const uint8_t dxBanks49[] PROGMEM = {2, 0, 1};
-const uint8_t dxBanks50[] PROGMEM = {3, 0, 1, 2};
-const uint8_t dxBanks51[] PROGMEM = {2, 0, 1};
-const uint8_t dxBanks52[] PROGMEM = {3, 0, 1, 2};
-const uint8_t dxBanks53[] PROGMEM = {3, 0, 1, 2};
-const uint8_t dxBanks55[] PROGMEM = {3, 0, 1, 2};
-const uint8_t dxBanks56[] PROGMEM = {3, 0, 1, 2};
-const uint8_t dxBanks58[] PROGMEM = {3, 0, 1, 2};
-const uint8_t dxBanks59[] PROGMEM = {2, 0, 1};
-const uint8_t dxBanks61[] PROGMEM = {6, 0, 1, 2, 3, 8, 16};
-const uint8_t dxBanks62[] PROGMEM = {5, 0, 1, 2, 8, 16};
-const uint8_t dxBanks63[] PROGMEM = {5, 0, 1, 2, 3, 8};
-const uint8_t dxBanks65[] PROGMEM = {3, 0, 1, 2};
-const uint8_t dxBanks66[] PROGMEM = {4, 0, 1, 2, 3};
-const uint8_t dxBanks71[] PROGMEM = {2, 0, 1};
-const uint8_t dxBanks73[] PROGMEM = {2, 0, 1};
-const uint8_t dxBanks74[] PROGMEM = {2, 0, 1};
-const uint8_t dxBanks80[] PROGMEM = {3, 0, 1, 2};
-const uint8_t dxBanks81[] PROGMEM = {3, 0, 1, 8};
-const uint8_t dxBanks88[] PROGMEM = {3, 0, 1, 2};
-const uint8_t dxBanks89[] PROGMEM = {5, 0, 1, 2, 3, 8};
-const uint8_t dxBanks90[] PROGMEM = {2, 0, 1};
-const uint8_t dxBanks91[] PROGMEM = {2, 0, 1};
-const uint8_t dxBanks102[] PROGMEM = {2, 0, 1};
-const uint8_t dxBanks107[] PROGMEM = {2, 0, 1};
-const uint8_t dxBanks114[] PROGMEM = {2, 0, 1};
-const uint8_t dxBanks115[] PROGMEM = {2, 0, 1};
-const uint8_t dxBanks116[] PROGMEM = {2, 0, 1};
-const uint8_t dxBanks117[] PROGMEM = {2, 0, 1};
-const uint8_t dxBanks118[] PROGMEM = {3, 0, 1, 2};
-const uint8_t dxBanks120[] PROGMEM = {5, 0, 1, 2, 3, 4};
-const uint8_t dxBanks121[] PROGMEM = {3, 0, 1, 5};
-const uint8_t dxBanks122[] PROGMEM = {5, 0, 1, 2, 3, 4};
-const uint8_t dxBanks123[] PROGMEM = {4, 0, 1, 2, 3};
-const uint8_t dxBanks124[] PROGMEM = {6, 0, 1, 2, 3, 4, 5};
-const uint8_t dxBanks125[] PROGMEM = {10, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-const uint8_t dxBanks126[] PROGMEM = {6, 0, 1, 2, 3, 4, 5};
-const uint8_t dxBanks127[] PROGMEM = {4, 0, 1, 2, 3};
-const uint8_t * const dxBanks[128] PROGMEM = {
+const uint8_t dxBanks0[] = {3, 0, 1, 2};
+const uint8_t dxBanks1[] = {2, 0, 8};
+const uint8_t dxBanks3[] = {2, 0, 8};
+const uint8_t dxBanks4[] = {7, 0, 1, 2, 3, 4, 8, 9};
+const uint8_t dxBanks5[] = {5, 0, 1, 2, 8, 9};
+const uint8_t dxBanks6[] = {3, 0, 1, 8};
+const uint8_t dxBanks7[] = {2, 0, 1};
+const uint8_t dxBanks12[] = {2, 0, 1};
+const uint8_t dxBanks14[] = {3, 0, 1, 2};
+const uint8_t dxBanks15[] = {2, 0, 1};
+const uint8_t dxBanks16[] = {8, 0, 1, 2, 8, 9, 16, 33, 40};
+const uint8_t dxBanks17[] = {6, 0, 1, 2, 8, 9, 16};
+const uint8_t dxBanks18[] = {4, 0, 8, 16, 24};
+const uint8_t dxBanks19[] = {7, 0, 1, 19, 3, 4, 5, 8};
+const uint8_t dxBanks21[] = {5, 0, 1, 2, 3, 8};
+const uint8_t dxBanks22[] = {2, 0, 1};
+const uint8_t dxBanks24[] = {8, 0, 1, 2, 8, 16, 24, 32, 40};
+const uint8_t dxBanks25[] = {7, 0, 1, 8, 16, 17, 18, 32};
+const uint8_t dxBanks26[] = {4, 0, 1, 2, 8};
+const uint8_t dxBanks27[] = {4, 0, 1, 2, 3};
+const uint8_t dxBanks29[] = {2, 0, 1};
+const uint8_t dxBanks30[] = {2, 0, 1};
+const uint8_t dxBanks31[] = {2, 0, 1};
+const uint8_t dxBanks32[] = {3, 0, 1, 2};
+const uint8_t dxBanks33[] = {5, 0, 1, 2, 3, 4};
+const uint8_t dxBanks38[] = {9, 0, 1, 2, 3, 4, 5, 6, 7, 8};
+const uint8_t dxBanks39[] = {11, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+const uint8_t dxBanks40[] = {2, 0, 1};
+const uint8_t dxBanks45[] = {2, 0, 1};
+const uint8_t dxBanks47[] = {2, 0, 1};
+const uint8_t dxBanks48[] = {4, 0, 1, 2, 3};
+const uint8_t dxBanks49[] = {2, 0, 1};
+const uint8_t dxBanks50[] = {3, 0, 1, 2};
+const uint8_t dxBanks51[] = {2, 0, 1};
+const uint8_t dxBanks52[] = {3, 0, 1, 2};
+const uint8_t dxBanks53[] = {3, 0, 1, 2};
+const uint8_t dxBanks55[] = {3, 0, 1, 2};
+const uint8_t dxBanks56[] = {3, 0, 1, 2};
+const uint8_t dxBanks58[] = {3, 0, 1, 2};
+const uint8_t dxBanks59[] = {2, 0, 1};
+const uint8_t dxBanks61[] = {6, 0, 1, 2, 3, 8, 16};
+const uint8_t dxBanks62[] = {5, 0, 1, 2, 8, 16};
+const uint8_t dxBanks63[] = {5, 0, 1, 2, 3, 8};
+const uint8_t dxBanks65[] = {3, 0, 1, 2};
+const uint8_t dxBanks66[] = {4, 0, 1, 2, 3};
+const uint8_t dxBanks71[] = {2, 0, 1};
+const uint8_t dxBanks73[] = {2, 0, 1};
+const uint8_t dxBanks74[] = {2, 0, 1};
+const uint8_t dxBanks80[] = {3, 0, 1, 2};
+const uint8_t dxBanks81[] = {3, 0, 1, 8};
+const uint8_t dxBanks88[] = {3, 0, 1, 2};
+const uint8_t dxBanks89[] = {5, 0, 1, 2, 3, 8};
+const uint8_t dxBanks90[] = {2, 0, 1};
+const uint8_t dxBanks91[] = {2, 0, 1};
+const uint8_t dxBanks102[] = {2, 0, 1};
+const uint8_t dxBanks107[] = {2, 0, 1};
+const uint8_t dxBanks114[] = {2, 0, 1};
+const uint8_t dxBanks115[] = {2, 0, 1};
+const uint8_t dxBanks116[] = {2, 0, 1};
+const uint8_t dxBanks117[] = {2, 0, 1};
+const uint8_t dxBanks118[] = {3, 0, 1, 2};
+const uint8_t dxBanks120[] = {5, 0, 1, 2, 3, 4};
+const uint8_t dxBanks121[] = {3, 0, 1, 5};
+const uint8_t dxBanks122[] = {5, 0, 1, 2, 3, 4};
+const uint8_t dxBanks123[] = {4, 0, 1, 2, 3};
+const uint8_t dxBanks124[] = {6, 0, 1, 2, 3, 4, 5};
+const uint8_t dxBanks125[] = {10, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+const uint8_t dxBanks126[] = {6, 0, 1, 2, 3, 4, 5};
+const uint8_t dxBanks127[] = {4, 0, 1, 2, 3};
+const uint8_t * const dxBanks[128] = {
     dxBanks0, dxBanks1, NULL, dxBanks3, dxBanks4, dxBanks5, dxBanks6, dxBanks7, NULL, NULL, NULL, NULL, dxBanks12, NULL, dxBanks14,
     dxBanks15, dxBanks16, dxBanks17, dxBanks18, dxBanks19, NULL, dxBanks21, dxBanks22, NULL, dxBanks24, dxBanks25, dxBanks26, dxBanks27,
     NULL, dxBanks29, dxBanks30, dxBanks31, dxBanks32, dxBanks33, NULL, NULL, NULL, NULL, dxBanks38, dxBanks39, dxBanks40, NULL, NULL, NULL,
@@ -899,7 +888,7 @@ const uint8_t * const dxBanks[128] PROGMEM = {
 };
 
 // A list of drumsets supproted by Pro.DX
-const uint8_t dxDrumSets[] PROGMEM  = {15, 0, 1, 2, 3, 4, 5, 6, 8, 11, 16, 17, 24, 25, 40, 48};
+const uint8_t dxDrumSets[] = {15, 0, 1, 2, 3, 4, 5, 6, 8, 11, 16, 17, 24, 25, 40, 48};
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////// private methods //////////////////////////////////////////
@@ -935,7 +924,7 @@ int mb_strlen_P(const char * _source)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-// Helper function returns the specified sub-string from the large string stored in PROGMEM
+// Helper function returns the specified sub-string from the large string stored in 
 // The large string contains many shorter strings ending with \0
 PGM_P   getSubString_P(PGM_P storage, int16_t index){
     while (index-- > 0){
@@ -1174,7 +1163,7 @@ void TesMidiUI::setTextCursor(uint8_t X, uint8_t Y){
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
-//  prints a number according to the specified format string located in PROGMEM
+//  prints a number according to the specified format string 
 void TesMidiUI::printFormatted(PGM_P format, uint8_t value){
     char buf[maxFormattedStringLength];     // for a properly aligned number
     char fmt[maxFormatDescriptorLength];    // for a format descriptor string
