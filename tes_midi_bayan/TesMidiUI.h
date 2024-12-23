@@ -3,6 +3,7 @@
 
 #include <GyverOLED.h>
 #include "TesLedSet.h"
+#include "common.h"
 
 // forward declaration
 class TesMIDIController;
@@ -56,7 +57,7 @@ struct  TesPresetStateMachine{
         uint8_t state: 2;
         uint8_t writePreset: 3;         // the preset being processed
     };
-    uint16_t    writeTimer;             // starts when the user holds the preset button
+    timer_t     writeTimer;             // starts when the user holds the preset button
 
     TesPresetStateMachine(void){
         state = psNormal;
@@ -70,7 +71,7 @@ struct  TesFKeyStateMachine{
         uint8_t state: 2;
         uint8_t writeFKey: 2;           // the F-key being processed (F1 .. F4)
     };
-    uint16_t    writeTimer;             // starts when the user holds the preset button
+    timer_t     writeTimer;             // starts when the user holds the preset button
 
     TesFKeyStateMachine(void){
         state       = psNormal;
@@ -134,10 +135,10 @@ private:
     GyverOLED<SSH1106_128x64>   * _oled;    // OLED display instance
     TesMIDIController           * _mc;      // MIDI Controller instance
     TesUIFlags                  _flags;     // aux flags
-    uint16_t                    _display_update_timer;      // we update display by a timer, not in each work cycle
+    timer_t                     _display_update_timer;      // we update display by a timer, not in each work cycle
     TesLedSet                   * _led_set;                 // the LED panel to be used
     TesEditorStatus             _editor_status;
-    uint16_t                    _inactivity_timer;          // if no user activity - each editor switches back to Main Screen
+    timer_t                     _inactivity_timer;          // if no user activity - each editor switches back to Main Screen
     TesPresetStateMachine       _preset_sm;                 // all data required to work with presets
     TesFKeyStateMachine         _fkey_sm;                   // all data required to work with F-keys
 

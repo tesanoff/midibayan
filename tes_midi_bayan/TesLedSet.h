@@ -2,6 +2,7 @@
 #define _TES_LED_SET_LIBRARY
 
 #include <Arduino.h>
+#include "common.h"
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // constants which shoudl be used to refer to particular LEDs
@@ -93,7 +94,7 @@ private:
     // (possible states are defined as enum above)
     // IMPORTANT: 2 bits are allocated for a sligle status, i.e. each byte can store statuses for 4 LEDs.
     uint8_t _led_mode[ _TES_LED_PANEL_LED_MODE_BYTES ];
-    uint16_t _blink_timer[ _TES_LED_SET_NUMBER_OF_CHIPS * 8 ];   // this has to be an array of uint32_t :(
+    timer_t _blink_timer[ _TES_LED_SET_NUMBER_OF_CHIPS * 8 ];
     // this flag shows that an update of the cascade is required
     uint8_t _cascade_update_is_required;
 

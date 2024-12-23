@@ -20,7 +20,7 @@ void TesPressureSensor::init(void){
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // the tick() method that must be called from loop()
 void TesPressureSensor::tick(void){
-    uint16_t    millis_snapshot = millis();
+    timer_t     millis_snapshot = millis();
 
     // check the timer
     if (millis_snapshot - _event_timer > PRESSURE_EVENT_PERIOD){

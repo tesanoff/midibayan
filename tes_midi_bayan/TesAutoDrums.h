@@ -2,6 +2,7 @@
 #define TES_AUTO_DRUMS_H
 
 #include <Arduino.h>
+#include "common.h"
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -63,7 +64,7 @@ private:
     TesMIDIOutQueue     * _midi_queue;
     uint8_t             _melodyId;
     bool                _is_playing;
-    uint16_t            _melody_timer;
+    timer_t             _melody_timer;
     uint8_t             _current_note;
     uint8_t             _tempo;
 

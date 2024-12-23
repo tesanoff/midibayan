@@ -43,7 +43,7 @@ void    TesMidiUI::init(void){
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // standard tick() method
 void TesMidiUI::tick(void){
-    uint16_t    millis_snapshot = millis();
+    timer_t     millis_snapshot = millis();
 
     // check the display update timer
     if (millis_snapshot - _display_update_timer > TES_DISPLAY_UPDATE_PERIOD){

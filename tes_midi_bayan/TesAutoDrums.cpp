@@ -249,7 +249,7 @@ void    TesAutoDrums::tick(void){
     // calculate note_period
     uint32_t notePeriod = noteDuration ? tact_period / noteDuration : 0;
     // check the melody timer
-    uint16_t millis_snapshot = millis();
+    timer_t millis_snapshot = millis();
     if((millis_snapshot - _melody_timer) > notePeriod){
         // it's time for the next note
         // if the current note command is "On" then its size is 3 bytes; otherwise - its size is 2 bytes

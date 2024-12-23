@@ -161,7 +161,7 @@ void    TesMIDIController::init(void){
 ///////////////////////////////////////////////////////////////////////////
 // the tick() method
 void    TesMIDIController::tick(void){
-    uint16_t    millis_snapshot = millis();
+    timer_t     millis_snapshot = millis();
     // check if we're sending parameters to the synthesizer
     if ( _var.sendingParameters ){
         if (millis_snapshot - _var.sendParamTimer > sendParamInterval){

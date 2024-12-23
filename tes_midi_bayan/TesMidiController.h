@@ -7,6 +7,7 @@
 #include "TesMidiUI.h"
 #include "TesAutoDrums.h"
 #include "swer.h"
+#include "common.h"
 
 #define TES_MIDI_DEBUG
 
@@ -225,8 +226,8 @@ struct TesMIDIControllerRunTimeData {
         uint8_t     numberOfActiveChordNotes: 4;    // this is for correct playing "drums for chords"
         uint8_t     drumsMode: 2;               // 0 - off, 1 - manual, 2 - standby, 3 - playing
     };
-    uint16_t        sendParamTimer;             // to measure intwervals between sending each parameter of the preset
-    uint16_t        globalSettingsSavingTimer;  // for saving global settings to EEPROM
+    timer_t         sendParamTimer;             // to measure intwervals between sending each parameter of the preset
+    timer_t         globalSettingsSavingTimer;  // for saving global settings to EEPROM
     uint16_t        bassNotesStatus;            // bitmap stores status of each lower-bass notes: 1 - on, 0 - off
     uint8_t         presetUpdateBitmap[SIZE_OF_PRESET_UPDATE_BITMAP];   // each bit represents 1 preset parameter
                                                 // used when preset parameters are sent to the synth to minimize 
