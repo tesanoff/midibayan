@@ -88,7 +88,7 @@ TesMIDIControllerSettings::TesMIDIControllerSettings (void){
     preset.drumSoundForChordVelocity    = 127;  // max velocity
     // set default values for everything except MIDI channels
     for(int i=1; i<NUMBER_OF_KBD_PARAMETERS; i++){
-        preset.kbdParameter[0][i] = preset.kbdParameter[1][i] = preset.kbdParameter[2][i] = preset.kbdParameter[3][i] = pgm_read_byte(kbdParameterDefaultValue + i);
+        preset.kbdParameter[0][i] = preset.kbdParameter[1][i] = preset.kbdParameter[2][i] = preset.kbdParameter[3][i] = kbdParameterDefaultValue[i];
     }
     // set default MIDI channels
     preset.kbdParameter[0][0] = 0;
@@ -166,7 +166,7 @@ void    TesMIDIController::tick(void){
     if ( _var.sendingParameters ){
         if (millis_snapshot - _var.sendParamTimer > sendParamInterval){
             // send the current parameter
-            sendKbdParameter(_var.currentKbd, pgm_read_byte(kbdParameterOrder + _var.currentParameter));
+            sendKbdParameter(_var.currentKbd, kbdParameterOrder[_var.currentParameter]);
             // check if it was the last parameter
             if ((_var.currentKbd == (NUMBER_OF_KEYBOARDS - 1)) && (_var.currentParameter == (NUMBER_OF_KBD_PARAMETERS - 1))){
                 // stop the process
@@ -202,7 +202,7 @@ void    TesMIDIController::tick(void){
                     if (_var.sendingParameters){
                         // check if the selected parameter is marked for sending in the case of optimized update
                         if (_var.optimizedUpdate) {
-                            uint8_t parId = pgm_read_byte(kbdParameterOrder + _var.currentParameter);
+                            uint8_t parId = kbdParameterOrder[_var.currentParameter];
                             uint8_t byteIndex   = (_var.currentKbd * NUMBER_OF_KBD_PARAMETERS + parId) / 8;
                             uint8_t bitIndex    = (_var.currentKbd * NUMBER_OF_KBD_PARAMETERS + parId) % 8;
                             // get the flag
@@ -288,7 +288,7 @@ void TesMIDIController::processButtonEvent(tesEvent *event){
     TesMIDICommand  cmd;            // compose a MIDI command
     cmd.midiCommand = mcNoteOn;     // we use only this command for playing notes
     cmd.channelId = _settings.preset.kbdParameter[getKbdId(event->buttonId)][idxChannel];
-    cmd.data1       = pgm_read_byte(noteMap + event->buttonId); // take a MIDI note from the mapping table
+    cmd.data1       = noteMap[event->buttonId]; // take a MIDI note from the mapping table
     cmd.data2       = (event->buttonEvent == tesBePressed)  // assume that events can be
                       ? TES_DEFAULT_VELOCITY : 0;           // either "Pressed" or "Released"
     _midi_queue.pushCommand(&cmd);

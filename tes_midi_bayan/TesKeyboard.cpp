@@ -240,7 +240,7 @@ uint8_t TesKeyboard::getPressedLevel(uint8_t buttonId){
     uint8_t byteIndex = buttonId / 8;
     uint8_t bitIndex  = buttonId % 8;
     // return the value
-    return (pgm_read_byte(tesButtonPressedLevels + byteIndex) & ((uint8_t)1 << bitIndex)) >> bitIndex;
+    return (tesButtonPressedLevels[byteIndex] & ((uint8_t)1 << bitIndex)) >> bitIndex;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -305,7 +305,7 @@ bool TesKeyboard::holdIsEnabled(uint8_t ctlButtonIndex){
     uint8_t byteIndex = ctlButtonIndex / 8;
     uint8_t bitIndex  = ctlButtonIndex % 8;
     // return the value
-    return (pgm_read_byte(tesCtlButtonHoldBitmap + byteIndex) & ((uint8_t)1 << bitIndex)) >> bitIndex;
+    return (tesCtlButtonHoldBitmap[byteIndex] & ((uint8_t)1 << bitIndex)) >> bitIndex;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -317,7 +317,7 @@ bool TesKeyboard::fastRepeatIsEnabled(uint8_t ctlButtonIndex){
     uint8_t byteIndex = ctlButtonIndex / 8;
     uint8_t bitIndex  = ctlButtonIndex % 8;
     // return the value
-    return (pgm_read_byte(tesCtlButtonFastRepeatBitmap + byteIndex) & ((uint8_t)1 << bitIndex)) >> bitIndex;
+    return (tesCtlButtonFastRepeatBitmap[byteIndex] & ((uint8_t)1 << bitIndex)) >> bitIndex;
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -467,7 +467,7 @@ const uint8_t   globalButtonMap[] = {
 // Translates the specified global button ID into a Control Button ID
 uint8_t TesKeyboard::getCtlButtonId(uint8_t  globalButtonId){
     // calculate the ID of a control button
-    uint8_t id = pgm_read_byte(globalButtonMap + globalButtonId);
+    uint8_t id = globalButtonMap[globalButtonId];
     // check if we get an unused key somehow
     if ( id == 0xFC ){
         // something went wrong
@@ -481,7 +481,7 @@ uint8_t TesKeyboard::getCtlButtonId(uint8_t  globalButtonId){
 // i.e. into ID of a button from left/right music keyboard (not from the control panel)
 uint8_t TesKeyboard::getMusicButtonId(uint8_t  globalButtonId){
     // calculate the ID of a music button
-    uint8_t id = pgm_read_byte(globalButtonMap + globalButtonId);
+    uint8_t id = globalButtonMap[globalButtonId];
     // check if we get an unused key somehow
     if ( id == 0xFC ){
         // something went wrong

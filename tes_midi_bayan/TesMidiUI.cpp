@@ -929,7 +929,7 @@ int mb_strlen_P(const char * _source)
 PGM_P   getSubString_P(PGM_P storage, int16_t index){
     while (index-- > 0){
         // skip the current string
-        while(pgm_read_byte(storage++) != 0);
+        while(*storage++ != 0);
     }
     return storage;
 }
@@ -939,7 +939,7 @@ PGM_P   getSubString_P(PGM_P storage, int16_t index){
 uint8_t getInstrumentGroupId(const uint8_t * group_map, uint8_t program_id){
     uint8_t group_id = 0;
 
-    while(pgm_read_byte(group_map + group_id) < program_id){
+    while(group_map[group_id] < program_id){
         group_id++;
     }
 
@@ -961,7 +961,7 @@ uint16_t getInstrumentIndex(const uint8_t * const * bank_map, uint8_t bank_id, u
         }
         else{
             // There're variations for program 'i'. The number of variations is stored in the 1st element of the vector.
-            instrument_index += pgm_read_byte(ptr);
+            instrument_index += ptr[0];
         }
     }
 
@@ -977,10 +977,10 @@ uint16_t getInstrumentIndex(const uint8_t * const * bank_map, uint8_t bank_id, u
     }
     else {
         // count prior variations of program_id
-        uint8_t N = pgm_read_byte(ptr);
+        uint8_t N = ptr[0];
         bool was_found = false;
         for(int i=1; i<=N; i++){
-            if (pgm_read_byte(ptr + i) != bank_id){
+            if (ptr[i] != bank_id){
                 // count this variation
                 instrument_index += 1;
             }
@@ -1011,9 +1011,9 @@ void setNextInstrument(const uint8_t * const * bank_map, uint8_t * bank_id, uint
     const uint8_t *ptr = bank_map[cur_program];
     // check if we can move to the next bank_id
     if (ptr != NULL){
-        uint8_t N = pgm_read_byte(ptr);             // the size of the vector
+        uint8_t N = ptr[0];             // the size of the vector
         for(int i=1; i<=N; i++){
-            if (pgm_read_byte(ptr + i) == cur_bank){
+            if (ptr[i] == cur_bank){
                 // we've got to the specified bank_id
                 bank_index = i;
                 break;
@@ -1041,7 +1041,7 @@ void setNextInstrument(const uint8_t * const * bank_map, uint8_t * bank_id, uint
     // check if we already have a new pair of bank_id:program_id
     if (bank_index != 0xFF){
         // just set the new bank_id
-        *bank_id = pgm_read_byte(ptr + bank_index);
+        *bank_id = ptr[bank_index];
         // program_id stays the same in this case
         // all done
         return;
@@ -1069,9 +1069,9 @@ void setNextInstrument(const uint8_t * const * bank_map, uint8_t * bank_id, uint
         *bank_id = 0;
     }
     else{
-        uint8_t N = pgm_read_byte(ptr);             // the size of the vector
+        uint8_t N = ptr[0];             // the size of the vector
         // read either the 1st of the last element (depending on the direction)
-        *bank_id = pgm_read_byte(ptr + ((forward)? 1 : N));
+        *bank_id = ptr[((forward)? 1 : N)];
     }
     // all done; new values were put into *bank_id and *program_id
 }
@@ -1206,7 +1206,7 @@ void TesMidiUI::drawMidiParamEditorScreen(void){
     for (int editorRow=0; editorRow<editorRows; editorRow++ ){
         setTextCursor(0, editorRow+editorFirstRow);
         uint8_t currentParameterIndex = editorRow + _editor_status.topIndex;
-        _oled->print( FPSTR((PGM_P)pgm_read_ptr(parLabel + currentParameterIndex)) );
+        _oled->print( parLabel[currentParameterIndex] );
         // print values
         for(int kbd=0; kbd<4; kbd++){
             // decide text inversion - select the value being edited
@@ -1232,8 +1232,8 @@ void TesMidiUI::drawMidiParamEditorScreen(void){
     // print the bottom
     _oled->fastLineH(7*symbolHeight-1, 3, 124, OLED_FILL);
     uint8_t selectedParameterIndex = _editor_status.topIndex + _editor_status.selectorY;
-    _oled->setCursor( (128 - mb_strlen_P(FPSTR((PGM_P)pgm_read_ptr(parHint + selectedParameterIndex)))*symbolWidth)/2, 7);
-    _oled->print(FPSTR((PGM_P)pgm_read_ptr(parHint + selectedParameterIndex)));
+    _oled->setCursor( (128 - mb_strlen_P(parHint[selectedParameterIndex])*symbolWidth)/2, 7);
+    _oled->print(parHint[selectedParameterIndex]);
 
     _flags.display_update_is_required = true;
 }
@@ -1247,20 +1247,20 @@ void TesMidiUI::drawSystemParamEditorScreen(void){
     for (int editorRow=0; editorRow<paramEditorRows; editorRow++){
         setTextCursor(paramEditorNameColumn, editorRow + paramEditorFirstRow);
         uint8_t currentSystemParameterIndex = editorRow + _editor_status.sysParTopIndex;
-        _oled->print( FPSTR((PGM_P)pgm_read_ptr(parParameterNames + currentSystemParameterIndex)) );
+        _oled->print( parParameterNames [currentSystemParameterIndex] );
         // print the value
         setTextCursor(paramEditorValueColumn, editorRow + paramEditorFirstRow);
         // decide text inversion - select the value being edited
         _oled->invertText(editorRow == _editor_status.sysParSelector);
         switch(currentSystemParameterIndex){
             case parRunningStatusId:
-                _oled->print( FPSTR((PGM_P)pgm_read_ptr(parBooleanLabel + _mc->_settings.global.runningStatus)) );
+                _oled->print( parBooleanLabel[_mc->_settings.global.runningStatus] );
                 break;
             case parBassOctavesId:
-                _oled->print( FPSTR((PGM_P)pgm_read_ptr(parBooleanLabel + _mc->_settings.preset.bassOctavesOn)) );
+                _oled->print( parBooleanLabel[_mc->_settings.preset.bassOctavesOn] );
                 break;
             case parSynthTypeId:
-                _oled->print( FPSTR((PGM_P)pgm_read_ptr(parSynthTypeLabel + _mc->_settings.global.synthType)) );
+                _oled->print( parSynthTypeLabel[_mc->_settings.global.synthType] );
                 break;
             case parMasterVolumeId:
                 printFormatted(numFormat3R, _mc->_settings.preset.masterVolume);
@@ -1270,11 +1270,11 @@ void TesMidiUI::drawSystemParamEditorScreen(void){
                 break;
             case parTest1:
                 // TODO the same value as RS
-                _oled->print( FPSTR((PGM_P)pgm_read_ptr(parBooleanLabel + _mc->_settings.global.runningStatus)) );
+                _oled->print( parBooleanLabel[_mc->_settings.global.runningStatus] );
                 break;
             case parTest2:
                 // TODO the same as "bass octaves"
-                _oled->print( FPSTR((PGM_P)pgm_read_ptr(parBooleanLabel + _mc->_settings.preset.bassOctavesOn)) );
+                _oled->print( parBooleanLabel[_mc->_settings.preset.bassOctavesOn] );
                 break;
             default:
                 SWER(swerGUI02);
@@ -1307,7 +1307,7 @@ void TesMidiUI::drawDrumsParamEditorScreen(void){
     // print rows in the work area
     for (int param_number=0; param_number < dpNumberOfParameters; param_number++){
         setTextCursor(dpEditorNameColumn, param_number * dpEditorRowIncrement + dpEditorFirstRow);
-        _oled->print( FPSTR((PGM_P)pgm_read_ptr(dpParameterNames + param_number)) );
+        _oled->print( dpParameterNames[param_number] );
         // print the value
         setTextCursor(dpEditorValueColumn, param_number * dpEditorRowIncrement + dpEditorFirstRow);
         // decide text inversion - select the value being edited
@@ -1378,8 +1378,8 @@ void TesMidiUI::drawInstrumentEditorScreen(void){
     _oled->setCursor((128 - mb_strlen_P(FPSTR(ieInstrumentGroupTitle))*symbolWidth)/2, ieInstrumentGroupTitlePos);
     _oled->print(FPSTR(ieInstrumentGroupTitle));
     // Print the Instrument group name
-    _oled->setCursor((128 - mb_strlen_P(FPSTR((PGM_P)pgm_read_ptr(dxGroupName + instrument_group)))*symbolWidth)/2, ieInstrumentGroupNamePos);
-    _oled->print(FPSTR((PGM_P)pgm_read_ptr(dxGroupName + instrument_group)));
+    _oled->setCursor((128 - mb_strlen_P(dxGroupName[instrument_group])*symbolWidth)/2, ieInstrumentGroupNamePos);
+    _oled->print(dxGroupName[instrument_group]);
 
     // Print the title of Instrument
     _oled->setCursor((128 - mb_strlen_P(FPSTR(ieInstrumentTitle))*symbolWidth)/2, ieInstrumentTitlePos);
@@ -1506,7 +1506,7 @@ void TesMidiUI::processCtlButtonEventMidiParamEditor(tesEvent *event){
                         if(event->buttonId == ctlButtonLeft){
                             newValueIsOk = true;
                             if (_mc->_settings.preset.kbdParameter[_editor_status.selectorX][parameterIndex] == 0){
-                                _mc->_settings.preset.kbdParameter[_editor_status.selectorX][parameterIndex] = pgm_read_byte(parMaxValue +parameterIndex);
+                                _mc->_settings.preset.kbdParameter[_editor_status.selectorX][parameterIndex] = parMaxValue[parameterIndex];
                             }
                             else {
                                 _mc->_settings.preset.kbdParameter[_editor_status.selectorX][parameterIndex]--;
@@ -1514,7 +1514,7 @@ void TesMidiUI::processCtlButtonEventMidiParamEditor(tesEvent *event){
                         }
                         else {      // ctlButtonRight
                             newValueIsOk = true;
-                            if (_mc->_settings.preset.kbdParameter[_editor_status.selectorX][parameterIndex] == pgm_read_byte(parMaxValue +parameterIndex)){
+                            if (_mc->_settings.preset.kbdParameter[_editor_status.selectorX][parameterIndex] == parMaxValue[parameterIndex]){
                                 _mc->_settings.preset.kbdParameter[_editor_status.selectorX][parameterIndex] = 0;
                             }
                             else {
@@ -1956,7 +1956,7 @@ void TesMidiUI::processCtlButtonEventInstrumentEditor(tesEvent *event){
                 }
                 // get the 1st program_id for the new group_id
                 _mc->_settings.preset.kbdParameter[_editor_status.selectorX][idxProgram] =
-                    (group_id == 0) ? 0 : (pgm_read_byte(dxGroupMap + group_id -1) + 1);
+                    (group_id == 0) ? 0 : (dxGroupMap[group_id -1] + 1);
                 // idxBank for a new group_id is always 0
                 _mc->_settings.preset.kbdParameter[_editor_status.selectorX][idxBank] = 0;
                 // notify the Midi Controller properly about the change
@@ -2058,10 +2058,10 @@ uint8_t TesMidiUI::getNextAtempBankId(uint8_t kbd_id, bool forward){
     // *** let's find the next bank id
 
     // get the total number of bank IDs
-    uint8_t N = pgm_read_byte(ptr);
+    uint8_t N = ptr[0];
     // find the index of the current bank
     uint8_t curIndex = 1;
-    while ((curIndex <= N) && (pgm_read_byte(ptr + curIndex) != curBankId)){
+    while ((curIndex <= N) && (ptr[curIndex] != curBankId)){
         curIndex++;
     }
     // now, the curIndex points to the current bank ID
@@ -2077,7 +2077,7 @@ uint8_t TesMidiUI::getNextAtempBankId(uint8_t kbd_id, bool forward){
         }
     }
     // return the new bank id
-    return pgm_read_byte(ptr + curIndex);
+    return ptr[curIndex];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2094,10 +2094,10 @@ uint8_t TesMidiUI::getNextAtempDrumsetId(bool forward){
         break;
     }
     // get the total number of drumsets
-    uint8_t N = pgm_read_byte(map);
+    uint8_t N = map[0];
     // find the index of the current bank
     uint8_t curIndex = 1;
-    while ((curIndex <= N) && (pgm_read_byte(map + curIndex) != _mc->_settings.preset.drumsetNumber)){
+    while ((curIndex <= N) && (map[curIndex] != _mc->_settings.preset.drumsetNumber)){
         curIndex++;
     }
     // now, the curIndex points to the current bank ID
@@ -2113,7 +2113,7 @@ uint8_t TesMidiUI::getNextAtempDrumsetId(bool forward){
         }
     }
     // return the new bank id
-    return pgm_read_byte(map + curIndex);
+    return map[curIndex];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2149,11 +2149,11 @@ bool TesMidiUI::adjustBankId(uint8_t kbd_id){
     else {
         // *** let's find the best new_bank_id
         // get the total number of bank IDs
-        uint8_t N = pgm_read_byte(ptr);
+        uint8_t N = ptr[0];
         // find a bank id closest to curBankId
         uint8_t diff = 200;
         for(int i = 1; i<=N; i++){
-            int b = pgm_read_byte(ptr + i);
+            int b = ptr[i];
             uint8_t d = abs(curBankId - b);
             if (d == 0){
                 // the best possible match

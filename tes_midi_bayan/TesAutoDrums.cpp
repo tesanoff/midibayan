@@ -101,7 +101,7 @@ TesAutoDrums::TesAutoDrums(TesMIDIOutQueue * midi_queue){
     // get a pointer to the melody
     uint8_t * melody_p = (uint8_t *)melody[_melodyId];
     // get the default tempo
-    _tempo = pgm_read_byte(melody_p);
+    _tempo = melody_p[0];
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -114,7 +114,7 @@ void    TesAutoDrums::start(void){
     TesMIDICommand  cmd;
     cmd.channelId = drumsChannel;
     cmd.midiCommand = mcProgramChange;
-    cmd.data1   = pgm_read_byte(melody_p + drumsetIndex);
+    cmd.data1   = melody_p[drumsetIndex];
     _midi_queue->pushCommand(&cmd);
     // set the current note (i.e. MIDI command)
     _current_note = firstNoteIndex;
@@ -168,7 +168,7 @@ void TesAutoDrums::setMelodyId(uint8_t melody_id){
     // get a pointer to the melody
     uint8_t * melody_p = (uint8_t *)melody[_melodyId];
     // get the default tempo
-    _tempo = pgm_read_byte(melody_p);
+    _tempo = melody_p[0];
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -185,7 +185,7 @@ void TesAutoDrums::setNextMelodyId(void){
     // get a pointer to the melody
     uint8_t * melody_p = (uint8_t *)melody[_melodyId];
     // get the default tempo
-    _tempo = pgm_read_byte(melody_p);
+    _tempo = melody_p[0];
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -202,7 +202,7 @@ void TesAutoDrums::setPreviousMelodyId(void){
     // get a pointer to the melody
     uint8_t * melody_p = (uint8_t *)melody[_melodyId];
     // get the default tempo
-    _tempo = pgm_read_byte(melody_p);
+    _tempo = melody_p[0];
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -241,10 +241,10 @@ void    TesAutoDrums::tick(void){
     uint32_t  tact_period = (long)1000 * 4 * (long)60 / _tempo;
     // get the current note command, so that we chan check whether it is "On" or "Off"
     EncodedNote en;
-    en.rawNote = pgm_read_byte(melody_p + _current_note);
+    en.rawNote = melody_p[_current_note];
     // get the duration of the current note (the divisor from 1/2, 1/4, 1/8, 1/16, etc. )
     // "the duration" is the second byte for "note off" or the third byte for "note on"
-    uint8_t noteDuration = pgm_read_byte(melody_p + _current_note + ((en.noteOff)?1:2));
+    uint8_t noteDuration = melody_p[_current_note + ((en.noteOff)?1:2)];
     // calculate note_period
     uint32_t notePeriod = noteDuration ? tact_period / noteDuration : 0;
     // check the melody timer
@@ -254,7 +254,7 @@ void    TesAutoDrums::tick(void){
         // if the current note command is "On" then its size is 3 bytes; otherwise - its size is 2 bytes
         _current_note += (en.noteOff) ? 2 : 3;
         // check if we have reached the end of the melody
-        en.rawNote = pgm_read_byte(melody_p + _current_note);
+        en.rawNote = melody_p[_current_note];
         if (en.rawNote == 0){
             // start from the very 1st note again
             _current_note = firstNoteIndex;
@@ -275,13 +275,13 @@ void    TesAutoDrums::playCurrentNote(void){
     uint8_t * melody_p = (uint8_t *)melody[_melodyId];
     // get the current note
     EncodedNote eNote;
-    eNote.rawNote = pgm_read_byte(melody_p + _current_note);
+    eNote.rawNote = melody_p[_current_note];
     // prepare the MIDI command and put it into the queue
     TesMIDICommand  cmd;
     cmd.channelId = drumsChannel;
     cmd.midiCommand = mcNoteOn;
     cmd.data1 = eNote.noteId;
-    cmd.data2 = (eNote.noteOff) ? 0 : pgm_read_byte(melody_p + _current_note + 1);
+    cmd.data2 = (eNote.noteOff) ? 0 : melody_p[_current_note + 1];
     _midi_queue->pushCommand(&cmd);
     // set the timer
     _melody_timer = millis();   // uint16_t <-- uint32_t
