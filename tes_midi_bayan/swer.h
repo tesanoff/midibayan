@@ -4,7 +4,7 @@
 #define _SWER_H
 
 // reserved values for SWERs
-// The higher 4 bits are set to '1' in order to make obvious that an error code is displayed on LEDs.
+// The higher 1 bit is set to '1' in order to make obvious that an error code is displayed on LEDs.
 // Otherwise, the user may think that LEDs just indicate active pre-sets (for numbers like 1, 2, 4, etc).
 #define swerMidiController01    0x81
 #define swerEventQueue01        0x82
