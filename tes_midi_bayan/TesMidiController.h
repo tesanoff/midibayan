@@ -232,6 +232,7 @@ struct TesMIDIControllerRunTimeData {
     uint8_t         presetUpdateBitmap[SIZE_OF_PRESET_UPDATE_BITMAP];   // each bit represents 1 preset parameter
                                                 // used when preset parameters are sent to the synth to minimize 
                                                 // the number of MIDI commands
+    uint8_t         currentBatteryLevel;        // 0..100%
 
     TesMIDIControllerRunTimeData(void){
         currentPresetNotSaved = false;
@@ -240,6 +241,7 @@ struct TesMIDIControllerRunTimeData {
         bassNotesStatus = 0;
         numberOfActiveChordNotes = 0;
         drumsMode = dmOff;
+        currentBatteryLevel = 0;
     }
 };
 

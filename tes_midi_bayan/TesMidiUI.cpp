@@ -1095,6 +1095,38 @@ void TesMidiUI::drawKbdHeader(void){
     _oled->invertText(false);
 }
 
+// Bitmaps for the battery leve indicator
+const uint8_t bat_000_17x8[] = { 0x80, 0xBE, 0xBE, 0xBE, 0xBE, 0xBE, 0xBE, 0xBE, 0xBE, 0xBE, 0xBE, 0xBE, 0xBE, 0xBE, 0x80, 0xE3, 0xE3 };
+const uint8_t bat_025_17x8[] = { 0x80, 0xBE, 0xA2, 0xA2, 0xA2, 0xBE, 0xBE, 0xBE, 0xBE, 0xBE, 0xBE, 0xBE, 0xBE, 0xBE, 0x80, 0xE3, 0xE3 };
+const uint8_t bat_050_17x8[] = { 0x80, 0xBE, 0xA2, 0xA2, 0xA2, 0xA2, 0xA2, 0xA2, 0xBE, 0xBE, 0xBE, 0xBE, 0xBE, 0xBE, 0x80, 0xE3, 0xE3 };
+const uint8_t bat_075_17x8[] = { 0x80, 0xBE, 0xA2, 0xA2, 0xA2, 0xA2, 0xA2, 0xA2, 0xA2, 0xA2, 0xA2, 0xBE, 0xBE, 0xBE, 0x80, 0xE3, 0xE3 };
+const uint8_t bat_100_17x8[] = { 0x80, 0xBE, 0xA2, 0xA2, 0xA2, 0xA2, 0xA2, 0xA2, 0xA2, 0xA2, 0xA2, 0xA2, 0xA2, 0xBE, 0x80, 0xE3, 0xE3 };
+const uint8_t * const bat_bitmap[5] = {
+    bat_000_17x8, bat_025_17x8, bat_050_17x8, bat_075_17x8, bat_100_17x8
+};
+enum    {battery_000 = 0, battery_025, battery_050, battery_075, battery_100};
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+//  Draws the battery level indicator (shared between Main screen & MIDI Param Editor)
+void TesMidiUI::drawBatteryIndicator(void){
+    int selected_bitmap = battery_000;
+
+    // check if we need to select another bitmap
+    if(_mc->_var.currentBatteryLevel > 90){
+        selected_bitmap = battery_100;
+    }
+    else if(_mc->_var.currentBatteryLevel > 60){
+        selected_bitmap = battery_075;
+    }
+    else if(_mc->_var.currentBatteryLevel > 40){
+        selected_bitmap = battery_050;
+    }
+    else if (_mc->_var.currentBatteryLevel > 20){
+        selected_bitmap = battery_025;
+    }
+    _oled->drawBitmap(0, 0, bat_bitmap[selected_bitmap], 17, 8, BITMAP_INVERT, BUF_REPLACE);
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////
 //  Draws the main screen
 void TesMidiUI::drawMainScreen(void){
@@ -1102,6 +1134,8 @@ void TesMidiUI::drawMainScreen(void){
 
     // print the header
     drawKbdHeader();
+    // print the battery level Indicator
+    drawBatteryIndicator();
     // print 3 top parameters
     for(int idx=0; idx<3; idx++){
         setTextCursor(0, idx+1);
@@ -1202,6 +1236,8 @@ void TesMidiUI::drawMidiParamEditorScreen(void){
     _oled->clear();
     // print the header
     drawKbdHeader();
+    // print the battery level Indicator
+    drawBatteryIndicator();
     // print rows in the work area
     for (int editorRow=0; editorRow<editorRows; editorRow++ ){
         setTextCursor(0, editorRow+editorFirstRow);
