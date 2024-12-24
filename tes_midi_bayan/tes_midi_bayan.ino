@@ -9,6 +9,7 @@
 #include "TesLedSet.h"
 #include "TesKeyboard.h"
 #include "TesPressureSensor.h"
+#include "TesBatterySensor.h"
 #include "TesMidiController.h"
 #include "swer.h"
 
@@ -30,6 +31,9 @@ TesKeyboard     theKeyboard(&theQueue);
 
 // There's the only pressure sensor
 TesPressureSensor   pressureSensor(&theQueue);
+
+// There's the only battery sensor
+TesBatterySensor   batterySensor(&theQueue);
 
 // the OLED display
 GyverOLED<SSH1106_128x64> oled;
@@ -68,6 +72,8 @@ void setup() {
     theKeyboard.init();
     // Initialize the pressure sensor
     pressureSensor.init();
+    // Initialize the battery sensor
+    batterySensor.init();
     // Initialize the MIDI controller
     theMIDIController.init();
 }
@@ -78,6 +84,7 @@ void loop() {
     ledSet.tick();
     theKeyboard.tick();
     pressureSensor.tick();
+    batterySensor.tick();
     theMIDIController.tick();
 
     // very simplified event dispatcher

@@ -123,6 +123,10 @@ void TesMIDIController::processEvent(tesEvent *event){
     case tesEvSystemControl:
         processSystemControlEvent(event);
         break;
+    case tesEvBattery:
+        _var.currentBatteryLevel = event->newBatteryValue;
+        // TODO make the UI re-draw the screen, if required
+        break;
     }
 }
 
