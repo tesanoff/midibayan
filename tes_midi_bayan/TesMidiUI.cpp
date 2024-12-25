@@ -402,6 +402,19 @@ void TesMidiUI::processSystemControlEvent(tesEvent *event){
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
+// This method processes events from the Battery Sensor
+void TesMidiUI::processBatteryEvent(tesEvent *event){
+    // check if the battery level indicator is visible
+    switch (_editor_status.screenMode){
+    case screenModeMain:
+    case screenModeMidiParamEdit:
+        // just redraw the active screen, assuming that _mc->_var already contaings the new value of the battery level
+        drawActiveScreen();
+        break;
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////
 // Changes the state of the Drum Machine
 void TesMidiUI::setDrumMachineState(uint8_t new_state){
     if (new_state == _mc->_var.drumsMode){
@@ -1095,7 +1108,7 @@ void TesMidiUI::drawKbdHeader(void){
     _oled->invertText(false);
 }
 
-// Bitmaps for the battery leve indicator
+// Bitmaps for the battery level indicator
 const uint8_t bat_000_17x8[] = { 0x80, 0xBE, 0xBE, 0xBE, 0xBE, 0xBE, 0xBE, 0xBE, 0xBE, 0xBE, 0xBE, 0xBE, 0xBE, 0xBE, 0x80, 0xE3, 0xE3 };
 const uint8_t bat_025_17x8[] = { 0x80, 0xBE, 0xA2, 0xA2, 0xA2, 0xBE, 0xBE, 0xBE, 0xBE, 0xBE, 0xBE, 0xBE, 0xBE, 0xBE, 0x80, 0xE3, 0xE3 };
 const uint8_t bat_050_17x8[] = { 0x80, 0xBE, 0xA2, 0xA2, 0xA2, 0xA2, 0xA2, 0xA2, 0xBE, 0xBE, 0xBE, 0xBE, 0xBE, 0xBE, 0x80, 0xE3, 0xE3 };

@@ -128,6 +128,10 @@ public:
     void processSystemControlEvent(tesEvent *event);
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
+    // This method processes events from the Battery Sensor
+    void processBatteryEvent(tesEvent *event);
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////
     // Changes the state of the Drum Machine
     void setDrumMachineState(uint8_t new_state);
 

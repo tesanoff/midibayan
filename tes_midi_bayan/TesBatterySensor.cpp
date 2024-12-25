@@ -83,7 +83,7 @@ uint8_t TesBatterySensor::getBatteryValue(void){
  *capacity = map(volts, 3400, 2600, 8, 0);
  */
 
-    // TODO rework this using Alex Gyver's algorythm of translating voltage measurements into percentage (above)
+    // Probably, we will need Alex Gyver's algorythm of translating voltage measurements into percentage (above)
     return constrain(map(filteredValue, batteryLowValue, batteryTopValue, 0, 100), 0, 100);
 }
 
