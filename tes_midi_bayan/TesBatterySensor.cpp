@@ -23,8 +23,9 @@ void TesBatterySensor::init(void){
     filteredValue = analogRead(batterySensorPin);
     lastSentValue   = 0;    // this will trigger sending the very first event, because the starting value
                             // will not be 0
-    // TODO ensure the sensor sends an event right after start.
-    _event_timer = millis();
+
+    _event_timer = 0xFFFF8ACF;  // 30000 earlier than "0" (i.e. millis() right after the start)
+                                // This should cause the very 1st message to be sent right after the start
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
