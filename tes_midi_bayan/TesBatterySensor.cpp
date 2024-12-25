@@ -11,7 +11,7 @@ TesBatterySensor::TesBatterySensor(TesEventQueue *queue){
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // initializes the instance
 void TesBatterySensor::init(void){
-    filteredValue   = 2048;
+    filteredValue   = 880;  // "average"
     lastSentValue   = 0;    // this will trigger sending the very first event, because the starting value
                             // will not be 0
     // TODO ensure the sensor sends an event right after start.
@@ -47,11 +47,10 @@ void TesBatterySensor::tick(void){
 // configuration parameters for battery sensor
 #define batterySensorPin   29
 
-#define BATTERY_FILTER        0.6     // Значение фильтра датчика давления. От 0 до 1. Ближе к 1 - слабая фильтрация. Ближе к 0 - сильная фильтрация.
+#define BATTERY_FILTER        0.6       // Значение фильтра датчика батареи. От 0 до 1. Ближе к 1 - слабая фильтрация. Ближе к 0 - сильная фильтрация.
 
-// TODO adjust these values
-#define batteryLowValue     2048
-#define batteryTopValue     4095
+#define batteryLowValue     737         // 3.0 V
+#define batteryTopValue     1020        // 4.13 V
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // reads raw data from the sensor and converts it to the 0..127 range
@@ -60,13 +59,29 @@ uint8_t TesBatterySensor::getBatteryValue(void){
 
     // Считать сырое (необработанное) значение датчика давления и вычесть из него среднее значение
     // Значение должно быть положительным.
-    //tmpValue = abs(analogRead(pressureSensorPin) - centerValue);
-    tmpValue = 4095;    // TODO replace this with actual reading
+    tmpValue = analogRead(batterySensorPin);
 
     // отфильтровать его
     filteredValue = BATTERY_FILTER*((float)(abs(tmpValue))) + ((float)1.0-BATTERY_FILTER)*(float)filteredValue;
 
-    // TODO rework this using Alex Gyver's algorythm of translating voltage measurements into percentage
+/*
+ * // отображение заряда в процентах по ёмкости! Интерполировано
+ * // вручную по графику разряда ЛИТИЕВОГО аккумулятора
+ *int volts = analogRead(0) * 5 * (float)0.977;    // несовсем корректно, так как 5 вольт ровно не бывает. Смотри предыдущий пример
+ *int capacity;
+ *if (volts > 3870)
+ *capacity = map(volts, 4200, 3870, 100, 77);
+ *else if ((volts <= 3870) && (volts > 3750) )
+ *capacity = map(volts, 3870, 3750, 77, 54);
+ *else if ((volts <= 3750) && (volts > 3680) )
+ *capacity = map(volts, 3750, 3680, 54, 31);
+ *else if ((volts <= 3680) && (volts > 3400) )
+ *capacity = map(volts, 3680, 3400, 31, 8);
+ *else if (volts <= 3400)
+ *capacity = map(volts, 3400, 2600, 8, 0);
+ */
+
+    // TODO rework this using Alex Gyver's algorythm of translating voltage measurements into percentage (above)
     return constrain(map(filteredValue, batteryLowValue, batteryTopValue, 0, 100), 0, 100);
 }
 
