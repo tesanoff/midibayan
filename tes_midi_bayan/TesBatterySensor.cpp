@@ -1,6 +1,15 @@
 #include "TesBatterySensor.h"
 
-#define BATTERY_EVENT_PERIOD   60000    // once per minute
+#define BATTERY_EVENT_PERIOD   30000    // twice per minute
+
+// configuration parameters for battery sensor
+#define batterySensorPin   29
+
+#define BATTERY_FILTER        0.6       // Значение фильтра датчика батареи. От 0 до 1. Ближе к 1 - слабая фильтрация. Ближе к 0 - сильная фильтрация.
+
+#define batteryLowValue     737         // 3.0 V
+#define batteryTopValue     1020        // 4.13 V
+
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // constructor
@@ -11,7 +20,7 @@ TesBatterySensor::TesBatterySensor(TesEventQueue *queue){
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // initializes the instance
 void TesBatterySensor::init(void){
-    filteredValue   = 880;  // "average"
+    filteredValue = analogRead(batterySensorPin);
     lastSentValue   = 0;    // this will trigger sending the very first event, because the starting value
                             // will not be 0
     // TODO ensure the sensor sends an event right after start.
@@ -43,14 +52,6 @@ void TesBatterySensor::tick(void){
 /////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////              Private stuff              //////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////
-
-// configuration parameters for battery sensor
-#define batterySensorPin   29
-
-#define BATTERY_FILTER        0.6       // Значение фильтра датчика батареи. От 0 до 1. Ближе к 1 - слабая фильтрация. Ближе к 0 - сильная фильтрация.
-
-#define batteryLowValue     737         // 3.0 V
-#define batteryTopValue     1020        // 4.13 V
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // reads raw data from the sensor and converts it to the 0..127 range
