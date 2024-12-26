@@ -12,6 +12,7 @@
 #include "TesBatterySensor.h"
 #include "TesMidiController.h"
 #include "swer.h"
+#include "common.h"
 
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -56,7 +57,7 @@ void setup() {
     Serial1.begin(31250);    // standard MIDI baud rate
     while(!Serial1)
         ;
-#ifdef TES_MIDI_DEBUG
+#if defined(TES_MIDI_DEBUG) || defined(DEBUG_ON)
     Serial.begin(9600);
     while(!Serial)
         ;
