@@ -13,6 +13,7 @@
 #include "TesMidiController.h"
 #include "swer.h"
 #include "common.h"
+#include "eeprom24.h"
 
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -67,6 +68,8 @@ void setup() {
     // so this setting is common now
     Wire.setClock(800000L); // Maximum speed
 
+    // Initialize the eeprom BEFORE the MIDI controller!
+    EEPROM.init();
     // Init the LED panel
     ledSet.reset();
     // Initialize the Keyboard
