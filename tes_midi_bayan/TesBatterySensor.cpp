@@ -1,6 +1,7 @@
 #include "TesBatterySensor.h"
 
-#define BATTERY_EVENT_PERIOD   30000    // twice per minute
+#define BATTERY_EVENT_PERIOD    30000   // twice per minute
+#define FIRST_MEASUREMENT_DELAY 500     // let the relay connect the battery to the "measurement" pin
 
 // configuration parameters for battery sensor
 #define batterySensorPin   29
@@ -24,8 +25,9 @@ void TesBatterySensor::init(void){
     lastSentValue   = 0;    // this will trigger sending the very first event, because the starting value
                             // will not be 0
 
-    _event_timer = 0xFFFFFFFFu - BATTERY_EVENT_PERIOD;   // 30000 earlier than "0" (i.e. millis() right after the start)
-                                                        // This should cause the very 1st message to be sent right after the start
+    // 30000 earlier than "0" (i.e. millis() right after the start)
+    // This should cause the very 1st message to be sent right after the start
+    _event_timer = 0xFFFFFFFFu - BATTERY_EVENT_PERIOD + FIRST_MEASUREMENT_DELAY;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
