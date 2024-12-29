@@ -6,7 +6,7 @@
 #include "swer.h"
 #include "midi_note_names.h"
 #include "prodx.h"
-//#include "atemp_hw.h"
+#include "atemp_hw.h"
 
 // period for updating the display (it takes too much time to update it in each work cycle)
 #define TES_DISPLAY_UPDATE_PERIOD   (1000 / 3)
@@ -25,7 +25,7 @@ TesMidiUI::TesMidiUI(GyverOLED<SSH1106_128x64> * oled, TesMIDIController * mc, T
     _oled = oled;
     _mc = mc;
     _led_set = led;
-    
+
     memset(&_editor_status, 0, sizeof(_editor_status));
 }
 
@@ -300,7 +300,7 @@ void TesMidiUI::processCtlButtonEvent(tesEvent *event){
                         case psNormal: {
                             // check if the F-key can be activated now
                             if((_mc->_settings.global.fkeyProfile[fkey_id].editorStatus.screenMode == screenModeInstrumentEdit)
-                                    && (_mc->_settings.global.synthType != stProDX)){
+                                    && ((_mc->_settings.global.synthType != stProDX) && (_mc->_settings.global.synthType != stAtemp))){
                                 // we cannot activate this F-key with the current synth type
                                 break;
                             }
@@ -385,7 +385,7 @@ void TesMidiUI::processCtlButtonEvent(tesEvent *event){
 // Processes Free Bass events
 void TesMidiUI::processFreeBassEvent(tesEvent *event){
     // the Free Bass indicator is always visible in the header
-        
+
     // just redraw the active screen (the _mc should have already taken care about setting its freebass parameter correctly)
     drawActiveScreen();
 }
@@ -802,13 +802,13 @@ const uint8_t * const  atBanks[128] = {
 //  32    33    34    35    36         37    38         39         40    41    42    43    44    45    46    47
     NULL, NULL, NULL, NULL, atBanks36, NULL, atBanks38, atBanks39, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 //  48         49         50         51    52    53    54    55         56         57    58    59         60    61         62         63
-    atBanks48, atBanks49, atBanks50, NULL, NULL, NULL, NULL, atBanks55, atBanks56, NULL, NULL, atBanks59, NULL, atBanks61, atBanks62, atBanks63, 
+    atBanks48, atBanks49, atBanks50, NULL, NULL, NULL, NULL, atBanks55, atBanks56, NULL, NULL, atBanks59, NULL, atBanks61, atBanks62, atBanks63,
 //  64         65         66         67         68    69         70         71         72    73    74    75    76    77    78    79
-    atBanks64, atBanks65, atBanks66, atBanks67, NULL, atBanks69, atBanks70, atBanks71, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 
-//  80         81         82    83    84    85    86    87    88    89         90    91    92    93    94    95    
+    atBanks64, atBanks65, atBanks66, atBanks67, NULL, atBanks69, atBanks70, atBanks71, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+//  80         81         82    83    84    85    86    87    88    89         90    91    92    93    94    95
     atBanks80, atBanks81, NULL, NULL, NULL, NULL, NULL, NULL, NULL, atBanks89, NULL, NULL, NULL, NULL, NULL, NULL,
 //  96    97    98    99    100   101   102         103   104   105   106   107         108   109   110   111
-    NULL, NULL, NULL, NULL, NULL, NULL, atBanks102, NULL, NULL, NULL, NULL, atBanks107, NULL, NULL, NULL, NULL, 
+    NULL, NULL, NULL, NULL, NULL, NULL, atBanks102, NULL, NULL, NULL, NULL, atBanks107, NULL, NULL, NULL, NULL,
 //  112   113   114   115         116         117         118         119   120         121         122         123         124         125         126         127
     NULL, NULL, NULL, atBanks115, atBanks116, atBanks117, atBanks118, NULL, atBanks120, atBanks121, atBanks122, atBanks123, atBanks124, atBanks125, atBanks126, atBanks127
 };
@@ -937,7 +937,7 @@ int mb_strlen_P(const char * _source)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-// Helper function returns the specified sub-string from the large string stored in 
+// Helper function returns the specified sub-string from the large string stored in
 // The large string contains many shorter strings ending with \0
 PGM_P   getSubString_P(PGM_P storage, int16_t index){
     while (index-- > 0){
@@ -1210,7 +1210,7 @@ void TesMidiUI::setTextCursor(uint8_t X, uint8_t Y){
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
-//  prints a number according to the specified format string 
+//  prints a number according to the specified format string
 void TesMidiUI::printFormatted(PGM_P format, uint8_t value){
     char buf[maxFormattedStringLength];     // for a properly aligned number
     char fmt[maxFormatDescriptorLength];    // for a format descriptor string
@@ -1261,7 +1261,7 @@ void TesMidiUI::drawMidiParamEditorScreen(void){
             // decide text inversion - select the value being edited
             _oled->invertText(
                 _editor_status.editMode
-                && (_editor_status.selectorX == kbd) 
+                && (_editor_status.selectorX == kbd)
                 && (_editor_status.selectorY == editorRow)
             );
             setTextCursor(6 + kbd*4, editorRow+editorFirstRow);
@@ -1410,32 +1410,50 @@ void TesMidiUI::drawDrumsParamEditorScreen(void){
 //  Draws the Instrument selector/editor screen
 void TesMidiUI::drawInstrumentEditorScreen(void){
     // This function can be called in the ATEMP mode only
-    if (_mc->_settings.global.synthType != stProDX){
-        SWER(swerGUI09);
+    // set aux valiables up
+    const char * const * _GroupName = NULL;
+    const uint8_t * _GroupMap       = NULL;
+    const char * _InstrumentNames   = NULL;
+    const uint8_t * const * _Banks  = NULL;
+    switch(_mc->_settings.global.synthType){
+        case stProDX:
+            _GroupName          = dxGroupName;
+            _GroupMap           = dxGroupMap;
+            _InstrumentNames    = dxInstrumentNames;
+            _Banks              = dxBanks;
+            break;
+        case stAtemp:
+            _GroupName          = atGroupName;
+            _GroupMap           = atGroupMap;
+            _InstrumentNames    = atInstrumentNames;
+            _Banks              = atBanks;
+            break;
+        default:
+            SWER(swerGUI09);
     }
     // Info: the ID of the current Keyboard is in _editor_status.selectorX (because this screen was called from Parameters Editor)
     // determine the instrument group and instrument index
     uint8_t     bank_id = _mc->_settings.preset.kbdParameter[_editor_status.selectorX][idxBank];
     uint8_t     program_id = _mc->_settings.preset.kbdParameter[_editor_status.selectorX][idxProgram];
-    uint8_t     instrument_group = getInstrumentGroupId(dxGroupMap, program_id);
-    uint16_t    instrument_index = getInstrumentIndex(dxBanks, bank_id, program_id);
+    uint8_t     instrument_group = getInstrumentGroupId(_GroupMap, program_id);
+    uint16_t    instrument_index = getInstrumentIndex(_Banks, bank_id, program_id);
 
     // clear work area
     _oled->clear();
 
     // Print the title of Instrument group
-    _oled->setCursor((128 - mb_strlen_P(FPSTR(ieInstrumentGroupTitle))*symbolWidth)/2, ieInstrumentGroupTitlePos);
+    _oled->setCursor((128 - mb_strlen_P(ieInstrumentGroupTitle)*symbolWidth)/2, ieInstrumentGroupTitlePos);
     _oled->print(FPSTR(ieInstrumentGroupTitle));
     // Print the Instrument group name
-    _oled->setCursor((128 - mb_strlen_P(dxGroupName[instrument_group])*symbolWidth)/2, ieInstrumentGroupNamePos);
-    _oled->print(dxGroupName[instrument_group]);
+    _oled->setCursor((128 - mb_strlen_P(_GroupName[instrument_group])*symbolWidth)/2, ieInstrumentGroupNamePos);
+    _oled->print(_GroupName[instrument_group]);
 
     // Print the title of Instrument
-    _oled->setCursor((128 - mb_strlen_P(FPSTR(ieInstrumentTitle))*symbolWidth)/2, ieInstrumentTitlePos);
-    _oled->print(FPSTR(ieInstrumentTitle));
+    _oled->setCursor((128 - mb_strlen_P(ieInstrumentTitle)*symbolWidth)/2, ieInstrumentTitlePos);
+    _oled->print(ieInstrumentTitle);
     // Print the Instrument name
-    PGM_P   str = getSubString_P(dxInstrumentNames, instrument_index);
-    _oled->setCursor((128 - mb_strlen_P(FPSTR(str))*symbolWidth)/2, ieInstrumentNamePos);
+    PGM_P   str = getSubString_P(_InstrumentNames, instrument_index);
+    _oled->setCursor((128 - mb_strlen_P(str)*symbolWidth)/2, ieInstrumentNamePos);
     _oled->print(FPSTR(str));
 
     // draw the selector
@@ -1457,7 +1475,7 @@ void TesMidiUI::drawInstrumentEditorScreen(void){
 
     // Print instrument IDs
     _oled->setCursor(0, ieInstrumentIDsLinePos);    // to the very beginning of the line
-    _oled->print(FPSTR(ieInstrumentIDsLine));
+    _oled->print(ieInstrumentIDsLine);
     _oled->setCursor(ieBankIdColumn*symbolWidth, ieInstrumentIDsLinePos);
     // print the Bank ID
     printFormatted(numFormat3R, bank_id);
@@ -1467,8 +1485,8 @@ void TesMidiUI::drawInstrumentEditorScreen(void){
 
     // print the bottom
     _oled->fastLineH(7*symbolHeight-1, 3, 124, OLED_FILL);
-    _oled->setCursor( (128 - mb_strlen_P(FPSTR(instrument_edit_screen_footer))*symbolWidth)/2, 7);
-    _oled->print(FPSTR(instrument_edit_screen_footer));
+    _oled->setCursor( (128 - mb_strlen_P(instrument_edit_screen_footer)*symbolWidth)/2, 7);
+    _oled->print(instrument_edit_screen_footer);
 
     _flags.display_update_is_required = true;
 }
@@ -1544,7 +1562,7 @@ void TesMidiUI::processCtlButtonEventMidiParamEditor(tesEvent *event){
                 bool    newValueIsOk;   // exit condition from the loop below
                 // Parameter to be changed: _mc->_settings.preset.kbdParameter[selectorX][topIndex +selectorY]
                 uint8_t parameterIndex = _editor_status.topIndex +_editor_status.selectorY;
-                if ((parameterIndex == idxBank) 
+                if ((parameterIndex == idxBank)
                         && ((_mc->_settings.global.synthType == stAtemp) || (_mc->_settings.global.synthType == stProDX))){
                     // Bank ID for Atemp synth - is a special case
                     _mc->_settings.preset.kbdParameter[_editor_status.selectorX][parameterIndex] = getNextAtempBankId(_editor_status.selectorX, (event->buttonId == ctlButtonRight));
@@ -1621,7 +1639,7 @@ void TesMidiUI::processCtlButtonEventMidiParamEditor(tesEvent *event){
                 // Parameter to be changed: _mc->_settings.preset.kbdParameter[selectorX][topIndex +selectorY]
                 uint8_t parameterIndex = _editor_status.topIndex +_editor_status.selectorY;
                 // There's a special case: Bank & Program for the stProDX synth.
-                if ((_mc->_settings.global.synthType == stProDX)
+                if (((_mc->_settings.global.synthType == stProDX) || (_mc->_settings.global.synthType == stAtemp))
                         && ((parameterIndex == idxBank) || (parameterIndex == idxProgram))){
                     // invoke a special editor screen
                     _editor_status.screenMode = screenModeInstrumentEdit;
@@ -1958,12 +1976,31 @@ void TesMidiUI::processCtlButtonEventDrumsParamEditor(tesEvent *event){
 ////////////////////////////////////////////////////////////////////////////////////////////////
 //  control button event handler to Instrument Editor mode
 void TesMidiUI::processCtlButtonEventInstrumentEditor(tesEvent *event){
-    if (_mc->_settings.global.synthType != stProDX){
+    if ((_mc->_settings.global.synthType != stProDX) && (_mc->_settings.global.synthType != stAtemp)){
         // this function can be called only for the ATEMP synthesizer
         SWER(swerGUI12);
     }
     // as this is a Control Button event, event->buttonId already contains Ctl Button ID
     bool    needToClearTheEvent = true; // by default we clear the event
+                                        //
+    // set aux valiables up
+    const uint8_t * _GroupMap       = NULL;
+    const uint8_t * const * _Banks  = NULL;
+    uint8_t _NumberOfGroups         = 0;
+    switch(_mc->_settings.global.synthType){
+        case stProDX:
+            _GroupMap           = dxGroupMap;
+            _Banks              = dxBanks;
+            _NumberOfGroups     = dxNumberOfGroups;
+            break;
+        case stAtemp:
+            _GroupMap           = atGroupMap;
+            _Banks              = atBanks;
+            _NumberOfGroups     = atNumberOfGroups;
+            break;
+        default:
+            SWER(swerGUI09);
+    }
 
     switch (event->buttonEvent){
     case tesBeReleased:
@@ -1990,22 +2027,22 @@ void TesMidiUI::processCtlButtonEventInstrumentEditor(tesEvent *event){
                 // changing the group (moving to the 1st instrument in the new group)
                 // get the id of the current group
                 uint8_t program_id = _mc->_settings.preset.kbdParameter[_editor_status.selectorX][idxProgram];
-                uint8_t group_id = getInstrumentGroupId(dxGroupMap, program_id);
+                uint8_t group_id = getInstrumentGroupId(_GroupMap, program_id);
                 if (event->buttonId == ctlButtonLeft){
                     // go to the previous group
                     if (group_id-- == 0){
-                        group_id = dxNumberOfGroups - 1;
+                        group_id = _NumberOfGroups - 1;
                     }
                 }
                 else {      // ctlButtonRight
                     // go to the next group
-                    if (++group_id == dxNumberOfGroups){
+                    if (++group_id == _NumberOfGroups){
                         group_id = 0;
                     }
                 }
                 // get the 1st program_id for the new group_id
                 _mc->_settings.preset.kbdParameter[_editor_status.selectorX][idxProgram] =
-                    (group_id == 0) ? 0 : (dxGroupMap[group_id -1] + 1);
+                    (group_id == 0) ? 0 : (_GroupMap[group_id -1] + 1);
                 // idxBank for a new group_id is always 0
                 _mc->_settings.preset.kbdParameter[_editor_status.selectorX][idxBank] = 0;
                 // notify the Midi Controller properly about the change
@@ -2019,7 +2056,7 @@ void TesMidiUI::processCtlButtonEventInstrumentEditor(tesEvent *event){
               }
             case ieInstrumentId:
                 setNextInstrument(
-                        dxBanks, 
+                        _Banks,
                         &(_mc->_settings.preset.kbdParameter[_editor_status.selectorX][idxBank]),
                         &(_mc->_settings.preset.kbdParameter[_editor_status.selectorX][idxProgram]),
                         (event->buttonId == ctlButtonRight)
@@ -2071,7 +2108,7 @@ void TesMidiUI::activatePreset(uint8_t preset_id){
         // there's nothonig to do
         return;
     }
-   
+
     // clear indication of the old preset
     _led_set->resetLED( _mc->_settings.global.activePreset + ledPreset1);    // the assumption is that Led IDs are sorted (like 0, 1, 2, etc.)
     // activate the new preset

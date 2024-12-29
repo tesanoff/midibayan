@@ -15,9 +15,9 @@ typedef uint32_t    timer_t;
 //#define DEBUG_ON
 
 #ifdef DEBUG_ON
-#define PRINT_1(value) Serial.println(value);
-#define PRINT_2(text,value) Serial.print(text); Serial.println(value);
-#define PRINT_2_HEX(text,value) Serial.print(text); Serial.println(value, HEX);
+#define PRINT_1(value) {Serial.print(__FILE__); Serial.print(":"); Serial.print(__LINE__); Serial.print(" "); Serial.println(value);}
+#define PRINT_2(text,value) {Serial.print(__FILE__); Serial.print(":"); Serial.print(__LINE__); Serial.print(" "); Serial.print(text); Serial.println(value);}
+#define PRINT_2_HEX(text,value) {Serial.print(__FILE__); Serial.print(":"); Serial.print(__LINE__); Serial.print(" "); Serial.print(text); Serial.println(value, HEX);}
 #else
 #define PRINT_1
 #define PRINT_2
