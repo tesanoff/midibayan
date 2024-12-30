@@ -1976,10 +1976,6 @@ void TesMidiUI::processCtlButtonEventDrumsParamEditor(tesEvent *event){
 ////////////////////////////////////////////////////////////////////////////////////////////////
 //  control button event handler to Instrument Editor mode
 void TesMidiUI::processCtlButtonEventInstrumentEditor(tesEvent *event){
-    if ((_mc->_settings.global.synthType != stProDX) && (_mc->_settings.global.synthType != stAtemp)){
-        // this function can be called only for the ATEMP synthesizer
-        SWER(swerGUI12);
-    }
     // as this is a Control Button event, event->buttonId already contains Ctl Button ID
     bool    needToClearTheEvent = true; // by default we clear the event
                                         //
@@ -1999,7 +1995,7 @@ void TesMidiUI::processCtlButtonEventInstrumentEditor(tesEvent *event){
             _NumberOfGroups     = atNumberOfGroups;
             break;
         default:
-            SWER(swerGUI09);
+            SWER(swerGUI12);
     }
 
     switch (event->buttonEvent){
