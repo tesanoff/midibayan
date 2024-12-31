@@ -48,7 +48,7 @@ struct tesEvent {
     };
 };
 
-#define TES_MAX_QUEUE_SIZE 12
+#define TES_MAX_QUEUE_SIZE 30
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
 // This is the Event Queue class
