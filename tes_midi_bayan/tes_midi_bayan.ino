@@ -70,16 +70,23 @@ void setup() {
 
     // Initialize the eeprom BEFORE the MIDI controller!
     EEPROM.init();
+PRINT_1("EEPROM done");
     // Init the LED panel
     ledSet.reset();
+PRINT_1("LED done");
     // Initialize the Keyboard
     theKeyboard.init();
+PRINT_1("Kbd done");
     // Initialize the pressure sensor
     pressureSensor.init();
+PRINT_1("Pressure done");
     // Initialize the battery sensor
     batterySensor.init();
+PRINT_1("Battery done");
     // Initialize the MIDI controller
     theMIDIController.init();
+PRINT_1("MIDI controller done");
+delay(500); // TODO this is for debugging only. Remove this!
 }
 
 /////////////////////////////////////////////////////////////

@@ -12,6 +12,7 @@
 
 #include "TesKeyboard.h"
 #include "swer.h"
+#include "common.h"
 
 //////////////////////////// settings for control buttons //////////////////////////////
 //
@@ -358,6 +359,9 @@ void TesKeyboard::readCascade(void){
             digitalWrite(clockPin, LOW);
         }
     }
+    // TODO mask unused bits
+    _buffer[0] |= 0b11000000;
+    _buffer[1] = 0xFF;
 }
 
 ///////////////////////////////////////////////////////////

@@ -12,7 +12,7 @@
 typedef uint32_t    timer_t;
 
 // debug mode
-//#define DEBUG_ON
+#define DEBUG_ON
 
 #ifdef DEBUG_ON
 #define PRINT_1(value) {Serial.print(__FILE__); Serial.print(":"); Serial.print(__LINE__); Serial.print(" "); Serial.println(value);}

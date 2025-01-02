@@ -14,8 +14,10 @@
 #define ledPreset5  4
 #define ledPreset6  5
 #define ledDrums    6
-#define ledSystem   7
-#define ledMidiOut  8
+//#define ledSystem   7
+#define ledSystem   8
+//#define ledMidiOut  8
+#define ledMidiOut  7
 
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////
