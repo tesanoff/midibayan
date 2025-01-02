@@ -943,6 +943,7 @@ void TesMIDIController::sendCurrentPresetToSynthesizer(uint8_t kbd_map, bool opt
     setDrumsVolume();
 
     // Always set the Expression
+    // We're sending the "expression" separately, because it's not part of configurable parameters.
     setExpression( _settings.preset.pressureSensorOn ? _var.lastPressureValue : TES_DEFAULT_EXPRESSION );
 
     // *** prepare for sending parameters for kbd channels
