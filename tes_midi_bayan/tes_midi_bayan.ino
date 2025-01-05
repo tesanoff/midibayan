@@ -68,6 +68,13 @@ void setup() {
     // so this setting is common now
     Wire.setClock(800000L); // Maximum speed
 
+
+    // SPI settings are commom for all SPI devices
+    SPI1.setSCK(10);
+    SPI1.setMOSI(11);
+    SPI1.setMISO(12);
+    SPI1.begin();
+
     // Initialize the eeprom BEFORE the MIDI controller!
     EEPROM.init();
 PRINT_1("EEPROM done");

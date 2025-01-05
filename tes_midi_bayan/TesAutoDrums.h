@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include "common.h"
+#include <MD_MIDIFile.h>
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -13,8 +14,16 @@
 class TesMIDIOutQueue;
 
 class TesAutoDrums {
+    friend void midi_handler_scanner(midi_event *pev);
+    friend void meta_handler_scanner(const meta_event *p);
+    friend void midi_handler_player(midi_event *pev);
+    friend void meta_handler_player(const meta_event *p);
 public:
     TesAutoDrums(TesMIDIOutQueue * midi_queue);
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+    // Initializes the engine
+    void    init(void);
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
     // Starts playing the current melody
@@ -67,8 +76,21 @@ private:
     timer_t             _melody_timer;
     uint8_t             _current_note;
     uint8_t             _tempo;
+    SDFAT               _SD;
+    MD_MIDIFile         _SMF;
 
     void    playCurrentNote(void);
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+
+    // receives MIDI events during MIDI files scanning
+    void midiEventScanner(midi_event *pev);
+    // receives META events during MIDI files scanning
+    void metaEventScanner(const meta_event *pmev);
+    // receives MIDI events during MIDI files playing
+    void midiEventPlayer(midi_event *pev);
+    // receives META events during MIDI files playing
+    void metaEventPlayer(const meta_event *pmev);
 };
 
 
