@@ -20,7 +20,8 @@
 // The layout is shown in a declaration oftesButtonPressedLevels below.
 
 // Basic parameters
-#define TES_FIRST_CONTROL_BUTTON        64                  // the index of the 1st ctl button
+//#define TES_FIRST_CONTROL_BUTTON        64                  // the index of the 1st ctl button
+#define TES_FIRST_CONTROL_BUTTON        0                  // the index of the 1st ctl button
 #define TES_LAST_CONTROL_BUTTON         (TES_FIRST_CONTROL_BUTTON + TES_NUMBER_OF_CONTROL_BUTTONS - 1)  // the index of the last ctl button
                                                                                                         // (!) The assumption is that there's just one
                                                                                                         // range of control buttons without any gaps it it.
@@ -81,9 +82,12 @@ const uint8_t   tesButtonPressedLevels[] = {
 #define dataPinR    14      // Right keyboard and Control Panel
 #define dataPinL    15      // Left keyboard & FreeBass sensor
 
-#define longCascadeSize         11      // 5 right-front + 3 right-back + 3 control panel
-#define shortCascadeSize        7       // just left keyboard
-#define freeBassSensorIndex     88      // global index of the Free Bass sensor
+//#define longCascadeSize         11      // 5 right-front + 3 right-back + 3 control panel
+#define longCascadeSize         1       // TODO - just 6 buttons
+//#define shortCascadeSize        7       // just left keyboard
+#define shortCascadeSize        1       // TODO - 1 "formal" chip (no left cascade in the reality)
+//#define freeBassSensorIndex     88      // global index of the Free Bass sensor
+#define freeBassSensorIndex     7      // TODO - unused pin
 
 #define totalNumberOfButtons    141     // this is the number of all buttons/sensors processed via all 74HC165 cascades
                                         // Gaps (unused pins) are also counted. Only the trailing pins are not counted here.
@@ -453,18 +457,24 @@ void TesKeyboard::processNewData(void){
 // Unused global indices are translated into 0xFC.
 //
 
+/*
+ *const uint8_t   globalButtonMap[] = {
+ * // Right keyboard 1st & 2nd rows:
+ *    52,  54, 55,  57, 58,  60, 61,  63, 64,  66, 67,  69, 70,  72, 73,  75, 76,  78, 79,  81, 82,  84, 85,  87, 88,  90, 91,
+ *    93, 94,  96, 97,  99, 100,  102, 103,  105, 106,  0xFC, 0xFC, 0xFC,
+ * // Right keyboard 3rd row:
+ *    53, 56, 59, 62, 65, 68, 71, 74, 77, 80, 83, 86, 89, 92, 95, 98, 101, 104,  0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC,
+ * // Control panel:
+ *    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 0xFC, 0xFC,
+ * // Left keyboard:
+ *    0xFC,  // <- Free Bass sensor
+ *    51, 50, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21,
+ *    20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 0xFC, 0xFC, 0xFC
+ *};
+ */
+
 const uint8_t   globalButtonMap[] = {
-// Right keyboard 1st & 2nd rows:
-    52,  54, 55,  57, 58,  60, 61,  63, 64,  66, 67,  69, 70,  72, 73,  75, 76,  78, 79,  81, 82,  84, 85,  87, 88,  90, 91,
-    93, 94,  96, 97,  99, 100,  102, 103,  105, 106,  0xFC, 0xFC, 0xFC,
-// Right keyboard 3rd row:
-    53, 56, 59, 62, 65, 68, 71, 74, 77, 80, 83, 86, 89, 92, 95, 98, 101, 104,  0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC,
-// Control panel:
-    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 0xFC, 0xFC,
-// Left keyboard:
-    0xFC,  // <- Free Bass sensor
-    51, 50, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21,
-    20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 0xFC, 0xFC, 0xFC
+  0, 1, 2, 3, 4, 5, 6, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC
 };
 
 ///////////////////////////////////////////////////////////
