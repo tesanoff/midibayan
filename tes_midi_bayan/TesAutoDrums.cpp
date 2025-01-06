@@ -67,6 +67,8 @@ void meta_handler_player(const meta_event *p){
 //#define SD_CARD_CS  26   // for the real version
 #define SD_CARD_CS  9   // for the breadboard debug version
 
+#define MAX_FILE_NAME_LENGTH    120
+
 #define drumsChannel    9
 #define defaultVolume   70
 
@@ -180,6 +182,33 @@ void    TesAutoDrums::init(void){
     // default handlers
     _SMF.setMidiHandler(midi_handler_player);   // TODO replace these pointers wit NULL after debugging
     _SMF.setMetaHandler(meta_handler_player);   //
+
+    // Now, we need to read names of all files in the root directory, assuming that all of them are MIDI files
+    SDDIR   root;
+    SDFILE  file;
+
+    if(!root.open("/")){
+        PRINT_1("Could not open root directory");
+        // TODO handle the error properly
+    }
+    else{
+        while(file.openNext(&root, O_RDONLY)){
+            char    buffer[MAX_FILE_NAME_LENGTH];
+            size_t name_length = file.getName(buffer, MAX_FILE_NAME_LENGTH);
+            PRINT_2("name length =", name_length);
+            if(!file.isDirectory()){
+                _file_names.push_back(buffer);
+            }
+            else {
+                PRINT_2("Skipping directory:", buffer);
+            }
+            file.close();
+        }
+    }
+    PRINT_2("Collected names = ", _file_names.size());
+    for(int i=0; i<_file_names.size();i++){
+        PRINT_1(_file_names[i]);
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////

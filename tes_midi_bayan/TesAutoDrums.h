@@ -4,12 +4,15 @@
 #include <Arduino.h>
 #include "common.h"
 #include <MD_MIDIFile.h>
+#include <vector>
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 #define numberOfMelodies    6   // the total number of imlemented melodies/rythms
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+
+typedef std::vector<String>   StringVector;
 
 class TesMIDIOutQueue;
 
@@ -78,6 +81,7 @@ private:
     uint8_t             _tempo;
     SDFAT               _SD;
     MD_MIDIFile         _SMF;
+    StringVector        _file_names;
 
     void    playCurrentNote(void);
 
