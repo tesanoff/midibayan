@@ -16,6 +16,42 @@ typedef std::vector<String>   StringVector;
 
 class TesMIDIOutQueue;
 
+struct  MidiFileValidationData {
+    uint8_t     tempo;                      // the tempo set in the file
+    uint16_t    number_of_commands;         // how many MIDI commands are in the file
+    struct {
+        bool    loop: 1;                    // should it be looped or not
+        bool    is_valid: 1;
+    };
+
+    void    clear(void){
+        memset(this, 0, sizeof(MidiFileValidationData));
+        is_valid = true; // by default it's valid. If we find an inconsistency - we just reset it.
+    }
+};
+
+struct  AutoDrumsRuntimeData {
+    struct {
+        bool                is_playing: 1;
+        bool                is_initialized: 1;
+        bool                init_in_progress: 1;
+    };
+    StringVector            file_names;
+    uint8_t                 melodyId;
+    uint8_t                 tempo;
+    timer_t                 init_timer;
+    MidiFileValidationData  validation_data;
+
+    AutoDrumsRuntimeData(void){
+        is_playing          = false;
+        is_initialized      = false;
+        init_in_progress    = false;
+
+        melodyId        = 0;
+        init_timer      = 0;
+    }
+};
+
 class TesAutoDrums {
     friend void midi_handler_scanner(midi_event *pev);
     friend void meta_handler_scanner(const meta_event *p);
@@ -74,17 +110,9 @@ public:
 
 private:
     TesMIDIOutQueue     * _midi_queue;
-    uint8_t             _melodyId;
-    bool                _is_playing;
-    timer_t             _melody_timer;
-    uint8_t             _current_note;
-    uint8_t             _tempo;
+    AutoDrumsRuntimeData _var;
     SDFAT               _SD;
     MD_MIDIFile         _SMF;
-    StringVector        _file_names;
-    bool                _is_scanning;
-
-    void    playCurrentNote(void);
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -96,6 +124,10 @@ private:
     void midiEventPlayer(midi_event *pev);
     // receives META events during MIDI files playing
     void metaEventPlayer(const meta_event *pmev);
+    
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+    // Validates the current MIDI file
+    void    validateMidiFile(void);
 };
 
 
