@@ -114,7 +114,8 @@ void    TesAutoDrums::start(void){
         PRINT_2("ERROR = ", err);
         return;
     }
-    // TODO turn "looping" on, if required
+    // turn "looping" on, if required
+    _SMF.looping( _var.file_attributes[_var.melodyId].loop );
     // set a flag
     _var.is_playing = true;
     // set the drumset
@@ -129,9 +130,6 @@ void    TesAutoDrums::start(void){
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // Stops playing the current melody
 void    TesAutoDrums::stop(void){
-    if(!_var.is_playing){
-        return;
-    }
     _SMF.close();
     _var.is_playing = false;
     // stop playing all notes in the channel (in case if they're playing)
@@ -280,23 +278,11 @@ void    TesAutoDrums::tick(void){
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // receives MIDI events during MIDI files scanning
 void TesAutoDrums::midiEventScanner(midi_event *pev){
-/*
- *typedef struct
- *{
- *  uint8_t track;    ///< the track this was on
- *  uint8_t channel;  ///< the midi channel
- *  uint8_t size;     ///< the number of data bytes
- *  uint8_t data[4];  ///< the data. Only 'size' bytes are valid
- *} midi_event;
- */
-
     // check if the MIDI channel is correct
     if(pev->channel != drumsChannel){
         // the file cannot send MIDI commands to non-drums channels
         _var.validation_data.is_valid = false;
     }
-
-    // TODO implement the rest!
 
     // count MIDI commands
     _var.validation_data.number_of_commands++;
@@ -305,21 +291,47 @@ void TesAutoDrums::midiEventScanner(midi_event *pev){
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // receives META events during MIDI files scanning
 void TesAutoDrums::metaEventScanner(const meta_event *pmev){
-/*
- *typedef struct
- *{
- *  uint8_t track;    ///< the track this was on
- *  uint16_t size;    ///< the number of data bytes
- *  uint8_t type;     ///< meta event type
- *  union 
- *  {
- *    uint8_t data[50]; ///< byte data. Only 'size' bytes are valid
- *    char chars[50];   ///< string data. Only 'size' bytes are valid
- *  };
- *} meta_event;
- */
-
-    // TODO implement this!
+    // we analyse just a subset of parameters
+    switch(pmev->type){
+    case 0x2F:      // end of track
+        {
+            PRINT_2("end of track ", pmev->track);
+        }
+        break;
+    case 0x51:      // set Tempo in "us / tick"
+        // Generally, it's set in track #0 and "played" just once in a very beginning.
+        // This is the real Tempo (if present in a MIDI file) which overrides the header's value.
+        {
+            // when we get here, the SMF object has already been adjusted to the new tempo.
+            // so, just read new values, if this is track #0
+            if (pmev->track == 0){
+                _var.validation_data.tempo_set_in_track_0   = true;
+                _var.validation_data.tick_time              = _SMF.getTickTime();               // us / tick
+                _var.validation_data.tempo                  = _SMF.getTempo();                  // beats / min
+                _var.validation_data.ticks_per_quarter_note = _SMF.getTicksPerQuarterNote();    // tick / quarter
+                PRINT_2("new tempo = ", _var.validation_data.tempo);
+            }
+            else {
+                _var.validation_data.tempo_set_in_track_n   = true;
+                PRINT_2("  tempo change in track1+ :", _SMF.getTempo());
+            }
+        }
+        break;
+    case 0x58:      // time signature
+        {
+            // when we get here, the SMF object has already been adjusted to the new time signature.
+            // so, just read new values
+            // NOTE: this doesn't change the tempo
+            if (pmev->track == 0){
+                _var.validation_data.time_signature     = _SMF.getTimeSignature();
+                PRINT_2_HEX("new time signature = ", _var.validation_data.time_signature);
+            }
+            else {
+                PRINT_2_HEX("  time signature change in track1+ :", _SMF.getTimeSignature());
+            }
+        }
+        break;
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -337,29 +349,30 @@ void TesAutoDrums::midiEventPlayer(midi_event *pev){
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // receives META events during MIDI files playing
 void TesAutoDrums::metaEventPlayer(const meta_event *pmev){
-/*
- *typedef struct
- *{
- *  uint8_t track;    ///< the track this was on
- *  uint16_t size;    ///< the number of data bytes
- *  uint8_t type;     ///< meta event type
- *  union 
- *  {
- *    uint8_t data[50]; ///< byte data. Only 'size' bytes are valid
- *    char chars[50];   ///< string data. Only 'size' bytes are valid
- *  };
- *} meta_event;
- */
-    // debug print
-    PRINT_1("============= META event (player) ===============");
-    PRINT_2_HEX("track   =\t", pmev->track);
-    PRINT_2_HEX("type    =\t", pmev->type);
-    PRINT_2_HEX("size    =\t", pmev->size);
-    for (int i=0;i<pmev->size;i++){
-        PRINT_2_HEX("data    =\t", pmev->data[i]);
-    }
+    // we analyse just a subset of parameters
+    switch(pmev->type){
+    case 0x51:      // set Tempo in "us / tick"
+        // Generally, it's set in track #0 and "played" just once in a very beginning.
+        // This is the real Tempo (if present in a MIDI file) which overrides the header's value.
+        {
+            // when we get here, the SMF object has already been adjusted to the new tempo.
 
-    // TODO implement this!
+            // TODO we need to adjust the tempo to the user-defined value (in proportion)
+            PRINT_1("*** Tempo is to be adjusted, if required");
+        }
+        break;
+    case 0x58:      // time signature
+        {
+            // when we get here, the SMF object has already been adjusted to the new time signature.
+            // NOTE: this doesn't change the tempo.
+
+            // TODO do we need to do anything here? (looks like we don't)
+        }
+        break;
+    }
+    
+
+    // TODO implement the rest!
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -375,8 +388,14 @@ void    TesAutoDrums::validateMidiFile(void){
     }
     _var.validation_data.clear();   // clear the validation data
 
-    // TODO Obtain initial information from the file header (tempo, etc.)
-    //      Also, decide if the file should be looped.
+    // Obtain initial information from the file header (tempo, etc.)
+    _var.validation_data.time_signature         = _SMF.getTimeSignature();          // like "4/4" ("high" / "low")
+    _var.validation_data.tick_time              = _SMF.getTickTime();               // us / tick
+    _var.validation_data.tempo                  = _SMF.getTempo();                  // beats / min
+    _var.validation_data.ticks_per_quarter_note = _SMF.getTicksPerQuarterNote();    // tick / quarter
+    PRINT_2("Header tempo = ", _var.validation_data.tempo);
+    PRINT_2_HEX("Header time signature = ", _var.validation_data.time_signature);
+    // TODO Also, decide if the file should be looped.
 
     // run the validation
     if(!_SMF.isEOF()){
@@ -384,10 +403,19 @@ void    TesAutoDrums::validateMidiFile(void){
     }
     _SMF.close();
     // *** _var.validation_data contains the validation result
+    // Final checks (if they make sense)
+    if(_var.validation_data.is_valid){
+        // check if the file was not empty (there're MIDI commands)
+        _var.validation_data.is_valid = (_var.validation_data.number_of_commands > 0);
+    }
 
     if (_var.validation_data.is_valid){
         PRINT_1("This file is valid");
-        // TODO add MIDI file attributes to the respective list
+        // add MIDI file attributes to the respective list
+        MidiFileAttributes  attr;
+        attr.loop       = _var.validation_data.loop;
+        attr.tempo      = _var.validation_data.tempo;
+        _var.file_attributes.push_back(attr);
         // move the pointer to the next MIDI file
         _var.melodyId++;
     }

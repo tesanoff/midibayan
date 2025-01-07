@@ -12,16 +12,20 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-typedef std::vector<String>   StringVector;
-
-class TesMIDIOutQueue;
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Auxiliary types
 
 struct  MidiFileValidationData {
-    uint8_t     tempo;                      // the tempo set in the file
     uint16_t    number_of_commands;         // how many MIDI commands are in the file
+    uint16_t    time_signature;             // "high" / "low"
+    uint32_t    tick_time;                  // in us /tick
+    uint16_t    tempo;                      // beats / min
+    uint16_t    ticks_per_quarter_note;     // tick / quarter <-- this is actually read from a file header
     struct {
         bool    loop: 1;                    // should it be looped or not
         bool    is_valid: 1;
+        bool    tempo_set_in_track_0: 1;
+        bool    tempo_set_in_track_n: 1;
     };
 
     void    clear(void){
@@ -30,6 +34,14 @@ struct  MidiFileValidationData {
     }
 };
 
+struct MidiFileAttributes{
+    uint16_t    tempo;
+    bool        loop;
+};
+typedef std::vector<MidiFileAttributes>   AttributeVector;
+
+typedef std::vector<String>   StringVector;
+
 struct  AutoDrumsRuntimeData {
     struct {
         bool                is_playing: 1;
@@ -37,6 +49,7 @@ struct  AutoDrumsRuntimeData {
         bool                init_in_progress: 1;
     };
     StringVector            file_names;
+    AttributeVector         file_attributes;
     uint8_t                 melodyId;
     uint8_t                 tempo;
     timer_t                 init_timer;
@@ -51,6 +64,10 @@ struct  AutoDrumsRuntimeData {
         init_timer      = 0;
     }
 };
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// TesAutoDrums
+class TesMIDIOutQueue;
 
 class TesAutoDrums {
     friend void midi_handler_scanner(midi_event *pev);
