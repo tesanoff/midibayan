@@ -9,52 +9,24 @@
 
 // MIDI handler for scanning
 void midi_handler_scanner(midi_event *pev){
-    PRINT_1("============= MIDI event (scanner) ===============");
-    PRINT_2_HEX("track   =\t", pev->track);
-    PRINT_2_HEX("channel =\t", pev->channel);
-    PRINT_2_HEX("size    =\t", pev->size);
-    for (int i=0;i<pev->size;i++){
-        PRINT_2_HEX("data    =\t", pev->data[i]);
-    }
     // pass the event to the AutoDrums class for processing
     theMIDIController._auto_drums.midiEventScanner(pev);
 }
 
 // META handler for scanning
 void meta_handler_scanner(const meta_event *p){
-    PRINT_1("============= META event (scanner) ===============");
-    PRINT_2_HEX("track   =\t", p->track);
-    PRINT_2_HEX("type    =\t", p->type);
-    PRINT_2_HEX("size    =\t", p->size);
-    for (int i=0;i<p->size;i++){
-        PRINT_2_HEX("data    =\t", p->data[i]);
-    }
     // pass the event to the AutoDrums class for processing
     theMIDIController._auto_drums.metaEventScanner(p);
 }
 
 // MIDI handler for playing
 void midi_handler_player(midi_event *pev){
-    PRINT_1("============= MIDI event (player) ===============");
-    PRINT_2_HEX("track   =\t", pev->track);
-    PRINT_2_HEX("channel =\t", pev->channel);
-    PRINT_2_HEX("size    =\t", pev->size);
-    for (int i=0;i<pev->size;i++){
-        PRINT_2_HEX("data    =\t", pev->data[i]);
-    }
     // pass the event to the AutoDrums class for processing
     theMIDIController._auto_drums.midiEventPlayer(pev);
 }
 
 // META handler for playing
 void meta_handler_player(const meta_event *p){
-    PRINT_1("============= META event (player) ===============");
-    PRINT_2_HEX("track   =\t", p->track);
-    PRINT_2_HEX("type    =\t", p->type);
-    PRINT_2_HEX("size    =\t", p->size);
-    for (int i=0;i<p->size;i++){
-        PRINT_2_HEX("data    =\t", p->data[i]);
-    }
     // pass the event to the AutoDrums class for processing
     theMIDIController._auto_drums.metaEventPlayer(p);
 }
@@ -159,6 +131,7 @@ const char * const  melodyName[numberOfMelodies] = {
 TesAutoDrums::TesAutoDrums(TesMIDIOutQueue * midi_queue){
     _midi_queue = midi_queue;
     _is_playing = false;
+    _is_scanning = false;
     // setup the default melody
     _melodyId = 0;      // the default melody ID
     // get a pointer to the melody
@@ -209,29 +182,34 @@ void    TesAutoDrums::init(void){
     for(int i=0; i<_file_names.size();i++){
         PRINT_1(_file_names[i]);
     }
+    // set the initial value of melody ID (an index if a file name)
+    _melodyId = 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // Starts playing the current melody
 void    TesAutoDrums::start(void){
+    PRINT_2("Starting melody: ", _file_names[_melodyId]);
+    // open a melody
+    int err = _SMF.load(_file_names[_melodyId].c_str());
+    if (err != MD_MIDIFile::E_OK){
+        PRINT_2("ERROR = ", err);
+        return;
+    }
+    // set a flag
     _is_playing = true;
-    // get a pointer to the melody
-    uint8_t * melody_p = (uint8_t *)melody[_melodyId];
     // set the drumset
     TesMIDICommand  cmd;
     cmd.channelId = drumsChannel;
     cmd.midiCommand = mcProgramChange;
-    cmd.data1   = melody_p[drumsetIndex];
+    cmd.data1   = 0;    // TODO rework this (put a proper drumset)
     _midi_queue->pushCommand(&cmd);
-    // set the current note (i.e. MIDI command)
-    _current_note = firstNoteIndex;
-    // play the current note
-    playCurrentNote();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // Stops playing the current melody
 void    TesAutoDrums::stop(void){
+    _SMF.close();
     _is_playing = false;
     // stop playing all notes in the channel (in case if they're playing)
     TesMIDICommand  cmd;
@@ -239,6 +217,10 @@ void    TesAutoDrums::stop(void){
     cmd.midiCommand = mcControlChange;
     cmd.data1   = 123;  // controller number; "all notes off"
     _midi_queue->pushCommand(&cmd);
+    // TODO remove the code below
+    PRINT_2("old melody id = ", _melodyId);
+    setNextMelodyId();
+    PRINT_2("new melody id = ", _melodyId);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -250,6 +232,7 @@ uint8_t TesAutoDrums::getTempo(void){
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // Sets the current tempo value
 void    TesAutoDrums::setTempo(uint8_t    tempo){
+    // TODO re-implement this
     _tempo = tempo; // no need to complicate yet
 }
 
@@ -267,15 +250,11 @@ void TesAutoDrums::setMelodyId(uint8_t melody_id){
         SWER(swerAutoDrums01);
     }
 
-    if ( melody_id >= numberOfMelodies){
+    if ( melody_id >= _file_names.size()){
         SWER(swerAutoDrums02);
     }
 
     _melodyId = melody_id;
-    // get a pointer to the melody
-    uint8_t * melody_p = (uint8_t *)melody[_melodyId];
-    // get the default tempo
-    _tempo = melody_p[0];
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -286,13 +265,9 @@ void TesAutoDrums::setNextMelodyId(void){
         SWER(swerAutoDrums01);
     }
 
-    if ( ++_melodyId == numberOfMelodies){
+    if ( ++_melodyId == _file_names.size()){
         _melodyId = 0;
     }
-    // get a pointer to the melody
-    uint8_t * melody_p = (uint8_t *)melody[_melodyId];
-    // get the default tempo
-    _tempo = melody_p[0];
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -304,18 +279,14 @@ void TesAutoDrums::setPreviousMelodyId(void){
     }
 
     if ( _melodyId-- == 0){
-        _melodyId = numberOfMelodies - 1;
+        _melodyId = _file_names.size() - 1;
     }
-    // get a pointer to the melody
-    uint8_t * melody_p = (uint8_t *)melody[_melodyId];
-    // get the default tempo
-    _tempo = melody_p[0];
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // Returns a string with the current melody name
 const char *    TesAutoDrums::getCurrentMelodyName(void){
-    return melodyName[_melodyId];
+    return _file_names[_melodyId].c_str();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -342,33 +313,13 @@ void    TesAutoDrums::tick(void){
         return;
     }
 
-    // get a pointer to the melody
-    uint8_t * melody_p = (uint8_t *)melody[_melodyId];
-    // calculate the period of the whole tact
-    uint32_t  tact_period = (long)1000 * 4 * (long)60 / _tempo;
-    // get the current note command, so that we chan check whether it is "On" or "Off"
-    EncodedNote en;
-    en.rawNote = melody_p[_current_note];
-    // get the duration of the current note (the divisor from 1/2, 1/4, 1/8, 1/16, etc. )
-    // "the duration" is the second byte for "note off" or the third byte for "note on"
-    uint8_t noteDuration = melody_p[_current_note + ((en.noteOff)?1:2)];
-    // calculate note_period
-    uint32_t notePeriod = noteDuration ? tact_period / noteDuration : 0;
-    // check the melody timer
-    timer_t millis_snapshot = millis();
-    if((millis_snapshot - _melody_timer) > notePeriod){
-        // it's time for the next note
-        // if the current note command is "On" then its size is 3 bytes; otherwise - its size is 2 bytes
-        _current_note += (en.noteOff) ? 2 : 3;
-        // check if we have reached the end of the melody
-        en.rawNote = melody_p[_current_note];
-        if (en.rawNote == 0){
-            // start from the very 1st note again
-            _current_note = firstNoteIndex;
-        }
-        // and play the new current note
-        playCurrentNote();
+    if(!_SMF.isEOF()){
+        _SMF.getNextEvent();
     }
+    else{
+        _is_playing = false; // TODO rework this. This is a temporary version
+    }
+
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -378,20 +329,7 @@ void    TesAutoDrums::tick(void){
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // plays the next note (the index of the next note is in _next_note)
 void    TesAutoDrums::playCurrentNote(void){
-    // get a pointer to the melody
-    uint8_t * melody_p = (uint8_t *)melody[_melodyId];
-    // get the current note
-    EncodedNote eNote;
-    eNote.rawNote = melody_p[_current_note];
-    // prepare the MIDI command and put it into the queue
-    TesMIDICommand  cmd;
-    cmd.channelId = drumsChannel;
-    cmd.midiCommand = mcNoteOn;
-    cmd.data1 = eNote.noteId;
-    cmd.data2 = (eNote.noteOff) ? 0 : melody_p[_current_note + 1];
-    _midi_queue->pushCommand(&cmd);
-    // set the timer
-    _melody_timer = millis();   // uint16_t <-- uint32_t
+    // TODO remove this method
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -406,6 +344,13 @@ void TesAutoDrums::midiEventScanner(midi_event *pev){
  *  uint8_t data[4];  ///< the data. Only 'size' bytes are valid
  *} midi_event;
  */
+    PRINT_1("============= MIDI event (scanner) ===============");
+    PRINT_2_HEX("track   =\t", pev->track);
+    PRINT_2_HEX("channel =\t", pev->channel);
+    PRINT_2_HEX("size    =\t", pev->size);
+    for (int i=0;i<pev->size;i++){
+        PRINT_2_HEX("data    =\t", pev->data[i]);
+    }
 
     // TODO implement this!
 }
@@ -426,6 +371,13 @@ void TesAutoDrums::metaEventScanner(const meta_event *pmev){
  *  };
  *} meta_event;
  */
+    PRINT_1("============= META event (scanner) ===============");
+    PRINT_2_HEX("track   =\t", pmev->track);
+    PRINT_2_HEX("type    =\t", pmev->type);
+    PRINT_2_HEX("size    =\t", pmev->size);
+    for (int i=0;i<pmev->size;i++){
+        PRINT_2_HEX("data    =\t", pmev->data[i]);
+    }
 
     // TODO implement this!
 }
@@ -433,15 +385,6 @@ void TesAutoDrums::metaEventScanner(const meta_event *pmev){
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // receives MIDI events during MIDI files playing
 void TesAutoDrums::midiEventPlayer(midi_event *pev){
-/*
- *typedef struct
- *{
- *  uint8_t track;    ///< the track this was on
- *  uint8_t channel;  ///< the midi channel
- *  uint8_t size;     ///< the number of data bytes
- *  uint8_t data[4];  ///< the data. Only 'size' bytes are valid
- *} midi_event;
- */
     // prepare the MIDI command and put it into the queue
     TesMIDICommand  cmd;
     cmd.channelId = drumsChannel;           // no other option, as the MIDI file was validated already
@@ -467,6 +410,14 @@ void TesAutoDrums::metaEventPlayer(const meta_event *pmev){
  *  };
  *} meta_event;
  */
+    // debug print
+    PRINT_1("============= META event (player) ===============");
+    PRINT_2_HEX("track   =\t", pmev->track);
+    PRINT_2_HEX("type    =\t", pmev->type);
+    PRINT_2_HEX("size    =\t", pmev->size);
+    for (int i=0;i<pmev->size;i++){
+        PRINT_2_HEX("data    =\t", pmev->data[i]);
+    }
 
     // TODO implement this!
 }

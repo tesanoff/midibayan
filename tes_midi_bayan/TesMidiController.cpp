@@ -653,6 +653,7 @@ void TesMIDIController::sendMIDICommand(TesMIDICommand *cmd){
 
     // check for the raw mode again, as it could also be set earlier (in previous calls)
     if ( rawMode ){
+        previousStatusByte  = 0;
         // send the payload until we see 0xF7
         for(int i=0; i<TES_MIDI_COMMAND_MAX_LENGTH; i++ ){
             // we send the byte anyway first

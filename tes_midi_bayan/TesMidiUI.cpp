@@ -114,6 +114,7 @@ void TesMidiUI::processCtlButtonEvent(tesEvent *event){
     case screenModeMain:
         {
             if (event->buttonEvent == tesBeReleased){
+                PRINT_2("key pressed = ", event->buttonId);
                 // key handlers specific for the main screen
                 switch(event->buttonId){
                 case ctlButtonTempoMinus:
@@ -146,6 +147,7 @@ void TesMidiUI::processCtlButtonEvent(tesEvent *event){
                     // clear the event to indicate it has been fully processed
                     event->eventType = tesEmpty;
                     break;
+                case ctlButtonDown: // TODO remove this
                 case ctlButtonDrumsControl:
                     if (_flags.drums_control_hold_detected){
                         // switch to the Manual mode
@@ -422,6 +424,7 @@ void TesMidiUI::setDrumMachineState(uint8_t new_state){
         return;
     }
 
+    PRINT_2("old state = ", _mc->_var.drumsMode);
     // actions depend on the current state
     switch (_mc->_var.drumsMode){
     case dmOff:
@@ -506,6 +509,7 @@ void TesMidiUI::setDrumMachineState(uint8_t new_state){
     default:
         SWER(swerGUI04);
     }
+    PRINT_2("new state = ", _mc->_var.drumsMode);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////

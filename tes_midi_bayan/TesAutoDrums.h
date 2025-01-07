@@ -82,6 +82,7 @@ private:
     SDFAT               _SD;
     MD_MIDIFile         _SMF;
     StringVector        _file_names;
+    bool                _is_scanning;
 
     void    playCurrentNote(void);
 
