@@ -46,6 +46,9 @@ void meta_handler_player(const meta_event *p){
 
 #define INIT_PERIOD     25  // ms
 
+String  loopPrefix("/LOOP/");
+String  singlePrefix("/SINGLE/");
+
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // constructor
 TesAutoDrums::TesAutoDrums(TesMIDIOutQueue * midi_queue){
@@ -69,14 +72,35 @@ void    TesAutoDrums::init(void){
     SDDIR   root;
     SDFILE  file;
 
-    if(!root.open("/")){
-        PRINT_1("Could not open root directory");
+    if(!root.open(loopPrefix.c_str())){
+        PRINT_1("Could not open LOOP directory");
         // TODO handle the error properly
     }
     else{
         while(file.openNext(&root, O_RDONLY)){
             char    buffer[MAX_FILE_NAME_LENGTH];
-            size_t name_length = file.getName(buffer, MAX_FILE_NAME_LENGTH);
+            loopPrefix.toCharArray(buffer, MAX_FILE_NAME_LENGTH);
+            size_t name_length = file.getName(buffer+loopPrefix.length(), MAX_FILE_NAME_LENGTH - loopPrefix.length());
+            PRINT_2("name length =", name_length);
+            if(!file.isDirectory()){
+                _var.file_names.push_back(buffer);
+            }
+            else {
+                PRINT_2("Skipping directory:", buffer);
+            }
+            file.close();
+        }
+    }
+    root.close();
+    if(!root.open(singlePrefix.c_str())){
+        PRINT_1("Could not open SINGLE directory");
+        // TODO handle the error properly
+    }
+    else{
+        while(file.openNext(&root, O_RDONLY)){
+            char    buffer[MAX_FILE_NAME_LENGTH];
+            singlePrefix.toCharArray(buffer, MAX_FILE_NAME_LENGTH);
+            size_t name_length = file.getName(buffer+singlePrefix.length(), MAX_FILE_NAME_LENGTH - singlePrefix.length());
             PRINT_2("name length =", name_length);
             if(!file.isDirectory()){
                 _var.file_names.push_back(buffer);
@@ -91,6 +115,7 @@ void    TesAutoDrums::init(void){
     for(int i=0; i<_var.file_names.size();i++){
         PRINT_1(_var.file_names[i]);
     }
+
     // *** The initial list of file names has been composed.
     //     Now, it's time to start validating those files.
     _var.init_in_progress   = true;
@@ -191,6 +216,7 @@ void TesAutoDrums::setMelodyId(uint8_t melody_id){
     }
 
     _var.melodyId = melody_id;
+    _var.tempo  = _var.file_attributes[_var.melodyId].tempo;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -208,6 +234,7 @@ void TesAutoDrums::setNextMelodyId(void){
     if ( ++_var.melodyId == _var.file_names.size()){
         _var.melodyId = 0;
     }
+    _var.tempo  = _var.file_attributes[_var.melodyId].tempo;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -225,6 +252,7 @@ void TesAutoDrums::setPreviousMelodyId(void){
     if ( _var.melodyId-- == 0){
         _var.melodyId = _var.file_names.size() - 1;
     }
+    _var.tempo  = _var.file_attributes[_var.melodyId].tempo;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -233,8 +261,16 @@ const char *    TesAutoDrums::getCurrentMelodyName(void){
     if(!_var.is_initialized){
         return NULL;
     }
+    // a returned name shoould be:
+    //  * wihout a prefix (like "/LOOP/")
+    //  * without the extension ".mid"
+    // NOTE: the returned value will live until this function is called for another melody
+    int start_pos = (_var.file_attributes[_var.melodyId].loop)? loopPrefix.length() : singlePrefix.length();
+    int end_pos = _var.file_names[_var.melodyId].length() - 4;  // without ".mid"
+    static  char    buffer[MAX_FILE_NAME_LENGTH];
+    strcpy(buffer, _var.file_names[_var.melodyId].substring(start_pos, end_pos).c_str());
 
-    return _var.file_names[_var.melodyId].c_str();
+    return buffer;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -395,13 +431,23 @@ void    TesAutoDrums::validateMidiFile(void){
     _var.validation_data.ticks_per_quarter_note = _SMF.getTicksPerQuarterNote();    // tick / quarter
     PRINT_2("Header tempo = ", _var.validation_data.tempo);
     PRINT_2_HEX("Header time signature = ", _var.validation_data.time_signature);
-    // TODO Also, decide if the file should be looped.
+    // Also, decide if the file should be looped.
+    _var.validation_data.loop                   = _var.file_names[_var.melodyId].startsWith(loopPrefix);
 
     // run the validation
     if(!_SMF.isEOF()){
         _SMF.scanAllTracks();
     }
     _SMF.close();
+    // *** We cannot call _SMF.initialise() here, but we need to reset some parameters to default values,
+    //     so that validation of the next file starts with default numbers.
+    // Set MIDI specified standard defaults
+    // - the code below is copy/pasted from the MD_MIDIFile library.
+    _SMF.setTicksPerQuarterNote(48); // 48 ticks per quarter note
+    _SMF.setTempo(120);              // 120 beats per minute
+    _SMF.setTempoAdjust(0);          // 0 beats per minute adjustment
+    _SMF.setMicrosecondPerQuarterNote(500000);  // 500,000 microseconds per quarter note
+    _SMF.setTimeSignature(4, 4);     // 4/4 time
     // *** _var.validation_data contains the validation result
     // Final checks (if they make sense)
     if(_var.validation_data.is_valid){
@@ -411,6 +457,7 @@ void    TesAutoDrums::validateMidiFile(void){
 
     if (_var.validation_data.is_valid){
         PRINT_1("This file is valid");
+        PRINT_2("\tloop = ", _var.validation_data.loop);
         // add MIDI file attributes to the respective list
         MidiFileAttributes  attr;
         attr.loop       = _var.validation_data.loop;
@@ -437,5 +484,6 @@ void    TesAutoDrums::validateMidiFile(void){
         _SMF.setMetaHandler(meta_handler_player);
         // set the default melodyId
         _var.melodyId           = 0;
+        _var.tempo  = _var.file_attributes[_var.melodyId].tempo;    // don't forget about the tempo
     }
 }
