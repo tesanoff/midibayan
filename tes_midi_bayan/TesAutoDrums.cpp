@@ -44,6 +44,8 @@ void meta_handler_player(const meta_event *p){
 #define drumsChannel    9
 #define defaultVolume   70
 
+#define defaultDrumset  0
+
 #define INIT_PERIOD     25  // ms
 
 String  loopPrefix("/LOOP/");
@@ -62,7 +64,7 @@ void    TesAutoDrums::init(void){
 
     if(!_SD.begin(sd_config)){
         PRINT_1("*** SD Card init failed!");
-        SWER(0xF0); // TODO assign a proper SWER id
+        SWER(swerAutoDrums03);
     }
     PRINT_1("SD Card - ok");
 
@@ -74,7 +76,6 @@ void    TesAutoDrums::init(void){
 
     if(!root.open(loopPrefix.c_str())){
         PRINT_1("Could not open LOOP directory");
-        // TODO handle the error properly
     }
     else{
         while(file.openNext(&root, O_RDONLY)){
@@ -94,7 +95,6 @@ void    TesAutoDrums::init(void){
     root.close();
     if(!root.open(singlePrefix.c_str())){
         PRINT_1("Could not open SINGLE directory");
-        // TODO handle the error properly
     }
     else{
         while(file.openNext(&root, O_RDONLY)){
@@ -112,16 +112,22 @@ void    TesAutoDrums::init(void){
         }
     }
     PRINT_2("Collected names = ", _var.file_names.size());
-    for(int i=0; i<_var.file_names.size();i++){
-        PRINT_1(_var.file_names[i]);
-    }
 
-    // *** The initial list of file names has been composed.
-    //     Now, it's time to start validating those files.
-    _var.init_in_progress   = true;
-    _var.melodyId           = 0;    // we start with this one
-    _SMF.setMidiHandler(midi_handler_scanner);
-    _SMF.setMetaHandler(meta_handler_scanner);
+    if(_var.file_names.size() > 0){
+        // *** The initial list of file names has been composed.
+        //     Now, it's time to start validating those files.
+        _var.init_in_progress   = true;
+        _var.melodyId           = 0;    // we start with this one
+        _SMF.setMidiHandler(midi_handler_scanner);
+        _SMF.setMetaHandler(meta_handler_scanner);
+    }
+    else{
+        // *** No MIDI files detected
+
+        // we consider the engine not initialized
+        _var.init_in_progress   = false;
+        _var.is_initialized     = false;
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -143,11 +149,15 @@ void    TesAutoDrums::start(void){
     _SMF.looping( _var.file_attributes[_var.melodyId].loop );
     // set a flag
     _var.is_playing = true;
+    // set the initial tempo
+    _SMF.setTempo(_var.user_defined_tempo);      // Initially, it's the same as the value encoded in the file.
+                                    // But the user can change it in _var.user_defined_tempo, so, _var.user_defined_tempo is the best place to take
+                                    // the initial value of tempo from.
     // set the drumset
     TesMIDICommand  cmd;
     cmd.channelId = drumsChannel;
     cmd.midiCommand = mcProgramChange;
-    cmd.data1   = 0;    // TODO rework this (put a proper drumset)
+    cmd.data1   = defaultDrumset;
     _midi_queue->pushCommand(&cmd);
     // The drumset can be changed if the MIDI file has a respecitve command; but we don't care about such cases.
 }
@@ -163,31 +173,36 @@ void    TesAutoDrums::stop(void){
     cmd.midiCommand = mcControlChange;
     cmd.data1   = 123;  // controller number; "all notes off"
     _midi_queue->pushCommand(&cmd);
-    // TODO remove the code below
-    {
-        PRINT_2("old melody id = ", _var.melodyId);
-        setNextMelodyId();
-        PRINT_2("new melody id = ", _var.melodyId);
-    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
-// Gets the current tempo value
-uint8_t TesAutoDrums::getTempo(void){
+// Gets the current user-defined tempo value
+uint16_t TesAutoDrums::getTempo(void){
     if(!_var.is_initialized){
         return 0;
     }
-    return _var.tempo;  // no need to complicate yet - TODO revise this
+    return _var.user_defined_tempo;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // Sets the current tempo value
-void    TesAutoDrums::setTempo(uint8_t    tempo){
+void    TesAutoDrums::setTempo(uint16_t    tempo){
     if(!_var.is_initialized){
         return;
     }
-    // TODO re-implement this
-    _var.tempo = tempo; // no need to complicate yet
+    // First, we store the new value of the user-defined tempo
+    _var.user_defined_tempo = tempo;
+    // check if we need to adjust the current playback tempo as well
+    if(_var.is_playing){
+        // The new value of the current tempo should be adjusted according to the new difference
+        // between the user-defined tempo and the "native" MIDI file tempo stored in the MIDI file attributes.
+        uint16_t    new_tempo   = map(_var.native_tempo, 0, _var.file_attributes[_var.melodyId].tempo, 0, _var.user_defined_tempo);
+        _SMF.setTempo(new_tempo);
+        PRINT_2("user defined tempo = ", _var.user_defined_tempo);
+        PRINT_2("\tbase tempo = ", _var.file_attributes[_var.melodyId].tempo);
+        PRINT_2("\tcurrent native tempo = ", _var.native_tempo);
+        PRINT_2("new playback tempo = ", new_tempo);
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -216,7 +231,7 @@ void TesAutoDrums::setMelodyId(uint8_t melody_id){
     }
 
     _var.melodyId = melody_id;
-    _var.tempo  = _var.file_attributes[_var.melodyId].tempo;
+    _var.user_defined_tempo  = _var.file_attributes[_var.melodyId].tempo;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -234,7 +249,8 @@ void TesAutoDrums::setNextMelodyId(void){
     if ( ++_var.melodyId == _var.file_names.size()){
         _var.melodyId = 0;
     }
-    _var.tempo  = _var.file_attributes[_var.melodyId].tempo;
+    _var.user_defined_tempo  = _var.file_attributes[_var.melodyId].tempo;
+    _var.native_tempo  = _var.file_attributes[_var.melodyId].tempo;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -252,7 +268,7 @@ void TesAutoDrums::setPreviousMelodyId(void){
     if ( _var.melodyId-- == 0){
         _var.melodyId = _var.file_names.size() - 1;
     }
-    _var.tempo  = _var.file_attributes[_var.melodyId].tempo;
+    _var.user_defined_tempo  = _var.file_attributes[_var.melodyId].tempo;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -301,8 +317,7 @@ void    TesAutoDrums::tick(void){
         else{
             // EOF is reached, and the file was not set for looping.
             // So, we need to stop playing.
-            _var.is_playing = false; // TODO rework this. This is a temporary version
-                                     // we will need to adjust the state of drum machine somehow.
+            _var.is_playing = false; // TODO revise this. Do we need to implement "auto stop"?
         }
     }
 }
@@ -379,6 +394,24 @@ void TesAutoDrums::midiEventPlayer(midi_event *pev){
     cmd.midiCommand = pev->data[0] >> 4;    // the MD_MIDIFile library uses the 0xV0 format for commands (where "V" is the "value")
     cmd.data1 = pev->data[1];
     cmd.data2 = pev->data[2];   // this makes sense only for 3-bytes commands, but it's safe to always copy it
+
+    // *** filter out "banned" MIDI commands:
+    //  * CC 7  - Volume
+    //  * CC 11 - Expression
+    switch (cmd.midiCommand){
+    case mcControlChange:
+        {
+            switch(cmd.data1){
+            case 7:         // Volume
+            case 11:        // Expression
+                // just return without sending this command
+                return;
+            }
+        }
+        break;
+    }
+    // *** all other MIDI commands are allowed
+
     _midi_queue->pushCommand(&cmd);
 }
 
@@ -393,8 +426,16 @@ void TesAutoDrums::metaEventPlayer(const meta_event *pmev){
         {
             // when we get here, the SMF object has already been adjusted to the new tempo.
 
-            // TODO we need to adjust the tempo to the user-defined value (in proportion)
-            PRINT_1("*** Tempo is to be adjusted, if required");
+            PRINT_2("META: old native tempo = ", _var.native_tempo);
+            // a new native tempo was set to the _SMF already; so, just get it from there
+            _var.native_tempo   =   _SMF.getTempo();
+            // The new value of the current tempo should be adjusted according to the difference
+            // between the user-defined tempo and the "native" MIDI file tempo stored in the MIDI file attributes.
+            uint16_t    new_tempo   = map(_var.native_tempo, 0, _var.file_attributes[_var.melodyId].tempo, 0, _var.user_defined_tempo);
+            _SMF.setTempo(new_tempo);
+            PRINT_2("META: user defined tempo = ", _var.user_defined_tempo);
+            PRINT_2("META: new native tempo = ", _var.native_tempo);
+            PRINT_2("META: new playback tempo = ", new_tempo);
         }
         break;
     case 0x58:      // time signature
@@ -407,8 +448,6 @@ void TesAutoDrums::metaEventPlayer(const meta_event *pmev){
         break;
     }
     
-
-    // TODO implement the rest!
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -484,6 +523,8 @@ void    TesAutoDrums::validateMidiFile(void){
         _SMF.setMetaHandler(meta_handler_player);
         // set the default melodyId
         _var.melodyId           = 0;
-        _var.tempo  = _var.file_attributes[_var.melodyId].tempo;    // don't forget about the tempo
+        _var.user_defined_tempo  = _var.file_attributes[_var.melodyId].tempo;    // don't forget about the tempo
+        _var.native_tempo  = _var.file_attributes[_var.melodyId].tempo;
     }
 }
+

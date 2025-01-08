@@ -51,7 +51,8 @@ struct  AutoDrumsRuntimeData {
     StringVector            file_names;
     AttributeVector         file_attributes;
     uint8_t                 melodyId;
-    uint8_t                 tempo;
+    uint16_t                user_defined_tempo;
+    uint16_t                native_tempo;   // this is the current tempo from the "MIDI file's" point of view
     timer_t                 init_timer;
     MidiFileValidationData  validation_data;
 
@@ -90,12 +91,12 @@ public:
     void    stop(void);
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
-    // gets the current tempo value
-    uint8_t getTempo(void);
+    // gets the current user-defined tempo value
+    uint16_t getTempo(void);
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
     // Sets the current tempo value
-    void    setTempo(uint8_t    tempo);
+    void    setTempo(uint16_t    tempo);
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
     // Returns an ID of the current melody
@@ -145,6 +146,7 @@ private:
     ///////////////////////////////////////////////////////////////////////////////////////////////
     // Validates the current MIDI file
     void    validateMidiFile(void);
+
 };
 
 

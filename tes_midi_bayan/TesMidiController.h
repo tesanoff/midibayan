@@ -9,7 +9,7 @@
 #include "swer.h"
 #include "common.h"
 
-#define TES_MIDI_DEBUG
+//#define TES_MIDI_DEBUG
 
 /////////////////////////////////////////////////////////////
 // auxiliary stuff

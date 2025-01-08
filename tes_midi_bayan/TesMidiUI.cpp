@@ -118,7 +118,17 @@ void TesMidiUI::processCtlButtonEvent(tesEvent *event){
                 // key handlers specific for the main screen
                 switch(event->buttonId){
                 case ctlButtonTempoMinus:
+                case ctlButtonLeft: // TODO remove this
+                case ctlButtonRight: // TODO remove this
                 case ctlButtonTempoPlus:
+                    { // TODO remove this
+                        if(event->buttonId == ctlButtonLeft){
+                            event->buttonId = ctlButtonTempoMinus;
+                        }
+                        else if (event->buttonId == ctlButtonRight){
+                            event->buttonId = ctlButtonTempoPlus;
+                        }
+                    }
                     // we change a tempo in the Standby or Playing modes only
                     if( (_mc->_var.drumsMode == dmStandby) || (_mc->_var.drumsMode == dmPlaying)){
                         _mc->_auto_drums.setTempo( _mc->_auto_drums.getTempo()
@@ -147,7 +157,7 @@ void TesMidiUI::processCtlButtonEvent(tesEvent *event){
                     // clear the event to indicate it has been fully processed
                     event->eventType = tesEmpty;
                     break;
-                case ctlButtonDown: // TODO remove this
+                case ctlButtonUp: // TODO remove this
                 case ctlButtonDrumsControl:
                     if (_flags.drums_control_hold_detected){
                         // switch to the Manual mode
@@ -241,6 +251,7 @@ void TesMidiUI::processCtlButtonEvent(tesEvent *event){
                 event->eventType = tesEmpty;
             }
             break;
+            case ctlButtonDown: // TODO remove this
             case ctlButtonDrumsStyle: {
                 bool was_playing = _mc->_auto_drums.isPlaying();
                 if ( was_playing ){
