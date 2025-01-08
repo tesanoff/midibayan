@@ -160,6 +160,8 @@ void    TesMIDIController::init(void){
     // initialize the GUI
     _ui.init();
 
+    //initialize the drum machine
+    _auto_drums.init();
 }
 
 
@@ -645,6 +647,7 @@ void TesMIDIController::sendMIDICommand(TesMIDICommand *cmd){
 #endif
     static bool rawMode = false;
     if ( !rawMode ){
+        previousStatusByte  = 0;
         // check if the current command starts the raw mode
         rawMode = (cmd->statusByte == 0xF0);
     }

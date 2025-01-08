@@ -250,6 +250,10 @@ class TesAutoDrums;
 // the MIDI controller itself
 class TesMIDIController  {
     friend class TesMidiUI;
+    friend void midi_handler_scanner(midi_event *pev);
+    friend void meta_handler_scanner(const meta_event *p);
+    friend void midi_handler_player(midi_event *pev);
+    friend void meta_handler_player(const meta_event *p);
 public:
     ///////////////////////////////////////////////////////////////////////////
     // Event handler
@@ -373,6 +377,8 @@ private:
     // This menthod should be called each time whe global settings are changed
     void globalSettingsChangeNotification(void);
 };
+
+extern TesMIDIController theMIDIController;
 
 ////////////////////////////////////////////////////////////////////////////////////////
 //      MIDI controller
