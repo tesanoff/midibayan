@@ -515,8 +515,8 @@ void TesMidiUI::setDrumMachineState(uint8_t new_state){
 #define symbolHeight    8       // pixels
 #define symbolWidth     6       // pixels
 
-#define maxFormatDescriptorLength   8
-#define maxFormattedStringLength    8
+#define maxFormatDescriptorLength   32
+#define maxFormattedStringLength    32
 const char numFormat3R[] = "%3d";       // 3 digits, right alignment
 const char auxFormat1[]  = " (%3d)";    // 3 digits, right alignment
 
@@ -1211,7 +1211,7 @@ void TesMidiUI::setTextCursor(uint8_t X, uint8_t Y){
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 //  prints a number according to the specified format string
-void TesMidiUI::printFormatted(PGM_P format, uint8_t value){
+void TesMidiUI::printFormatted(PGM_P format, uint16_t value){
     char buf[maxFormattedStringLength];     // for a properly aligned number
     char fmt[maxFormatDescriptorLength];    // for a format descriptor string
     sprintf(buf, strcpy_P(fmt, format), value);
