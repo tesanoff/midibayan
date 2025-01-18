@@ -271,7 +271,7 @@ public:
 
     ///////////////////////////////////////////////////////////////////////////
     // constructor
-    TesMIDIController(TesLedSet *led_panel, GyverOLED<SSH1106_128x64> *oled);
+    TesMIDIController(TesLedSet *led_panel, OledDisplay *oled);
 
 private:
     TesMidiUI              _ui;           // a class responsible for processing control button events

@@ -1,5 +1,4 @@
 #include <Arduino.h>
-#include <GyverOLED.h>
 #include "TesLedSet.h"
 #include "TesEventQueue.h"
 #include "TesKeyboard.h"
@@ -249,7 +248,7 @@ void    TesMIDIController::tick(void){
 
 ///////////////////////////////////////////////////////////////////////////
 // constructor
-TesMIDIController::TesMIDIController(TesLedSet *led_panel, GyverOLED<SSH1106_128x64> *oled)
+TesMIDIController::TesMIDIController(TesLedSet *led_panel, OledDisplay  *oled)
     :_ui(oled, this, led_panel),
     _auto_drums(&_midi_queue)
 {
