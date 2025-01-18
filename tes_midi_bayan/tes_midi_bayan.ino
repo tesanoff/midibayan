@@ -5,7 +5,6 @@
  *  2024
  */
 
-#include <GyverOLED.h>
 #include "TesLedSet.h"
 #include "TesKeyboard.h"
 #include "TesPressureSensor.h"
@@ -38,7 +37,7 @@ TesPressureSensor   pressureSensor(&theQueue);
 TesBatterySensor   batterySensor(&theQueue);
 
 // the OLED display
-GyverOLED<SSH1106_128x64> oled;
+OledDisplay oled;
 
 // the MIDI controller
 TesMIDIController   theMIDIController(&ledSet, &oled);

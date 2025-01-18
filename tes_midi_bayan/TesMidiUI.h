@@ -5,6 +5,9 @@
 #include "TesLedSet.h"
 #include "common.h"
 
+// specify the OLED display model just in one place, here.
+typedef GyverOLED<SSH1106_128x64>   OledDisplay;
+
 // forward declaration
 class TesMIDIController;
 
@@ -104,7 +107,7 @@ class TesMidiUI {
 public:
     ///////////////////////////////////////////////////////////////////////////////////////////////
     // constructor
-    TesMidiUI(GyverOLED<SSH1106_128x64> * oled, TesMIDIController * mc, TesLedSet * led);
+    TesMidiUI(OledDisplay * oled, TesMIDIController * mc, TesLedSet * led);
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
     // Initializes the instance.
@@ -136,7 +139,7 @@ public:
     void setDrumMachineState(uint8_t new_state);
 
 private:
-    GyverOLED<SSH1106_128x64>   * _oled;    // OLED display instance
+    OledDisplay                 * _oled;    // OLED display instance
     TesMIDIController           * _mc;      // MIDI Controller instance
     TesUIFlags                  _flags;     // aux flags
     timer_t                     _display_update_timer;      // we update display by a timer, not in each work cycle

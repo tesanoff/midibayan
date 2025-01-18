@@ -21,7 +21,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // constructor
-TesMidiUI::TesMidiUI(GyverOLED<SSH1106_128x64> * oled, TesMIDIController * mc, TesLedSet * led){
+TesMidiUI::TesMidiUI(OledDisplay * oled, TesMIDIController * mc, TesLedSet * led){
     _oled = oled;
     _mc = mc;
     _led_set = led;
