@@ -28,7 +28,9 @@ struct  TesEditorStatus{
         uint8_t sysParTopIndex: 3;      // the index of a row  which is shown in the top position
         uint8_t drumsParSelector: 3;    // specifies the active drums parameter
         uint8_t instrumentSelector :1;  // 0 .. 1 (just 2 parameters)
+        uint8_t msSelector: 3;          // specifies the current row
     };
+    uint8_t msTopIndex;                 // the index of a file shown in the top position
 };
 
 struct  TesFKeyProfile{
@@ -44,6 +46,8 @@ struct  TesFKeyProfile{
         editorStatus.sysParSelector     = 0;
         editorStatus.drumsParSelector   = 0;
         editorStatus.instrumentSelector     = 1;
+        editorStatus.msSelector         = 0;
+        editorStatus.msTopIndex         = 0;
     }
 };
 
@@ -91,11 +95,13 @@ struct  TesUIFlags {
     uint8_t display_update_is_required: 1;  // true - when the display require updating
     uint8_t menu_hold_detected: 1;          // true - when the "Menu" key is held
     uint8_t drums_control_hold_detected: 1; // true - when the "Drums" key is held
+    uint8_t drums_style_hold_detected: 1;   // true - when the "Style" key is held
 
     TesUIFlags(void){
         display_update_is_required  = false;
         menu_hold_detected          = false;
         drums_control_hold_detected = false;
+        drums_style_hold_detected   = false;
     }
 };
 
@@ -190,20 +196,28 @@ private:
     void drawInstrumentEditorScreen(void);
     
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    //  control button event handler to Midi Param Editor more
+    //  Draws the melody selector screen
+    void drawMelodySelectorScreen(void);
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    //  control button event handler for Midi Param Editor mode
     void processCtlButtonEventMidiParamEditor(tesEvent *event);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    //  control button event handler to System Param Editor more
+    //  control button event handler for System Param Editor mode
     void processCtlButtonEventSystemParamEditor(tesEvent *event);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    //  control button event handler to Drums Param Editor more
+    //  control button event handler for Drums Param Editor mode
     void processCtlButtonEventDrumsParamEditor(tesEvent *event);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    //  control button event handler to Instrument Editor more
+    //  control button event handler for Instrument Editor mode
     void processCtlButtonEventInstrumentEditor(tesEvent *event);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    //  control button event handler for Melody Selector mode
+    void processCtlButtonEventMelodySelector(tesEvent *event);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //  Activates the specified preset
@@ -227,6 +241,10 @@ private:
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // Starts indicating a not saved preset
     void indicatePresetChange(void);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    // Sets Melody Selector's variables up, so that they point to the current melody.
+    void initMelodySelector(void);
 };
 
 #endif

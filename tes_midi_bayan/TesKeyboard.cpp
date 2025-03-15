@@ -30,8 +30,9 @@
 // This is configured here, in the bitmap below.
 // 1 - "hold" is enabled
 // 0 - "hold is disabled
-//                                           7       0   15      8    23     16
-const uint8_t   tesCtlButtonHoldBitmap[] = { 0b00110000, 0b11111111, 0b00000111};
+//                                             7      0   15      8   23     16
+const uint8_t   tesCtlButtonHoldBitmap[] = { 0b00110000, 0b11111111, 0b00001111};
+//                                                                     ~~   <-- not used
 
 // Control buttons are not equal again: some of them may have the "fast repeat" function, some of them may not.
 // This is configured here, in the bitmap below.
@@ -41,6 +42,7 @@ const uint8_t   tesCtlButtonHoldBitmap[] = { 0b00110000, 0b11111111, 0b00000111}
 // WARNING: don't be an idiot! Do not turn "Hold" and "Fast Repeat" features for the same button simultaneiously!
 //                                                 7      0   15      8    23     16
 const uint8_t   tesCtlButtonFastRepeatBitmap[] = { 0b00001111, 0b00000000, 0b00110000};
+//                                                                           ~~   <-- not used
 
 // internal states of control buttons
 enum {tesCtlButtonReleased = 0, tesCtlButtonPressed, tesCtlButtonHold, tesCtlButtonFastRepeat};

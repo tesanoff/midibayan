@@ -73,7 +73,7 @@ struct TesMIDICommand {
 
 //////////////////////////////////////////
 // MIDI-out queue
-#define TES_MIDI_QUEUE_SIZE     30
+#define TES_MIDI_QUEUE_SIZE     50
 class TesMIDIOutQueue {
 private:
     TesMIDICommand  _command[ TES_MIDI_QUEUE_SIZE  ];
@@ -109,7 +109,7 @@ public:
             _head = 0;
         }
         // put the command to the head
-        memcpy((_command + _head), command, sizeof(TesMIDICommand));
+        _command[_head] = *command;
         _size++;    // don't forget it
         return true;
     }
@@ -168,7 +168,9 @@ public:
 #define idxChorusType       13
 
 #define NUMBER_OF_KBD_PARAMETERS    14
-#define TES_EEPROM_SIGNATURE 0x5A11             // 0x5Avv, where: 5A - signature, vv - version
+#define NUMBER_OF_PRESETS           6           // 6 presets in 1 page
+#define NUMBER_OF_PRESET_PAGES      4
+#define TES_EEPROM_SIGNATURE 0x5A13             // 0x5Avv, where: 5A - signature, vv - version
 #define GLOBAL_SETTINGS_SAVING_TIMEOUT  8000    // changes are saved to EEPROM in 8 seconds after the last change
 
 #define SIZE_OF_PRESET_UPDATE_BITMAP    (((NUMBER_OF_KEYBOARDS * NUMBER_OF_KBD_PARAMETERS) -  1) / 8 + 1)
@@ -181,8 +183,10 @@ struct TesMIDIControllerSettings {
         struct {
             uint8_t     runningStatus: 1;       // true - running status enabled; false = disabled
             uint8_t     synthType: 2;           // let's reserve range 0 .. 3
+            uint8_t     activePresetPage: 2;    // up to 4 pages (0..3)
             uint8_t     activePreset: 3;        // 0 .. 5
             uint8_t     drumsMidiChannel: 4;    // a MIDI channel for drums
+            uint8_t     drumsAdditionalChannel: 4;  // another channel: for a melody played from the SD card
         };
         TesFKeyProfile  fkeyProfile[4];       // move it to system data that can be stored in EEPROM
     } global;
@@ -216,6 +220,7 @@ struct TesMIDIControllerRunTimeData {
     uint8_t     lastPressureValue;          // the last value received from the Pressure Sensor
     struct {
         uint8_t     currentPresetNotSaved: 1;   // true - if the current preset has changes not saved in the EEPROM
+        uint8_t     activePresetPageChanged: 1; // true - if the preset page was changed, but a new preset was not activated yet
         uint8_t     freeBassOn: 1;              // the current mode of the left keyboard
         uint8_t     sendingParameters: 1;       // true - when we're sending parameters to the synthesizer
         uint8_t     optimizedUpdate: 1;         // true - when we need to send a parameter only if it differs from the same parameter in the previous preset
@@ -236,6 +241,7 @@ struct TesMIDIControllerRunTimeData {
 
     TesMIDIControllerRunTimeData(void){
         currentPresetNotSaved = false;
+        activePresetPageChanged = false;
         sendingParameters = false;
         globalSettingsNotSaved = false;
         bassNotesStatus = 0;

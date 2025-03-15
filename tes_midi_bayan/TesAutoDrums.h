@@ -31,6 +31,15 @@ struct  MidiFileValidationData {
 struct MidiFileAttributes{
     uint16_t    tempo;
     bool        loop;
+    bool        has_fill;
+    uint8_t     fill_id;
+
+    MidiFileAttributes(){
+        tempo       = 0;
+        loop        = false;
+        has_fill    = false;
+        fill_id     = 0;
+    }
 };
 typedef std::vector<MidiFileAttributes>   AttributeVector;
 
@@ -41,9 +50,13 @@ struct  AutoDrumsRuntimeData {
         bool                is_playing: 1;
         bool                is_initialized: 1;
         bool                init_in_progress: 1;
+        bool                playing_drums_fill: 1;
+        bool                drums_fill_requested: 1;
+        bool                drums_fill_starting: 1;
     };
     StringVector            file_names;
     AttributeVector         file_attributes;
+    StringVector            fill_names;
     uint8_t                 melodyId;
     uint16_t                user_defined_tempo;
     uint16_t                native_tempo;   // this is the current tempo from the "MIDI file's" point of view
@@ -54,6 +67,9 @@ struct  AutoDrumsRuntimeData {
         is_playing          = false;
         is_initialized      = false;
         init_in_progress    = false;
+        playing_drums_fill  = false;
+        drums_fill_starting = false;
+        drums_fill_requested    = false;
 
         melodyId        = 0;
         init_timer      = 0;
@@ -63,6 +79,7 @@ struct  AutoDrumsRuntimeData {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// TesAutoDrums
 class TesMIDIOutQueue;
+struct TesMIDIControllerSettings;
 
 class TesAutoDrums {
     friend void midi_handler_scanner(midi_event *pev);
@@ -70,7 +87,7 @@ class TesAutoDrums {
     friend void midi_handler_player(midi_event *pev);
     friend void meta_handler_player(const meta_event *p);
 public:
-    TesAutoDrums(TesMIDIOutQueue * midi_queue);
+    TesAutoDrums(TesMIDIOutQueue * midi_queue, TesMIDIControllerSettings * mc_settings);
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
     // Initializes the engine
@@ -93,6 +110,10 @@ public:
     void    setTempo(uint16_t    tempo);
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
+    // Returns the number of available melodies
+    uint8_t getNumberOfMelodies(void);
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////
     // Returns an ID of the current melody
     uint8_t getCurrentMelodyId(void);
 
@@ -109,6 +130,10 @@ public:
     void setPreviousMelodyId(void);
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
+    // Returns a string with the specified melody name
+    const char *    getMelodyName(uint8_t melody_id);
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////
     // Returns a string with the current melody name
     const char *    getCurrentMelodyName(void);
 
@@ -120,11 +145,22 @@ public:
     // the tick() method
     void    tick(void);
 
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+    // Returns true if the drum machine is properly initialized
+    bool    isInitialized(void){
+        return _var.is_initialized;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+    // requests playing Drums Fill (if applicable)
+    void    requestDrumsFill(void);
+
 private:
-    TesMIDIOutQueue     * _midi_queue;
-    AutoDrumsRuntimeData _var;
-    SDFAT               _SD;
-    MD_MIDIFile         _SMF;
+    TesMIDIOutQueue             * _midi_queue;
+    TesMIDIControllerSettings   * _mc_settings;
+    AutoDrumsRuntimeData        _var;
+    SDFAT                       _SD;
+    MD_MIDIFile                 _SMF;
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -140,6 +176,10 @@ private:
     ///////////////////////////////////////////////////////////////////////////////////////////////
     // Validates the current MIDI file
     void    validateMidiFile(void);
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+    // Arranges MIDI file names
+    void    arrangeMidiFiles(void);
 
 };
 
