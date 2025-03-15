@@ -18,6 +18,7 @@
 #define screenModeSysParamEdit      2
 #define screenModeDrumsEdit         3
 #define screenModeInstrumentEdit    4
+#define screenModeMelodyEdit        5
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // constructor
@@ -91,7 +92,7 @@ void TesMidiUI::tick(void){
             // return back to the normal mode
             _fkey_sm.state = psNormal;
             // save the F-key settings
-            memcpy(&_mc->_settings.global.fkeyProfile[_fkey_sm.writeFKey].editorStatus, &_editor_status, sizeof(_editor_status));
+            _mc->_settings.global.fkeyProfile[_fkey_sm.writeFKey].editorStatus = _editor_status;
             // notify the controller about global settings change
             _mc->globalSettingsChangeNotification();
 
@@ -155,6 +156,7 @@ void TesMidiUI::processCtlButtonEvent(tesEvent *event){
                         // *** ATTENTION! each time we change screens - we turn off the edit mode
                         _editor_status.editMode = false;
                         _inactivity_timer = millis();   // set inactivity timer for a non-Main screen
+                        _flags.drums_control_hold_detected = false;
                     }
                     else {
                         switch(_mc->_var.drumsMode){
@@ -162,7 +164,12 @@ void TesMidiUI::processCtlButtonEvent(tesEvent *event){
                             setDrumMachineState(dmManual);
                             break;
                         case dmManual:
-                            setDrumMachineState(dmStandby);
+                            if(_mc->_auto_drums.isInitialized()){
+                                setDrumMachineState(dmStandby);
+                            }
+                            else{
+                                setDrumMachineState(dmOff);
+                            }
                             break;
                         case dmStandby:
                             setDrumMachineState(dmPlaying);
@@ -174,8 +181,45 @@ void TesMidiUI::processCtlButtonEvent(tesEvent *event){
                     }
                     // clear the event to indicate it has been fully processed
                     event->eventType = tesEmpty;
-                    _flags.drums_control_hold_detected = false;
                     drawActiveScreen();
+                    break;
+                case ctlButtonDrumsStyle:
+                    if (_flags.drums_style_hold_detected){
+                        // Calling the melody selector screen
+                        _editor_status.screenMode = screenModeMelodyEdit;
+                        // Adjust a pointer to the current melody
+                        initMelodySelector();
+                        // *** ATTENTION! each time we change screens - we turn off the edit mode
+                        _editor_status.editMode = false;
+                        _inactivity_timer = millis();   // set inactivity timer for a non-Main screen
+                        // reset the long press flag (because we have just received the "released" event)
+                        _flags.drums_style_hold_detected = false;
+                    }
+                    else {
+                        bool was_playing = _mc->_auto_drums.isPlaying();
+                        if ( was_playing ){
+                            _mc->_auto_drums.stop();
+                        }
+                        _mc->_auto_drums.setNextMelodyId();
+                        if ( was_playing ){
+                            _mc->_auto_drums.start();
+                        }
+                        drawActiveScreen();
+                        // clear the event to indicate it has been fully processed
+                        event->eventType = tesEmpty;
+                    }
+                    drawActiveScreen();
+                    // clear the event to indicate it has been fully processed
+                    event->eventType = tesEmpty;
+                    break;
+                case ctlButtonDown:
+                    PRINT_1("'Drums Fill' button was pressed");
+                    if(_mc->_var.drumsMode == dmPlaying){
+                        PRINT_1("** requesting drums fill");
+                        _mc->_auto_drums.requestDrumsFill();
+                    }
+                    // clear the event to indicate it has been fully processed
+                    event->eventType = tesEmpty;
                     break;
                 }
             }
@@ -190,6 +234,12 @@ void TesMidiUI::processCtlButtonEvent(tesEvent *event){
                 case ctlButtonDrumsControl:
                     // register the long pressed key
                     _flags.drums_control_hold_detected = true;
+                    // clear the event to indicate it has been fully processed
+                    event->eventType = tesEmpty;
+                    break;
+                case ctlButtonDrumsStyle:
+                    // register the long pressed key
+                    _flags.drums_style_hold_detected = true;
                     // clear the event to indicate it has been fully processed
                     event->eventType = tesEmpty;
                     break;
@@ -208,6 +258,9 @@ void TesMidiUI::processCtlButtonEvent(tesEvent *event){
         break;
     case screenModeInstrumentEdit:
         processCtlButtonEventInstrumentEditor( event );
+        break;
+    case screenModeMelodyEdit:
+        processCtlButtonEventMelodySelector( event );
         break;
     default:
         SWER(swerGUI06);
@@ -235,20 +288,6 @@ void TesMidiUI::processCtlButtonEvent(tesEvent *event){
             case ctlButtonSynthSync: {
                 // send parameters to active keyboards
                 _mc->sendCurrentPresetToSynthesizer( _mc->_var.freeBassOn ? 0b00001001 : 0b00000111, false );   // sendng all parameters
-                // clear the event to indicate it has been fully processed
-                event->eventType = tesEmpty;
-            }
-            break;
-            case ctlButtonDrumsStyle: {
-                bool was_playing = _mc->_auto_drums.isPlaying();
-                if ( was_playing ){
-                    _mc->_auto_drums.stop();
-                }
-                _mc->_auto_drums.setNextMelodyId();
-                if ( was_playing ){
-                    _mc->_auto_drums.start();
-                }
-                drawActiveScreen();
                 // clear the event to indicate it has been fully processed
                 event->eventType = tesEmpty;
             }
@@ -294,7 +333,8 @@ void TesMidiUI::processCtlButtonEvent(tesEvent *event){
             case ctlButtonF3:
             case ctlButtonF4: {
                 // check if F-keys can work in the current _editor_status.screenMode
-                if (_editor_status.screenMode != screenModeDrumsEdit){
+                if ((_editor_status.screenMode != screenModeDrumsEdit)
+                        && (_editor_status.screenMode != screenModeMelodyEdit)){
                     uint8_t fkey_id = event->buttonId - ctlButtonF1;
                     switch ( _fkey_sm.state ){
                         case psNormal: {
@@ -305,7 +345,7 @@ void TesMidiUI::processCtlButtonEvent(tesEvent *event){
                                 break;
                             }
                             // activate F-key
-                            memcpy(&_editor_status, &_mc->_settings.global.fkeyProfile[fkey_id].editorStatus, sizeof(_editor_status));
+                            _editor_status = _mc->_settings.global.fkeyProfile[fkey_id].editorStatus;
                             drawActiveScreen();
                         }
                         break;
@@ -358,7 +398,9 @@ void TesMidiUI::processCtlButtonEvent(tesEvent *event){
             case ctlButtonF3:
             case ctlButtonF4: {
                 // check if F-keys can work in the current _editor_status.screenMode
-                if ((_editor_status.screenMode != screenModeDrumsEdit) && (_editor_status.screenMode != screenModeMain)){
+                if ((_editor_status.screenMode != screenModeDrumsEdit)
+                        && (_editor_status.screenMode != screenModeMain)
+                        && (_editor_status.screenMode != screenModeMelodyEdit)){
                     uint8_t fkey_id = event->buttonId - ctlButtonF1;
                     // only one F-key may be stored at a time
                     if (_preset_sm.state == psNormal){
@@ -448,6 +490,12 @@ void TesMidiUI::setDrumMachineState(uint8_t new_state){
             _led_set->resetLED(ledDrums);  // turn it off first
             _led_set->startBlink(ledDrums);
             // a melody is always ready to play
+            break;
+        case dmOff:
+            // change the state
+            _mc->_var.drumsMode = dmOff;
+            // set the LED
+            _led_set->resetLED(ledDrums);  // turn it off
             break;
         default:
             SWER(swerGUI05);
@@ -573,6 +621,10 @@ const uint8_t parMaxValue[theNumberOfMidiParameters] = {
     15, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 7, 7
 };
 
+// definitions for printing the preset page ID on the main screen
+#define ppY ((3<<3) + (symbolHeight/2))
+const char ppText[] = "Набор пресетов %1d";
+
 // "Indicators" showing values of the MIDI controller local settings
 #define indRow                  5
 #define indNumber               4   // the number of implemented indicators for now
@@ -614,7 +666,12 @@ const char * const  parBooleanLabel[] = {
 #define parBooleanN             2       // the number of options
 
 // list of parameter IDs
-enum {parRunningStatusId = 0, parBassOctavesId, parSynthTypeId, parMasterVolumeId, parDrumsChannelId, parTest1, parTest2};
+enum {parPresetPageId = 0, parRunningStatusId, parBassOctavesId, parSynthTypeId, parMasterVolumeId, parDrumsChannelId, parDrumsAdditionalChannelId};
+
+/////////////////////////////////////////////////////////////////
+// specific data for the Master Volume parameter
+const char parPresetPageName[]    = "Набор пресетов";
+#define parPresetPageMaxValue 3     // 0 .. 3
 
 /////////////////////////////////////////////////////////////////
 // specific data forn the Running Status parameter
@@ -641,20 +698,21 @@ const char parMasterVolumeName[]    = "Общая громкость";
 const char parDrumsChannelName[]    = "Канал ударных";
 #define parDrumsChannelMaxValue 15
 
+const char parDrumsAdditionalChannelName[]    = "Канал мелодии";
+#define parDrumsAdditionalChannelMaxValue 15
+
 /////////////////////////////////////////////////////////////////
 // common data
 
 #define paramEditorFirstRow     1       // we start from this row
-#define paramEditorRows         5       // 5 parameters in total
+#define paramEditorRows         5       // 5 rows in the scroll area
 #define paramEditorNameColumn   0       // where we start printing names
 #define paramEditorValueColumn  17      // where we start printing values
 
 #define parNumberOfParameters   7
-const char parTestName1[]    = "T1"; // TODO remove test labels after debugging
-const char parTestName2[]    = "T2"; //
 const char * const  parParameterNames[parNumberOfParameters] = {
-    parRunningStatusName, parBassOctavesName, parSynthTypeName, parMasterVolumeName, parDrumsChannelName,
-    parTestName1, parTestName2
+    parPresetPageName, parRunningStatusName, parBassOctavesName, parSynthTypeName, parMasterVolumeName, parDrumsChannelName,
+    parDrumsAdditionalChannelName
 };
 
 const char sys_param_screen_footer[] = "Настройки системы";
@@ -698,7 +756,7 @@ const char dpDrumSoundForChordVelocityName[]    = "       его сила";
 // common data
 
 #define dpEditorFirstRow     0       // we start from this row
-#define dpEditorRows         6       // parameters in total
+#define dpEditorRows         6       // number of rows in the scroll area
 #define dpEditorRowIncrement 1       // 0 empty row between parameters
 #define dpEditorNameColumn   0       // where we start printing names
 #define dpEditorValueColumn  17      // where we start printing values
@@ -732,6 +790,16 @@ const char ieInstrumentIDsLine[] = "Банк: XXX, Прог.: XXX";
 #define ieProgramIdColumn   18
 
 const char instrument_edit_screen_footer[] = "Выбор инструмента";
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// section for Melody Selector screen
+
+#define msEditorFirstRow     0       // we start from this row
+#define msEditorRows         7       // number of rows in the scroll area
+#define msEditorNameColumn   0       // where we start printing names
+
+//                                            123456789-123456789-1
+const char melody_selector_screen_footer[] = "Выбор мелодии";
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // *** section for ATEMP Synthesizer
@@ -1149,16 +1217,28 @@ void TesMidiUI::drawMainScreen(void){
     drawKbdHeader();
     // print the battery level Indicator
     drawBatteryIndicator();
-    // print 3 top parameters
-    for(int idx=0; idx<3; idx++){
+    // print 2 parameters: bank & instrument
+    for(int idx=0; idx<2; idx++){
         setTextCursor(0, idx+1);
-        _oled->print(parLabel[idx]);
+        uint8_t parameter_id = 0;
+        switch(idx){
+            case 0:
+                parameter_id    = idxBank;
+                break;
+            case 1:
+                parameter_id    = idxProgram;
+                break;
+        }
+        _oled->print(parLabel[parameter_id]);
         // print parameters here
         for(int kbd=0; kbd<4; kbd++){
             setTextCursor(6 + kbd*4, idx+1);
-            printFormatted(numFormat3R, _mc->_settings.preset.kbdParameter[kbd][idx]);
+            printFormatted(numFormat3R, _mc->_settings.preset.kbdParameter[kbd][parameter_id]);
         }
     }
+    // print the Id of the current preset page
+    _oled->setCursorXY( 2 * symbolWidth , ppY);
+    printFormatted(ppText, _mc->_settings.global.activePresetPage + 1);     // we show preset page numbers starting from "1"
     // print Indicators
     {
         // Indicator's logic is different, so, print them onr-by-one (not in a cycle)
@@ -1237,6 +1317,9 @@ void TesMidiUI::drawActiveScreen(void){
     case screenModeInstrumentEdit:
         drawInstrumentEditorScreen();
         break;
+    case screenModeMelodyEdit:
+        drawMelodySelectorScreen();
+        break;
     default:
         SWER(swerGUI08);
     }
@@ -1265,7 +1348,12 @@ void TesMidiUI::drawMidiParamEditorScreen(void){
                 && (_editor_status.selectorY == editorRow)
             );
             setTextCursor(6 + kbd*4, editorRow+editorFirstRow);
-            printFormatted(numFormat3R, _mc->_settings.preset.kbdParameter[kbd][currentParameterIndex]);
+            if(currentParameterIndex == idxChannel){
+                printFormatted(numFormat3R, _mc->_settings.preset.kbdParameter[kbd][currentParameterIndex] + 1);
+            }
+            else{
+                printFormatted(numFormat3R, _mc->_settings.preset.kbdParameter[kbd][currentParameterIndex]);
+            }
         }
         //reset text inversion (just in case...)
         _oled->invertText(false);
@@ -1302,6 +1390,9 @@ void TesMidiUI::drawSystemParamEditorScreen(void){
         // decide text inversion - select the value being edited
         _oled->invertText(editorRow == _editor_status.sysParSelector);
         switch(currentSystemParameterIndex){
+            case parPresetPageId:
+                printFormatted(numFormat3R, _mc->_settings.global.activePresetPage + 1);
+                break;
             case parRunningStatusId:
                 _oled->print( parBooleanLabel[_mc->_settings.global.runningStatus] );
                 break;
@@ -1315,15 +1406,10 @@ void TesMidiUI::drawSystemParamEditorScreen(void){
                 printFormatted(numFormat3R, _mc->_settings.preset.masterVolume);
                 break;
             case parDrumsChannelId:
-                printFormatted(numFormat3R, _mc->_settings.global.drumsMidiChannel);
+                printFormatted(numFormat3R, _mc->_settings.global.drumsMidiChannel + 1);
                 break;
-            case parTest1:
-                // TODO the same value as RS
-                _oled->print( parBooleanLabel[_mc->_settings.global.runningStatus] );
-                break;
-            case parTest2:
-                // TODO the same as "bass octaves"
-                _oled->print( parBooleanLabel[_mc->_settings.preset.bassOctavesOn] );
+            case parDrumsAdditionalChannelId:
+                printFormatted(numFormat3R, _mc->_settings.global.drumsAdditionalChannel + 1);
                 break;
             default:
                 SWER(swerGUI02);
@@ -1492,6 +1578,36 @@ void TesMidiUI::drawInstrumentEditorScreen(void){
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
+//  Draws the Instrument selector/editor screen
+void TesMidiUI::drawMelodySelectorScreen(void){
+    // clear work area
+    _oled->clear();
+
+    // See how many rows we need to print
+    uint8_t rows_for_printing   = min(msEditorRows, _mc->_auto_drums.getNumberOfMelodies());
+    // print rows in the work area
+    for (int editorRow=0; editorRow<rows_for_printing; editorRow++ ){
+        // set the cursor
+        setTextCursor(msEditorNameColumn, editorRow+msEditorFirstRow);
+        // calculate the index of a melody to be printed here
+        uint8_t currentMelodyIndex  = editorRow + _editor_status.msTopIndex;
+        // decide if we need to inverse text for this melody name
+        _oled->invertText(editorRow == _editor_status.msSelector);
+        // print the melody name
+        _oled->print(_mc->_auto_drums.getMelodyName(currentMelodyIndex));
+        //reset text inversion (just in case...)
+        _oled->invertText(false);
+    }
+
+    // print the bottom
+    _oled->fastLineH(7*symbolHeight-1, 3, 124, OLED_FILL);
+    _oled->setCursor( (128 - mb_strlen_P(melody_selector_screen_footer)*symbolWidth)/2, 7);
+    _oled->print(FPSTR(melody_selector_screen_footer));
+
+    _flags.display_update_is_required = true;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////
 //  control button event handler to Midi Param Editor mode
 void TesMidiUI::processCtlButtonEventMidiParamEditor(tesEvent *event){
     // as this is a Control Button event, event->buttonId already contains Ctl Button ID
@@ -1592,11 +1708,17 @@ void TesMidiUI::processCtlButtonEventMidiParamEditor(tesEvent *event){
                         // keep changing the Channel ID until it's unique
                         if (parameterIndex == idxChannel){
                             // yes, this is the Channel parameter; let's check the condition
+                            uint8_t new_channel = _mc->_settings.preset.kbdParameter[_editor_status.selectorX][idxChannel];
                             for(int i=0; i<4; i++){
-                                if ( (i != _editor_status.selectorX) && (_mc->_settings.preset.kbdParameter[i][idxChannel] == _mc->_settings.preset.kbdParameter[_editor_status.selectorX][idxChannel]) ){
+                                if ( (i != _editor_status.selectorX) && (_mc->_settings.preset.kbdParameter[i][idxChannel] == new_channel) ){
                                     newValueIsOk = false;
                                     break;
                                 }
+                            }
+                            if (newValueIsOk){
+                                // check another Channels
+                                newValueIsOk = (new_channel != _mc->_settings.global.drumsMidiChannel) 
+                                    && (new_channel != _mc->_settings.global.drumsAdditionalChannel);
                             }
                         }
                     } while ( ! newValueIsOk );
@@ -1741,15 +1863,31 @@ void TesMidiUI::processCtlButtonEventSystemParamEditor(tesEvent *event){
         case ctlButtonLeft:
         case ctlButtonRight:
             switch(_editor_status.sysParSelector + _editor_status.sysParTopIndex){
+            case parPresetPageId:
+                if (event->buttonId == ctlButtonLeft){
+                    if (_mc->_settings.global.activePresetPage-- == 0){
+                        _mc->_settings.global.activePresetPage = parPresetPageMaxValue;
+                    }
+                }
+                else {      // ctlButtonRight
+                    if (_mc->_settings.global.activePresetPage++ == parPresetPageMaxValue){
+                        _mc->_settings.global.activePresetPage = 0;
+                    }
+                }
+                // activate the current preset from the new preset page
+                _mc->_var.activePresetPageChanged = true;                   // this will make the MIDI Controller reload
+                                                                            // the current preset
+                activatePreset(_mc->_settings.global.activePreset);
+                _mc->_var.activePresetPageChanged = false;                  // reset the flag
+                // function _mc->globalSettingsChangeNotification() was already called from activatePreset()
+                break;
             case parRunningStatusId:
-            case parTest1:  // TODO remove it after debugging
                 // toggle the value
                 _mc->_settings.global.runningStatus = ! _mc->_settings.global.runningStatus;
                 // notify the controller about global settings change
                 _mc->globalSettingsChangeNotification();
                 break;
             case parBassOctavesId:
-            case parTest2: // TODO remove it after debugging
                 // toggle the value
                 _mc->_settings.preset.bassOctavesOn = ! _mc->_settings.preset.bassOctavesOn;
                 // notify the controller about preset change
@@ -1788,15 +1926,61 @@ void TesMidiUI::processCtlButtonEventSystemParamEditor(tesEvent *event){
                 indicatePresetChange();
                 break;
             case parDrumsChannelId:
-                if (event->buttonId == ctlButtonLeft){
-                    if (_mc->_settings.global.drumsMidiChannel-- == 0){
-                        _mc->_settings.global.drumsMidiChannel = parDrumsChannelMaxValue;
-                    }
+                {
+                    bool new_value_is_ok;
+                    do {
+                        new_value_is_ok = true;
+                        if (event->buttonId == ctlButtonLeft){
+                            if (_mc->_settings.global.drumsMidiChannel-- == 0){
+                                _mc->_settings.global.drumsMidiChannel = parDrumsChannelMaxValue;
+                            }
+                        }
+                        else {      // ctlButtonRight
+                            if (_mc->_settings.global.drumsMidiChannel++ == parDrumsChannelMaxValue){
+                                _mc->_settings.global.drumsMidiChannel = 0;
+                            }
+                        }
+                        // check if the new value is not the same as any other configured channel
+                        for(int i=0; i<NUMBER_OF_KEYBOARDS; i++){
+                            if(_mc->_settings.global.drumsMidiChannel == _mc->_settings.preset.kbdParameter[i][idxChannel]){
+                                new_value_is_ok = false;
+                                break;
+                            }
+                        }
+                        if(new_value_is_ok){
+                            new_value_is_ok = (_mc->_settings.global.drumsMidiChannel != _mc->_settings.global.drumsAdditionalChannel);
+                        }
+                    }while (!new_value_is_ok);
                 }
-                else {      // ctlButtonRight
-                    if (_mc->_settings.global.drumsMidiChannel++ == parDrumsChannelMaxValue){
-                        _mc->_settings.global.drumsMidiChannel = 0;
-                    }
+                // notify the controller about global settings change
+                _mc->globalSettingsChangeNotification();
+                break;
+            case parDrumsAdditionalChannelId:
+                {
+                    bool new_value_is_ok;
+                    do {
+                        new_value_is_ok = true;
+                        if (event->buttonId == ctlButtonLeft){
+                            if (_mc->_settings.global.drumsAdditionalChannel-- == 0){
+                                _mc->_settings.global.drumsAdditionalChannel = parDrumsAdditionalChannelMaxValue;
+                            }
+                        }
+                        else {      // ctlButtonRight
+                            if (_mc->_settings.global.drumsAdditionalChannel++ == parDrumsAdditionalChannelMaxValue){
+                                _mc->_settings.global.drumsAdditionalChannel = 0;
+                            }
+                        }
+                        // check if the new value is not the same as any other configured channel
+                        for(int i=0; i<NUMBER_OF_KEYBOARDS; i++){
+                            if(_mc->_settings.global.drumsAdditionalChannel == _mc->_settings.preset.kbdParameter[i][idxChannel]){
+                                new_value_is_ok = false;
+                                break;
+                            }
+                        }
+                        if(new_value_is_ok){
+                            new_value_is_ok = (_mc->_settings.global.drumsMidiChannel != _mc->_settings.global.drumsAdditionalChannel);
+                        }
+                    }while (!new_value_is_ok);
                 }
                 // notify the controller about global settings change
                 _mc->globalSettingsChangeNotification();
@@ -2098,9 +2282,104 @@ void TesMidiUI::processCtlButtonEventInstrumentEditor(tesEvent *event){
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
+//  control button event handler for Melody Selector mode
+void TesMidiUI::processCtlButtonEventMelodySelector(tesEvent *event){
+    // as this is a Control Button event, event->buttonId already contains Ctl Button ID
+    bool    needToClearTheEvent = true; // by default we clear the event
+
+    uint8_t actual_editor_rows  = min(msEditorRows, _mc->_auto_drums.getNumberOfMelodies());
+
+    switch (event->buttonEvent){
+    case tesBeReleased:
+        switch (event->buttonId){
+        case ctlButtonUp:
+            // move up
+            // move to the previous row
+            if( _editor_status.msSelector == 0){
+                // the first editor Row
+                // Scroll the list down until topIndex == 0
+                if((_editor_status.msTopIndex) > 0){
+                    // scrolling is done by decrementing the topIndex value
+                    _editor_status.msTopIndex--;
+                }
+                else{
+                    // The beginning of the parameter list is reached.
+                    // Navigate to the very end of the list:
+                    // - set topIndex to theNumberOfMidiParameters - editorRows
+                    // - set selectorY to editorRows-1 as well
+                    _editor_status.msTopIndex = _mc->_auto_drums.getNumberOfMelodies() - actual_editor_rows;
+                    _editor_status.msSelector = actual_editor_rows-1;
+                }
+            }
+            else{
+                _editor_status.msSelector--;
+            }
+            drawActiveScreen();
+            break;
+        case ctlButtonDown:
+            // move down
+            // move to the next row
+            if( _editor_status.msSelector == actual_editor_rows-1){
+                // the last editor Row
+                // Scroll the list up until topIndex+msSelector == theNumberOfMidiParameters-1
+                if((_editor_status.msSelector + _editor_status.msTopIndex) < _mc->_auto_drums.getNumberOfMelodies()-1){
+                    // scrolling is done by incrementing the topIndex value
+                    _editor_status.msTopIndex++;
+                }
+                else{
+                    // The end of the parameter list is reached.
+                    // Navigate to the beginning of the list:
+                    // - set topIndex to 0 in order to start from the 1st parameter
+                    // - set selectorY to 0 as well
+                    _editor_status.msTopIndex = 0;
+                    _editor_status.msSelector = 0;
+                }
+            }
+            else{
+                _editor_status.msSelector++;
+            }
+            drawActiveScreen();
+            break;
+        case ctlButtonOk:
+            {
+                bool was_playing = _mc->_auto_drums.isPlaying();
+                if ( was_playing ){
+                    _mc->_auto_drums.stop();
+                }
+                _mc->_auto_drums.setMelodyId(_editor_status.msTopIndex + _editor_status.msSelector);
+                if ( was_playing ){
+                    _mc->_auto_drums.start();
+                }
+            }
+            // *** ATTENTION! Control goes to the case below! Don't put "break" here!
+        case ctlButtonMenu:
+            // return back to the main screen
+            _editor_status.screenMode = screenModeMain;
+            // *** ATTENTION! each time we change screens - we turn off the edit mode
+            _editor_status.editMode = false;
+            drawActiveScreen();
+            break;
+        default:
+            // not handled ctl button; don't clear the event
+            needToClearTheEvent = false;
+            break;
+        }
+        break;
+    default:
+        // not handled ctl button event; don't clear the event
+        needToClearTheEvent = false;
+        break;
+    }
+    if (needToClearTheEvent){
+        event->eventType = tesEmpty;
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////
 //  Activates the specified preset
 void TesMidiUI::activatePreset(uint8_t preset_id){
-    if ((preset_id == _mc->_settings.global.activePreset) && ( ! _mc->_var.currentPresetNotSaved)){
+    if (((preset_id == _mc->_settings.global.activePreset) && ( ! _mc->_var.currentPresetNotSaved))
+            && (! _mc->_var.activePresetPageChanged)){
         // there's nothonig to do
         return;
     }
@@ -2272,3 +2551,22 @@ void TesMidiUI::indicatePresetChange(void){
     }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////
+// Sets Melody Selector's variables up, so that they point to the current melody.
+void TesMidiUI::initMelodySelector(void){
+    uint8_t actual_editor_rows = min(msEditorRows, _mc->_auto_drums.getNumberOfMelodies());
+    uint8_t melody_index = _mc->_auto_drums.getCurrentMelodyId();
+
+    if(melody_index < actual_editor_rows){
+        _editor_status.msTopIndex = 0;
+        _editor_status.msSelector = melody_index;
+    }
+    else if(melody_index >= (_mc->_auto_drums.getNumberOfMelodies() - actual_editor_rows)){
+        _editor_status.msTopIndex = _mc->_auto_drums.getNumberOfMelodies() - actual_editor_rows;
+        _editor_status.msSelector = melody_index - _editor_status.msTopIndex;
+    }
+    else {
+        _editor_status.msSelector = actual_editor_rows / 2;
+        _editor_status.msTopIndex = melody_index - _editor_status.msSelector;
+    }
+}

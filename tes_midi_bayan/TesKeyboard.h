@@ -23,28 +23,28 @@
 #define TES_KEYBOARD_CASCADE_SIZE 18            // 5 right-front + 3 right-back + 3 control panel + 7 left
 
 // names of control buttons
-#define ctlButtonUp             0
-#define ctlButtonDown           1
-#define ctlButtonLeft           2
-#define ctlButtonRight          3
-#define ctlButtonOk             4
-#define ctlButtonMenu           5
+#define ctlButtonUp             0      // "repeat"
+#define ctlButtonDown           1      // "repeat"
+#define ctlButtonLeft           2      // "repeat"
+#define ctlButtonRight          3      // "repeat"
+#define ctlButtonOk             4       // "hold"
+#define ctlButtonMenu           5       // "hold"
 #define ctlButtonSynthSync      6
 #define ctlButtonPressure       7
-#define ctlButtonPreset1        8
-#define ctlButtonPreset2        9
-#define ctlButtonPreset3        10
-#define ctlButtonPreset4        11
-#define ctlButtonPreset5        12
-#define ctlButtonPreset6        13
-#define ctlButtonF1             14
-#define ctlButtonF2             15
-#define ctlButtonF3             16
-#define ctlButtonF4             17
-#define ctlButtonDrumsControl   18
-#define ctlButtonDrumsStyle     19
-#define ctlButtonTempoMinus     20
-#define ctlButtonTempoPlus      21
+#define ctlButtonPreset1        8       // "hold"
+#define ctlButtonPreset2        9       // "hold"
+#define ctlButtonPreset3        10      // "hold"
+#define ctlButtonPreset4        11      // "hold"
+#define ctlButtonPreset5        12      // "hold"
+#define ctlButtonPreset6        13      // "hold"
+#define ctlButtonF1             14      // "hold"
+#define ctlButtonF2             15      // "hold"
+#define ctlButtonF3             16      // "hold"
+#define ctlButtonF4             17      // "hold"
+#define ctlButtonDrumsControl   18      // "hold"
+#define ctlButtonDrumsStyle     19      // "hold"
+#define ctlButtonTempoMinus     20      // "repeat"
+#define ctlButtonTempoPlus      21      // "repeat"
 
 // now the class itself
 class TesKeyboard {

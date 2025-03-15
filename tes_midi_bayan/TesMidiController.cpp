@@ -72,8 +72,10 @@ TesMIDIControllerSettings::TesMIDIControllerSettings (void){
     // set default values for global parameters
     global.runningStatus = false;   // ATEMP synth. doesn't work well with RS
     global.synthType = stAtemp;
+    global.activePresetPage = 0;
     global.activePreset = 0;
     global.drumsMidiChannel = 9;    // I let this hardcode be here, because it's very unlikely that anybody will want to change this default value
+    global.drumsAdditionalChannel = 8;  // channel for a melody that can be played together with drums
 
     // set default values for preset values
     preset.pressureSensorOn = false;
@@ -133,7 +135,7 @@ void TesMIDIController::processEvent(tesEvent *event){
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 //  EEPROM-specific constants and variables
 
-#define signatureAddress    1022    // the last 2 bytes of the EEPROM (1022 and 1023)
+#define signatureAddress    (2048 - 2)
 #define eepromBaseAddress   0
 
 
@@ -143,6 +145,7 @@ void TesMIDIController::processEvent(tesEvent *event){
 void    TesMIDIController::init(void){
     // check if we have data in the EEPROM
     uint16_t    signature = EEPROM.readUint16(signatureAddress);
+    PRINT_2_HEX("EEPROM signature = ", signature);
     if (signature == TES_EEPROM_SIGNATURE){
         // we have data in EEPROM; now read it
         readGlobalSettingsFromEEPROM();
@@ -250,7 +253,7 @@ void    TesMIDIController::tick(void){
 // constructor
 TesMIDIController::TesMIDIController(TesLedSet *led_panel, OledDisplay  *oled)
     :_ui(oled, this, led_panel),
-    _auto_drums(&_midi_queue)
+    _auto_drums(&_midi_queue, &_settings)
 {
     // store parameters
     _led_set      = led_panel;
@@ -421,7 +424,7 @@ void TesMIDIController::processSystemControlEvent(tesEvent *event){
             // create a brand new copy of settings with default values (yes, that a heavy stack usage)
             TesMIDIControllerSettings   default_settings;
             // copy default settings to the current settings
-            memcpy(&_settings, &default_settings, sizeof(_settings));
+            _settings = default_settings;
         }
         // now - initialize EEPROM again
         initializeEEPROM();
@@ -802,6 +805,13 @@ void TesMIDIController::setDrumsVolume(void){
     // make a proportional change (according to the fixed volume setting for the channel)
     cmd.data2           = map(_settings.preset.masterVolume, 0, 127, 0, _settings.preset.drumsVolume);
     _midi_queue.pushCommand(&cmd);
+
+    cmd.midiCommand     = mcControlChange;
+    cmd.channelId       = _settings.global.drumsAdditionalChannel;
+    cmd.data1           = 7;        // Volume controller
+    // just set it to the Master Volume
+    cmd.data2           = _settings.preset.masterVolume;
+    _midi_queue.pushCommand(&cmd);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -823,11 +833,16 @@ void TesMIDIController::initializeEEPROM(void){
     // write the global settings
     writeGlobalSettingsToEEPROM();
 
-    // write 6 presets with the same default values
-    for (int i = 0; i<6; i++){
-        // just write the current settings to the respective slot
-        writePresetToEEPROM(i);
+    // write all presets with the same default values
+    uint8_t active_page = _settings.global.activePresetPage;    // save the current value
+    for(int page=0; page<NUMBER_OF_PRESET_PAGES; page++){
+        _settings.global.activePresetPage = page;
+        for (int i = 0; i<NUMBER_OF_PRESETS; i++){
+            // just write the current settings to the respective slot
+            writePresetToEEPROM(i);
+        }
     }
+    _settings.global.activePresetPage = active_page;            // restore the saved value
 
     // write the signature (into the pre-defined address)
     if( !EEPROM.writeUint16(signatureAddress, (uint16_t)TES_EEPROM_SIGNATURE) ){
@@ -858,6 +873,8 @@ void TesMIDIController::writeGlobalSettingsToEEPROM(void){
 //////////////////////////////////////////////////////////////////////////
 // Reads the specified preset from the EEPROM
 void TesMIDIController::readPresetFromEEPROM(uint8_t preset_id){
+    // convert a relative preset ID into the absolute one
+    preset_id += _settings.global.activePresetPage * NUMBER_OF_PRESETS;
     TesMIDIControllerSettings::TesMIDIControllerPreset     new_preset;      // yes, heavy stack usage
     // calculate the EEPROM address
     int address = eepromBaseAddress + sizeof(_settings.global) + preset_id * sizeof(_settings.preset);
@@ -888,7 +905,7 @@ void TesMIDIController::readPresetFromEEPROM(uint8_t preset_id){
         }
     }
     // replace the old preset with the new one
-    memcpy(&_settings.preset, &new_preset, sizeof(new_preset));
+    _settings.preset = new_preset;
     if (need_to_update_expression) {
         setExpression( _settings.preset.pressureSensorOn ? _var.lastPressureValue : TES_DEFAULT_EXPRESSION );
     }
@@ -897,6 +914,8 @@ void TesMIDIController::readPresetFromEEPROM(uint8_t preset_id){
 //////////////////////////////////////////////////////////////////////////
 // Writes the specified preset to the EEPROM
 void TesMIDIController::writePresetToEEPROM(uint8_t preset_id){
+    // convert a relative preset ID into the absolute one
+    preset_id += _settings.global.activePresetPage * NUMBER_OF_PRESETS;
     // calculate the EEPROM address
     int address = eepromBaseAddress + sizeof(_settings.global) + preset_id * sizeof(_settings.preset);
     // write the preset settings

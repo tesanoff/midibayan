@@ -48,6 +48,7 @@ TesMIDIController   theMIDIController(&ledSet, &oled);
 void    SWER(uint8_t   error_code){
 
     ledSet.showDebugCode( error_code, 0x01 );  // SWER always turns the "MIDI out" LED on
+    PRINT_2_HEX("*** SWER = ", error_code);
     for(;;);
 }
 

@@ -23,7 +23,7 @@ bool TesEventQueue::pushEvent(tesEvent *event){
     }
     // ok, let's continue
 
-    memcpy((_event + _head++), event, sizeof(tesEvent));
+    _event[_head++] = *event;
     // correct the head, if required
     if( _head == TES_MAX_QUEUE_SIZE ){
         _head = 0;

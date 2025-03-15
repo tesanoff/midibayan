@@ -41,7 +41,6 @@ void meta_handler_player(const meta_event *p){
 
 #define MAX_FILE_NAME_LENGTH    120
 
-#define drumsChannel    9
 #define defaultVolume   70
 
 #define defaultDrumset  0
@@ -50,11 +49,16 @@ void meta_handler_player(const meta_event *p){
 
 String  loopPrefix("/LOOP/");
 String  singlePrefix("/SINGLE/");
+String  fillSuffix(".1");
+String  fileExtension(".mid");
+
+const   char    drumFillLabel[] =   "FILL-START";
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // constructor
-TesAutoDrums::TesAutoDrums(TesMIDIOutQueue * midi_queue){
+TesAutoDrums::TesAutoDrums(TesMIDIOutQueue * midi_queue, TesMIDIControllerSettings * mc_settings){
     _midi_queue = midi_queue;
+    _mc_settings = mc_settings;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -64,7 +68,10 @@ void    TesAutoDrums::init(void){
 
     if(!_SD.begin(sd_config)){
         PRINT_1("*** SD Card init failed!");
-        SWER(swerAutoDrums03);
+        // we consider the engine not initialized
+        _var.init_in_progress   = false;
+        _var.is_initialized     = false;
+        return;
     }
     PRINT_1("SD Card - ok");
 
@@ -82,7 +89,6 @@ void    TesAutoDrums::init(void){
             char    buffer[MAX_FILE_NAME_LENGTH];
             loopPrefix.toCharArray(buffer, MAX_FILE_NAME_LENGTH);
             size_t name_length = file.getName(buffer+loopPrefix.length(), MAX_FILE_NAME_LENGTH - loopPrefix.length());
-            PRINT_2("name length =", name_length);
             if(!file.isDirectory()){
                 _var.file_names.push_back(buffer);
             }
@@ -101,7 +107,6 @@ void    TesAutoDrums::init(void){
             char    buffer[MAX_FILE_NAME_LENGTH];
             singlePrefix.toCharArray(buffer, MAX_FILE_NAME_LENGTH);
             size_t name_length = file.getName(buffer+singlePrefix.length(), MAX_FILE_NAME_LENGTH - singlePrefix.length());
-            PRINT_2("name length =", name_length);
             if(!file.isDirectory()){
                 _var.file_names.push_back(buffer);
             }
@@ -111,7 +116,6 @@ void    TesAutoDrums::init(void){
             file.close();
         }
     }
-    PRINT_2("Collected names = ", _var.file_names.size());
 
     if(_var.file_names.size() > 0){
         // *** The initial list of file names has been composed.
@@ -138,7 +142,6 @@ void    TesAutoDrums::start(void){
         return;
     }
     // *** The assumption is that is a melody exists in the list - then it's validated successfully
-    PRINT_2("Starting melody: ", _var.file_names[_var.melodyId]);
     // open a melody
     int err = _SMF.load(_var.file_names[_var.melodyId].c_str());
     if (err != MD_MIDIFile::E_OK){
@@ -153,9 +156,11 @@ void    TesAutoDrums::start(void){
     _SMF.setTempo(_var.user_defined_tempo);      // Initially, it's the same as the value encoded in the file.
                                     // But the user can change it in _var.user_defined_tempo, so, _var.user_defined_tempo is the best place to take
                                     // the initial value of tempo from.
+    
+    _var.playing_drums_fill = false;
     // set the drumset
     TesMIDICommand  cmd;
-    cmd.channelId = drumsChannel;
+    cmd.channelId = _mc_settings->global.drumsMidiChannel;
     cmd.midiCommand = mcProgramChange;
     cmd.data1   = defaultDrumset;
     _midi_queue->pushCommand(&cmd);
@@ -167,9 +172,16 @@ void    TesAutoDrums::start(void){
 void    TesAutoDrums::stop(void){
     _SMF.close();
     _var.is_playing = false;
+    _var.playing_drums_fill = false;
+    _var.drums_fill_requested = false;
     // stop playing all notes in the channel (in case if they're playing)
     TesMIDICommand  cmd;
-    cmd.channelId = drumsChannel;
+    cmd.channelId = _mc_settings->global.drumsMidiChannel;
+    cmd.midiCommand = mcControlChange;
+    cmd.data1   = 123;  // controller number; "all notes off"
+    _midi_queue->pushCommand(&cmd);
+    // stop playing all notes in the additional channel (in case if they're playing)
+    cmd.channelId = _mc_settings->global.drumsAdditionalChannel;
     cmd.midiCommand = mcControlChange;
     cmd.data1   = 123;  // controller number; "all notes off"
     _midi_queue->pushCommand(&cmd);
@@ -198,11 +210,13 @@ void    TesAutoDrums::setTempo(uint16_t    tempo){
         // between the user-defined tempo and the "native" MIDI file tempo stored in the MIDI file attributes.
         uint16_t    new_tempo   = map(_var.native_tempo, 0, _var.file_attributes[_var.melodyId].tempo, 0, _var.user_defined_tempo);
         _SMF.setTempo(new_tempo);
-        PRINT_2("user defined tempo = ", _var.user_defined_tempo);
-        PRINT_2("\tbase tempo = ", _var.file_attributes[_var.melodyId].tempo);
-        PRINT_2("\tcurrent native tempo = ", _var.native_tempo);
-        PRINT_2("new playback tempo = ", new_tempo);
     }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+// Returns the number of available melodies
+uint8_t TesAutoDrums::getNumberOfMelodies(void){
+    return  _var.file_names.size();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -272,8 +286,8 @@ void TesAutoDrums::setPreviousMelodyId(void){
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
-// Returns a string with the current melody name
-const char *    TesAutoDrums::getCurrentMelodyName(void){
+// Returns a string with the specified melody name
+const char *    TesAutoDrums::getMelodyName(uint8_t melody_id){
     if(!_var.is_initialized){
         return NULL;
     }
@@ -281,12 +295,18 @@ const char *    TesAutoDrums::getCurrentMelodyName(void){
     //  * wihout a prefix (like "/LOOP/")
     //  * without the extension ".mid"
     // NOTE: the returned value will live until this function is called for another melody
-    int start_pos = (_var.file_attributes[_var.melodyId].loop)? loopPrefix.length() : singlePrefix.length();
-    int end_pos = _var.file_names[_var.melodyId].length() - 4;  // without ".mid"
+    int start_pos = (_var.file_attributes[melody_id].loop)? loopPrefix.length() : singlePrefix.length();
+    int end_pos = _var.file_names[melody_id].length() - fileExtension.length();     // without ".mid"
     static  char    buffer[MAX_FILE_NAME_LENGTH];
-    strcpy(buffer, _var.file_names[_var.melodyId].substring(start_pos, end_pos).c_str());
+    strcpy(buffer, _var.file_names[melody_id].substring(start_pos, end_pos).c_str());
 
     return buffer;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+// Returns a string with the current melody name
+const char *    TesAutoDrums::getCurrentMelodyName(void){
+    return  getMelodyName(_var.melodyId);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -310,15 +330,73 @@ void    TesAutoDrums::tick(void){
 
     // check if we're playing a melody
     if ( _var.is_playing ){
+        // check if we need to start Drums Fill
+        if (_var.drums_fill_starting){
+            PRINT_1("starting Drums Fill");
+            // close the main MIDI file
+            _SMF.close();
+            // open the Drums Fill melody
+            int err = _SMF.load(_var.fill_names[ _var.file_attributes[_var.melodyId].fill_id ].c_str());
+            if (err != MD_MIDIFile::E_OK){
+                PRINT_2("ERROR = ", err);
+                SWER(swerAutoDrums05);
+            }
+            // always turn "looping" off for Drums Fills
+            _SMF.looping( false );
+            // set a flag
+            _var.playing_drums_fill = true;
+            // reset the request (because it's one-off)
+            _var.drums_fill_requested   = false;
+            // setting the same tempo as for the main file
+            _SMF.setTempo(_var.user_defined_tempo);
+            // reset the flag
+            _var.drums_fill_starting = false;
+        }
+
         // standard playing of the current MIDI file
         if(!_SMF.isEOF()){
             _SMF.getNextEvent();
         }
         else{
             // EOF is reached, and the file was not set for looping.
-            // So, we need to stop playing.
-            _var.is_playing = false; // TODO revise this. Do we need to implement "auto stop"?
+            if (_var.playing_drums_fill){
+                // *** Drums Fill - done
+                PRINT_1("drums fill - done");
+                // Restarting the main melody
+                _var.playing_drums_fill = false;
+                _SMF.close();
+                // open the melody again
+                int err = _SMF.load(_var.file_names[_var.melodyId].c_str());
+                if (err != MD_MIDIFile::E_OK){
+                    PRINT_2("ERROR = ", err);
+                    SWER(swerAutoDrums06);
+                }
+                // turn "looping" on, if required
+                _SMF.looping( _var.file_attributes[_var.melodyId].loop );
+                // set the initial tempo again
+                _SMF.setTempo(_var.user_defined_tempo);
+            }
+            else{
+                // So, we need to stop playing.
+                _var.is_playing = false; // TODO revise this. Do we need to implement "auto stop"?
+            }
         }
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+// requests playing Drums Fill (if applicable)
+void    TesAutoDrums::requestDrumsFill(void){
+    if(!_var.is_initialized){
+        return;
+    }
+
+    if((_var.is_playing)
+            && (_var.file_attributes[_var.melodyId].has_fill)
+            && (!_var.playing_drums_fill)){
+        // set the flag - it will be processed when the label (drumFillLabel) is detected
+        _var.drums_fill_requested = true;
+        PRINT_1("** drums fill was requested");
     }
 }
 
@@ -330,7 +408,8 @@ void    TesAutoDrums::tick(void){
 // receives MIDI events during MIDI files scanning
 void TesAutoDrums::midiEventScanner(midi_event *pev){
     // check if the MIDI channel is correct
-    if(pev->channel != drumsChannel){
+    if((pev->channel != _mc_settings->global.drumsMidiChannel)
+            && (pev->channel != _mc_settings->global.drumsAdditionalChannel)){
         // the file cannot send MIDI commands to non-drums channels
         _var.validation_data.is_valid = false;
     }
@@ -346,7 +425,7 @@ void TesAutoDrums::metaEventScanner(const meta_event *pmev){
     switch(pmev->type){
     case 0x2F:      // end of track
         {
-            PRINT_2("end of track ", pmev->track);
+            // nothing to do
         }
         break;
     case 0x51:      // set Tempo in "us / tick"
@@ -360,11 +439,9 @@ void TesAutoDrums::metaEventScanner(const meta_event *pmev){
                 _var.validation_data.tick_time              = _SMF.getTickTime();               // us / tick
                 _var.validation_data.tempo                  = _SMF.getTempo();                  // beats / min
                 _var.validation_data.ticks_per_quarter_note = _SMF.getTicksPerQuarterNote();    // tick / quarter
-                PRINT_2("new tempo = ", _var.validation_data.tempo);
             }
             else {
                 _var.validation_data.tempo_set_in_track_n   = true;
-                PRINT_2("  tempo change in track1+ :", _SMF.getTempo());
             }
         }
         break;
@@ -375,10 +452,6 @@ void TesAutoDrums::metaEventScanner(const meta_event *pmev){
             // NOTE: this doesn't change the tempo
             if (pmev->track == 0){
                 _var.validation_data.time_signature     = _SMF.getTimeSignature();
-                PRINT_2_HEX("new time signature = ", _var.validation_data.time_signature);
-            }
-            else {
-                PRINT_2_HEX("  time signature change in track1+ :", _SMF.getTimeSignature());
             }
         }
         break;
@@ -390,7 +463,7 @@ void TesAutoDrums::metaEventScanner(const meta_event *pmev){
 void TesAutoDrums::midiEventPlayer(midi_event *pev){
     // prepare the MIDI command and put it into the queue
     TesMIDICommand  cmd;
-    cmd.channelId = drumsChannel;           // no other option, as the MIDI file was validated already
+    cmd.channelId = pev->channel;           // it must be correct, because the MIDI file was validated already
     cmd.midiCommand = pev->data[0] >> 4;    // the MD_MIDIFile library uses the 0xV0 format for commands (where "V" is the "value")
     cmd.data1 = pev->data[1];
     cmd.data2 = pev->data[2];   // this makes sense only for 3-bytes commands, but it's safe to always copy it
@@ -401,11 +474,23 @@ void TesAutoDrums::midiEventPlayer(midi_event *pev){
     switch (cmd.midiCommand){
     case mcControlChange:
         {
-            switch(cmd.data1){
-            case 7:         // Volume
-            case 11:        // Expression
-                // just return without sending this command
-                return;
+            if(cmd.channelId == _mc_settings->global.drumsMidiChannel){
+                switch(cmd.data1){
+                case 7:         // Volume
+                case 11:        // Expression
+                    // just return without sending this command
+                    // This command is not allowed in this channel
+                    return;
+                }
+            }
+            else if (cmd.channelId == _mc_settings->global.drumsAdditionalChannel){
+                if(cmd.data1 == 7){     // Volume
+                    // We allow volume change in the Additional channel but we scale this to the Master Volume
+                    cmd.data2 = map(cmd.data2, 0, 127, 0, _mc_settings->preset.masterVolume);
+                }
+            }
+            else{
+                SWER(swerAutoDrums04);  // we must not get here
             }
         }
         break;
@@ -426,16 +511,12 @@ void TesAutoDrums::metaEventPlayer(const meta_event *pmev){
         {
             // when we get here, the SMF object has already been adjusted to the new tempo.
 
-            PRINT_2("META: old native tempo = ", _var.native_tempo);
             // a new native tempo was set to the _SMF already; so, just get it from there
             _var.native_tempo   =   _SMF.getTempo();
             // The new value of the current tempo should be adjusted according to the difference
             // between the user-defined tempo and the "native" MIDI file tempo stored in the MIDI file attributes.
             uint16_t    new_tempo   = map(_var.native_tempo, 0, _var.file_attributes[_var.melodyId].tempo, 0, _var.user_defined_tempo);
             _SMF.setTempo(new_tempo);
-            PRINT_2("META: user defined tempo = ", _var.user_defined_tempo);
-            PRINT_2("META: new native tempo = ", _var.native_tempo);
-            PRINT_2("META: new playback tempo = ", new_tempo);
         }
         break;
     case 0x58:      // time signature
@@ -446,6 +527,19 @@ void TesAutoDrums::metaEventPlayer(const meta_event *pmev){
             // TODO do we need to do anything here? (looks like we don't)
         }
         break;
+    case 0x01:      // text
+        {
+            if((pmev->size == strlen(drumFillLabel)) && (0 == strcmp(pmev->chars, drumFillLabel))){
+                if ((_var.file_attributes[_var.melodyId].has_fill)
+                        && (! _var.playing_drums_fill)
+                        && (_var.drums_fill_requested)){
+                    // the actual start will be done in tick()
+                    PRINT_1("triggering Drums Fill");
+                    _var.drums_fill_starting = true;
+                }
+            }
+        }
+        break;
     }
     
 }
@@ -453,50 +547,46 @@ void TesAutoDrums::metaEventPlayer(const meta_event *pmev){
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // Validates the current MIDI file
 void    TesAutoDrums::validateMidiFile(void){
-    PRINT_2("Start validation for: ", _var.file_names[_var.melodyId].c_str());
     // _var.melodyId points to the file to be validated now
+    _var.validation_data.clear();   // clear the validation data
     // open a melody
     int err = _SMF.load(_var.file_names[_var.melodyId].c_str());
     if (err != MD_MIDIFile::E_OK){
         PRINT_2("ERROR = ", err);
-        return;
+        _var.validation_data.is_valid = false;
     }
-    _var.validation_data.clear();   // clear the validation data
+    else{
+        // Obtain initial information from the file header (tempo, etc.)
+        _var.validation_data.time_signature         = _SMF.getTimeSignature();          // like "4/4" ("high" / "low")
+        _var.validation_data.tick_time              = _SMF.getTickTime();               // us / tick
+        _var.validation_data.tempo                  = _SMF.getTempo();                  // beats / min
+        _var.validation_data.ticks_per_quarter_note = _SMF.getTicksPerQuarterNote();    // tick / quarter
+        // Also, decide if the file should be looped.
+        _var.validation_data.loop                   = _var.file_names[_var.melodyId].startsWith(loopPrefix);
 
-    // Obtain initial information from the file header (tempo, etc.)
-    _var.validation_data.time_signature         = _SMF.getTimeSignature();          // like "4/4" ("high" / "low")
-    _var.validation_data.tick_time              = _SMF.getTickTime();               // us / tick
-    _var.validation_data.tempo                  = _SMF.getTempo();                  // beats / min
-    _var.validation_data.ticks_per_quarter_note = _SMF.getTicksPerQuarterNote();    // tick / quarter
-    PRINT_2("Header tempo = ", _var.validation_data.tempo);
-    PRINT_2_HEX("Header time signature = ", _var.validation_data.time_signature);
-    // Also, decide if the file should be looped.
-    _var.validation_data.loop                   = _var.file_names[_var.melodyId].startsWith(loopPrefix);
-
-    // run the validation
-    if(!_SMF.isEOF()){
-        _SMF.scanAllTracks();
-    }
-    _SMF.close();
-    // *** We cannot call _SMF.initialise() here, but we need to reset some parameters to default values,
-    //     so that validation of the next file starts with default numbers.
-    // Set MIDI specified standard defaults
-    // - the code below is copy/pasted from the MD_MIDIFile library.
-    _SMF.setTicksPerQuarterNote(48); // 48 ticks per quarter note
-    _SMF.setTempo(120);              // 120 beats per minute
-    _SMF.setTempoAdjust(0);          // 0 beats per minute adjustment
-    _SMF.setMicrosecondPerQuarterNote(500000);  // 500,000 microseconds per quarter note
-    _SMF.setTimeSignature(4, 4);     // 4/4 time
-    // *** _var.validation_data contains the validation result
-    // Final checks (if they make sense)
-    if(_var.validation_data.is_valid){
-        // check if the file was not empty (there're MIDI commands)
-        _var.validation_data.is_valid = (_var.validation_data.number_of_commands > 0);
+        // run the validation
+        if(!_SMF.isEOF()){
+            _SMF.scanAllTracks();
+        }
+        _SMF.close();
+        // *** We cannot call _SMF.initialise() here, but we need to reset some parameters to default values,
+        //     so that validation of the next file starts with default numbers.
+        // Set MIDI specified standard defaults
+        // - the code below is copy/pasted from the MD_MIDIFile library.
+        _SMF.setTicksPerQuarterNote(48); // 48 ticks per quarter note
+        _SMF.setTempo(120);              // 120 beats per minute
+        _SMF.setTempoAdjust(0);          // 0 beats per minute adjustment
+        _SMF.setMicrosecondPerQuarterNote(500000);  // 500,000 microseconds per quarter note
+        _SMF.setTimeSignature(4, 4);     // 4/4 time
+        // *** _var.validation_data contains the validation result
+        // Final checks (if they make sense)
+        if(_var.validation_data.is_valid){
+            // check if the file was not empty (there're MIDI commands)
+            _var.validation_data.is_valid = (_var.validation_data.number_of_commands > 0);
+        }
     }
 
     if (_var.validation_data.is_valid){
-        PRINT_1("This file is valid");
-        PRINT_2("\tloop = ", _var.validation_data.loop);
         // add MIDI file attributes to the respective list
         MidiFileAttributes  attr;
         attr.loop       = _var.validation_data.loop;
@@ -507,24 +597,79 @@ void    TesAutoDrums::validateMidiFile(void){
     }
     else{
         // *** The file is not valid.
-        PRINT_1("This file is NOT valid");
         // remove it from the list
         _var.file_names.erase(_var.file_names.begin() + _var.melodyId);
         // _var.melodyId points to the next file now
     }
 
-    // check if the next file exists
-    if(_var.melodyId == _var.file_names.size()){
-        PRINT_1("All MIDI files have been validated");
-        // *** all files were validated
-        _var.init_in_progress   = false;
-        _var.is_initialized     = true;
-        _SMF.setMidiHandler(midi_handler_player);
-        _SMF.setMetaHandler(meta_handler_player);
-        // set the default melodyId
-        _var.melodyId           = 0;
-        _var.user_defined_tempo  = _var.file_attributes[_var.melodyId].tempo;    // don't forget about the tempo
-        _var.native_tempo  = _var.file_attributes[_var.melodyId].tempo;
+    // check if the list is not empty (we might erase all files because all of them were invalid)
+    if(_var.file_names.size() > 0){
+        // *** ok, the list of files is not empty
+
+        // check if the next file exists
+        if(_var.melodyId == _var.file_names.size()){
+            // *** all files were validated
+
+            // arrange the MIDI file names (some of them may be for drum fills)
+            arrangeMidiFiles();
+            // set flags & variables up
+            _var.init_in_progress   = false;
+            _var.is_initialized     = true;
+            _SMF.setMidiHandler(midi_handler_player);
+            _SMF.setMetaHandler(meta_handler_player);
+            // set the default melodyId
+            _var.melodyId           = 0;
+            _var.user_defined_tempo  = _var.file_attributes[_var.melodyId].tempo;    // don't forget about the tempo
+            _var.native_tempo  = _var.file_attributes[_var.melodyId].tempo;
+        }
     }
+    else{
+        // *** the list of files is empty! All file names were removed from the list during validation.
+
+        // In this case we consider the engine NOT initialized
+        _var.init_in_progress   = false;
+        _var.is_initialized     = false;
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+// Arranges MIDI file names
+void    TesAutoDrums::arrangeMidiFiles(void){
+    /*
+     * All file names are collected in _var.file_names. Some of those files are probably Drum Fills.
+     * We check file names with fillSuffix and move them to _var.fill_names.
+     */
+    PRINT_1("*** Arranging MIDI files");
+    for(int i=0; i < _var.file_names.size(); i++){
+        // Only loop files can have Drum Fills
+        if (_var.file_attributes[i].loop){
+            // check if this is a Drum Fill file
+            int suffix_position = _var.file_names[i].lastIndexOf(fillSuffix);
+            if(suffix_position == _var.file_names[i].length() - fileExtension.length() - fillSuffix.length()){
+                // *** the fill suffix is exactly where it should be. I.e. this is a Drum Fill file.
+                // put the file name into the fill list
+                _var.fill_names.push_back(_var.file_names[i]);
+                // remove the file name from the main list
+                _var.file_names.erase(_var.file_names.begin() + i);
+                _var.file_attributes.erase(_var.file_attributes.begin() + i);
+                // return the index back
+                i--;
+            }
+        }
+    }
+    // find the main file for each drum fill file
+    for(int i=0; i < _var.fill_names.size(); i++){
+        String  base_name = _var.fill_names[i].substring(0, _var.fill_names[i].length() - fillSuffix.length() - fileExtension.length());
+        // find the respective main file
+        for(int j=0; j < _var.file_names.size(); j++){
+            if((_var.file_names[j].length() == (_var.fill_names[i].length() - fillSuffix.length())) && (_var.file_names[j].lastIndexOf(base_name) == 0)){
+                // register the drum fill
+                _var.file_attributes[j].has_fill    = true;
+                _var.file_attributes[j].fill_id     = i;
+                break;
+            }
+        }
+    }
+    PRINT_1("*** MIDI files arranged");
 }
 
