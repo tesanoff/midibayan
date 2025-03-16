@@ -93,15 +93,9 @@ enum {dpDrumsVolume = 0, dpDrumsetNumber, dpSoundForBass, dpSoundForBassVelocity
 // aux flags
 struct  TesUIFlags {
     uint8_t display_update_is_required: 1;  // true - when the display require updating
-    uint8_t menu_hold_detected: 1;          // true - when the "Menu" key is held
-    uint8_t drums_control_hold_detected: 1; // true - when the "Drums" key is held
-    uint8_t drums_style_hold_detected: 1;   // true - when the "Style" key is held
 
     TesUIFlags(void){
         display_update_is_required  = false;
-        menu_hold_detected          = false;
-        drums_control_hold_detected = false;
-        drums_style_hold_detected   = false;
     }
 };
 

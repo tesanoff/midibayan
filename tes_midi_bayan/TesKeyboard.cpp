@@ -12,6 +12,11 @@
 
 #include "TesKeyboard.h"
 #include "swer.h"
+<<<<<<< HEAD
+=======
+#include "common.h"
+#include "TesCtlButtonController.h"
+>>>>>>> cfd891f (Переделано на управляющие кнопки в стиле Gyver)
 
 //////////////////////////// settings for control buttons //////////////////////////////
 //
@@ -23,30 +28,6 @@
 #define TES_LAST_CONTROL_BUTTON         (TES_FIRST_CONTROL_BUTTON + TES_NUMBER_OF_CONTROL_BUTTONS - 1)  // the index of the last ctl button
                                                                                                         // (!) The assumption is that there's just one
                                                                                                         // range of control buttons without any gaps it it.
-#define tesButtonHoldPeriod             (1000 * 3/4)        // 0.75 seconds
-#define tesButtonFastRepeatPeriod       (1000 * 1/20)       // 0.05 seconds
-
-// Control buttons are not equal: some of them may have the "hold" function, some of them may not.
-// This is configured here, in the bitmap below.
-// 1 - "hold" is enabled
-// 0 - "hold is disabled
-//                                             7      0   15      8   23     16
-const uint8_t   tesCtlButtonHoldBitmap[] = { 0b00110000, 0b11111111, 0b00001111};
-//                                                                     ~~   <-- not used
-
-// Control buttons are not equal again: some of them may have the "fast repeat" function, some of them may not.
-// This is configured here, in the bitmap below.
-// 1 - "fast repeat" is enabled
-// 0 - "fast repeat" is disabled
-//
-// WARNING: don't be an idiot! Do not turn "Hold" and "Fast Repeat" features for the same button simultaneiously!
-//                                                 7      0   15      8    23     16
-const uint8_t   tesCtlButtonFastRepeatBitmap[] = { 0b00001111, 0b00000000, 0b00110000};
-//                                                                           ~~   <-- not used
-
-// internal states of control buttons
-enum {tesCtlButtonReleased = 0, tesCtlButtonPressed, tesCtlButtonHold, tesCtlButtonFastRepeat};
-
 /////////////////////// Settings for ALL buttons //////////////////////////////////////////////////
 //
 
@@ -107,14 +88,12 @@ const uint8_t   tesButtonPressedLevels[] = {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Constructor
-TesKeyboard::TesKeyboard(TesEventQueue *queue){
+TesKeyboard::TesKeyboard(TesEventQueue *queue)
+    :_eventQueue(queue),
+    _ctlButtonController(queue)
+{
     // save the parameters
     _eventQueue = queue;
-
-    // data specific for ctl buttons
-    memset(_hold_timer, 0, sizeof(uint16_t) * TES_NUMBER_OF_CONTROL_BUTTONS);
-    memset(_ctlButtonState, tesCtlButtonReleased, sizeof(uint8_t) * (TES_NUMBER_OF_CONTROL_BUTTONS - 1) / 4 + 1);
-    // _ctlButtonFastRepeatState is not initialized, because it's initialized each time when a control button goes into the FastRepast state.
 
     //set the pins up
     pinMode(latchPin, OUTPUT);
@@ -164,73 +143,7 @@ void TesKeyboard::tick(void){
     // analyze and create new events, if required
     processNewData();
 
-    uint16_t    millis_snapshot = millis();
-    // check control buttons timers if the "hold" or "Fast Repeat" feature is enabled for the button
-    for (int i = 0; i < TES_NUMBER_OF_CONTROL_BUTTONS; i++){
-        
-        // "hold" and "fast repeat" features:
-        // a) cannot be turned on simultaneously
-        // b) handled differently
-
-        uint8_t currentCtlButtonState = getCtlButtonState(i);
-        if ( currentCtlButtonState == tesCtlButtonPressed ){
-            // "hold" and "fast repeat" features are handled differently
-            if ( holdIsEnabled(i) ){
-                // check if the hold timer has expired for a Hold-enabled ctl button
-                if( (millis_snapshot - _hold_timer[i]) > tesButtonHoldPeriod){
-                    // the hold timer expired
-
-                    // change the button status to "hold"
-                    setCtlButtonState(i, tesCtlButtonHold);
-                    // put a respective event to the queue
-                    tesEvent    event;
-                    event.eventType = tesEvControlButton;
-                    event.buttonEvent = tesBeHold;
-                    event.buttonId = i;
-                    _eventQueue->pushEvent(&event);
-                }
-            }
-            else if ( fastRepeatIsEnabled(i) ){
-                // check if the hold timer has expired for a FastRepeat-enabled ctl button
-                if( (millis_snapshot - _hold_timer[i]) > tesButtonHoldPeriod){
-                    // the hold timer expired
-
-                    // change the button status to "fast repeat"
-                    setCtlButtonState(i, tesCtlButtonFastRepeat);
-                    // set the "fast repeat" timer (in the same _hold_timer[] variable)
-                    _hold_timer[i] = millis_snapshot;
-                    // set the virtual status for this ctl button working in the "fast repeat" mode now
-                    setCtlButtonFastRepeatState(i, 0);  // It was pressed already; so, the next status for the outer world should be "released"
-                    // put the "released" event to the queue
-                    tesEvent    event;
-                    event.eventType = tesEvControlButton;
-                    event.buttonEvent = tesBeReleased;
-                    event.buttonId = i;
-                    _eventQueue->pushEvent(&event);
-                }
-            }
-        }
-        else if ( currentCtlButtonState == tesCtlButtonFastRepeat ){
-            // i.e. this ctl button is already working in the "Fast Repeat" mode.
-
-            // check the Fast Repeat timer
-            if (millis_snapshot - _hold_timer[i] > tesButtonFastRepeatPeriod){
-                // the Fast Repeat timer has expired
-
-                uint8_t oldFastRepeatState = getCtlButtonFastRepeatState(i);
-                // toggle the virtual status for this ctl button
-                setCtlButtonFastRepeatState(i, ! oldFastRepeatState);
-                // set the Fast Repeat timer again
-                _hold_timer[i] = millis_snapshot;
-                // put a respective event to the queue
-                tesEvent    event;
-                event.eventType = tesEvControlButton;
-                event.buttonEvent = ( oldFastRepeatState ) ? tesBeReleased : tesBePressed;
-                event.buttonId = i;
-                _eventQueue->pushEvent(&event);
-            }
-        }
-    }
+    _ctlButtonController.tick();
 }
 
 // Private members
@@ -246,80 +159,10 @@ uint8_t TesKeyboard::getPressedLevel(uint8_t buttonId){
 }
 
 //////////////////////////////////////////////////////////////////////
-// Returns a state of the specified control button
-//
-uint8_t TesKeyboard::getCtlButtonState(uint8_t ctlButtonIndex){
-    // calculating index & shift
-    uint8_t index = ctlButtonIndex / 4;
-    uint8_t shift  = (ctlButtonIndex % 4) * 2;
-    // return the value
-    return (_ctlButtonState[index] & ((uint8_t)0b00000011 << shift)) >> shift;
-}
-
-//////////////////////////////////////////////////////////////////////
-// Sets a state of the specified control button
-//
-void TesKeyboard::setCtlButtonState(uint8_t ctlButtonIndex, uint8_t value){
-    // calculating index & shift
-    uint8_t index = ctlButtonIndex / 4;
-    uint8_t shift  = (ctlButtonIndex % 4) * 2;
-    // return the value
-    _ctlButtonState[index] = _ctlButtonState[index] & ~((uint8_t)0b00000011 << shift) | (value << shift);
-}
-
-//////////////////////////////////////////////////////////////////////
-// Returns a virtual "released/pressed" status of the specified control button
-//
-uint8_t TesKeyboard::getCtlButtonFastRepeatState(uint8_t ctlButtonIndex){
-    // calculating index & shift
-    uint8_t index = ctlButtonIndex / 8;
-    uint8_t shift  = ctlButtonIndex % 8;
-    // return the value
-    return (_ctlButtonFastRepeatState[index] & ((uint8_t)0b00000001 << shift)) >> shift;
-}
-
-//////////////////////////////////////////////////////////////////////
-// Sets a virtual "released/pressed" status of the specified control button
-//
-void TesKeyboard::setCtlButtonFastRepeatState(uint8_t ctlButtonIndex, uint8_t value){
-    // clear unused bits just in case...
-    value &= 0b00000001;
-    // calculating index & shift
-    uint8_t index = ctlButtonIndex / 8;
-    uint8_t shift  = ctlButtonIndex % 8;
-    // return the value
-    _ctlButtonFastRepeatState[index] = _ctlButtonFastRepeatState[index] & ~((uint8_t)0b00000001 << shift) | (value << shift);
-}
-
-//////////////////////////////////////////////////////////////////////
 // Returns True if the specified button is a control button
 //
 bool TesKeyboard::isCtlButton(uint8_t buttonIndex){
     return (buttonIndex >= TES_FIRST_CONTROL_BUTTON) && (buttonIndex <= TES_LAST_CONTROL_BUTTON);
-}
-
-//////////////////////////////////////////////////////////////////////
-// Returns True if the "Hold" function is enabled for 
-// the specified control button
-//
-bool TesKeyboard::holdIsEnabled(uint8_t ctlButtonIndex){
-    // calculating byteIndex and bitIndex for accessing the bitmap
-    uint8_t byteIndex = ctlButtonIndex / 8;
-    uint8_t bitIndex  = ctlButtonIndex % 8;
-    // return the value
-    return (tesCtlButtonHoldBitmap[byteIndex] & ((uint8_t)1 << bitIndex)) >> bitIndex;
-}
-
-//////////////////////////////////////////////////////////////////////
-// Returns True if the "Fast Repeat" function is enabled for 
-// the specified control button
-//
-bool TesKeyboard::fastRepeatIsEnabled(uint8_t ctlButtonIndex){
-    // calculating byteIndex and bitIndex for accessing the bitmap
-    uint8_t byteIndex = ctlButtonIndex / 8;
-    uint8_t bitIndex  = ctlButtonIndex % 8;
-    // return the value
-    return (tesCtlButtonFastRepeatBitmap[byteIndex] & ((uint8_t)1 << bitIndex)) >> bitIndex;
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -399,34 +242,8 @@ void TesKeyboard::processNewData(void){
                 _eventQueue->pushEvent(&event);
 	    }
             else if ( isCtlButton(currentButton) ){ // check if this is a control button
-                int skipEvent = false;
-                if ( newValue == getPressedLevel(currentButton) ){
-                    // if pressed - start the hold timer
-                    _hold_timer[getCtlButtonId(currentButton)] = millis();
-                    setCtlButtonState((currentButton - TES_FIRST_CONTROL_BUTTON), tesCtlButtonPressed);
-                }
-                else {
-                    // If the ctl button is in "fast repeat" state, and the current fast repeat status is "0" 
-                    // (released), then we should not send another (a duplicate) "released" event.
-                    // Instead, we just change the ctl btn status from "fast repeat" to "released", which 
-                    // should automatically stop sending automatic events
-                    if( (getCtlButtonState(getCtlButtonId(currentButton)) == tesCtlButtonFastRepeat) && (getCtlButtonFastRepeatState(getCtlButtonId(currentButton)) == 0) ){
-                        skipEvent = true;
-                    }
-
-                    // if released - clear the status
-                    setCtlButtonState(getCtlButtonId(currentButton), tesCtlButtonReleased);
-                }
-                // We send different events for music and control buttons.
-                // This one - is for a control button.
-                if ( ! skipEvent ){
-                    // prepare an event record
-                    tesEvent    event;
-                    event.eventType = tesEvControlButton;
-                    event.buttonEvent = (newValue != getPressedLevel(currentButton)) ? tesBeReleased : tesBePressed;
-                    event.buttonId = getCtlButtonId(currentButton);
-                    _eventQueue->pushEvent(&event);
-                }
+                // this is all we need to do for coltrol buttons here
+                _ctlButtonController.processCtlButton(getCtlButtonId(currentButton), (newValue == getPressedLevel(currentButton)));
             }
             else {
                 // this is a music button.

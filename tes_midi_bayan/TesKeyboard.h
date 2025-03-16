@@ -12,6 +12,7 @@
 #ifndef TES_KEYBOARD_H
 #define TES_KEYBOARD_H
 #include "TesEventQueue.h"
+#include "TesCtlButtonController.h"
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 //                                 Public part
@@ -65,52 +66,16 @@ private:
     uint8_t _previous_buffer [ TES_KEYBOARD_CASCADE_SIZE ]; // This is for comparing old and new values
     TesEventQueue   * _eventQueue;                      // the queue to work with
     ////////// for control buttons /////////
-    uint16_t    _hold_timer[TES_NUMBER_OF_CONTROL_BUTTONS];         // The same timers are used for both "Hold" and "Fast Repeat" functions
-    uint8_t     _ctlButtonState[ (TES_NUMBER_OF_CONTROL_BUTTONS-1) / 4 + 1 ]; // each byte stores states for 4 buttons
-                                                                              // 2 bits per button
-    uint8_t     _ctlButtonFastRepeatState[ (TES_NUMBER_OF_CONTROL_BUTTONS-1) / 8 + 1 ];     // this bitmap stores "virtual" pressed/released statuses
-                                                                                            // 1 bit per button
+    TesCtlButtonController  _ctlButtonController;
 
     ///////////////////////////////////////////////////////////////////////
     // Returns a "pressed" level for the specified button
     uint8_t getPressedLevel(uint8_t buttonId);
 
     //////////////////////////////////////////////////////////////////////
-    // Returns a state of the specified control button
-    //
-    uint8_t getCtlButtonState(uint8_t ctlButtonIndex);
-
-    //////////////////////////////////////////////////////////////////////
-    // Sets a state of the specified control button
-    //
-    void setCtlButtonState(uint8_t ctlButtonIndex, uint8_t value);
-
-    //////////////////////////////////////////////////////////////////////
-    // Returns a virtual "released/pressed" status of the specified control button
-    //
-    uint8_t getCtlButtonFastRepeatState(uint8_t ctlButtonIndex);
-
-    //////////////////////////////////////////////////////////////////////
-    // Sets a virtual "released/pressed" status of the specified control button
-    //
-    void setCtlButtonFastRepeatState(uint8_t ctlButtonIndex, uint8_t value);
-
-    //////////////////////////////////////////////////////////////////////
     // Returns True if the specified button is a control button
     //
     bool isCtlButton(uint8_t buttonIndex);
-
-    //////////////////////////////////////////////////////////////////////
-    // Returns True if the "Hold" function is enabled for 
-    // the specified control button
-    //
-    bool holdIsEnabled(uint8_t ctlButtonIndex);
-
-    //////////////////////////////////////////////////////////////////////
-    // Returns True if the "Fast Repeat" function is enabled for 
-    // the specified control button
-    //
-    bool fastRepeatIsEnabled(uint8_t ctlButtonIndex);
 
     ///////////////////////////////////////////////////////////////////////
     // Reads all data from the cascade(s)

@@ -112,7 +112,7 @@ void TesMIDIController::processEvent(tesEvent *event){
     case tesEvButton:
         processButtonEvent(event);  // call the specific handler of music button-related events
         break;
-    case tesEvControlButton:
+    case tesEvGyverButton:
         processControlButtonEvent(event);  // call the specific handler of control button-related events
         break;
     case tesEvPressure:

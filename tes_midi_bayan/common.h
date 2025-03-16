@@ -23,3 +23,18 @@ typedef uint32_t    timer_t;
 #define PRINT_2(text,value)
 #define PRINT_2_HEX(text,value)
 #endif
+
+///////////////////////////////////////////////////////////////////////////
+// Functions for manipulating with bitmaps
+//
+
+// Clears the bitmap
+void    bitmap_clear(uint8_t * bitmap, uint8_t size);
+
+// Sets the specified bit
+void    bitmap_set(uint8_t * bitmap, uint8_t id, uint8_t value);
+
+// Gets the value of the specified bit
+uint8_t bitmap_get(const uint8_t * bitmap, uint8_t id);
+
+

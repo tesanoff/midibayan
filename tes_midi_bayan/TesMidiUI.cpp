@@ -114,7 +114,9 @@ void TesMidiUI::processCtlButtonEvent(tesEvent *event){
     switch ( _editor_status.screenMode ) {
     case screenModeMain:
         {
-            if (event->buttonEvent == tesBeReleased){
+            // "released" means a normal release; "step" means "autorepeated release"
+            if ((event->buttonEvent == tesBeReleased)
+                    || (event->buttonEvent == tesBeStep)){
                 // key handlers specific for the main screen
                 switch(event->buttonId){
                 case ctlButtonTempoMinus:
@@ -130,72 +132,40 @@ void TesMidiUI::processCtlButtonEvent(tesEvent *event){
                     break;
                 case ctlButtonMenu:
                     // *** switching to the Kbd or System Parameters Edit mode is possible from the main screen only
-                    // check if this was a long press
-                    if (_flags.menu_hold_detected){
-                        // long press starts system parameters editor
-                        _editor_status.screenMode = screenModeSysParamEdit;
-                    }
-                    else {
-                        _editor_status.screenMode = screenModeMidiParamEdit;
-                        // *** ATTENTION! each time we change screens - we turn off the edit mode
-                        _editor_status.editMode = false;
-                    }
+                    _editor_status.screenMode = screenModeMidiParamEdit;
+                    // *** ATTENTION! each time we change screens - we turn off the edit mode
+                    _editor_status.editMode = false;
                     _inactivity_timer = millis();   // set inactivity timer for a non-Main screen
                     drawActiveScreen();
-                    // reset the long press flag (because we have just received the "released" event)
-                    _flags.menu_hold_detected = false;
                     // clear the event to indicate it has been fully processed
                     event->eventType = tesEmpty;
                     break;
                 case ctlButtonDrumsControl:
-                    if (_flags.drums_control_hold_detected){
-                        // switch to the Manual mode
+                    switch(_mc->_var.drumsMode){
+                    case dmOff:
                         setDrumMachineState(dmManual);
-                        // start drums parameters editing
-                        _editor_status.screenMode = screenModeDrumsEdit;
-                        // *** ATTENTION! each time we change screens - we turn off the edit mode
-                        _editor_status.editMode = false;
-                        _inactivity_timer = millis();   // set inactivity timer for a non-Main screen
-                        _flags.drums_control_hold_detected = false;
-                    }
-                    else {
-                        switch(_mc->_var.drumsMode){
-                        case dmOff:
-                            setDrumMachineState(dmManual);
-                            break;
-                        case dmManual:
-                            if(_mc->_auto_drums.isInitialized()){
-                                setDrumMachineState(dmStandby);
-                            }
-                            else{
-                                setDrumMachineState(dmOff);
-                            }
-                            break;
-                        case dmStandby:
-                            setDrumMachineState(dmPlaying);
-                            break;
-                        case dmPlaying:
-                            setDrumMachineState(dmOff);
-                            break;
+                        break;
+                    case dmManual:
+                        if(_mc->_auto_drums.isInitialized()){
+                            setDrumMachineState(dmStandby);
                         }
+                        else{
+                            setDrumMachineState(dmOff);
+                        }
+                        break;
+                    case dmStandby:
+                        setDrumMachineState(dmPlaying);
+                        break;
+                    case dmPlaying:
+                        setDrumMachineState(dmOff);
+                        break;
                     }
                     // clear the event to indicate it has been fully processed
                     event->eventType = tesEmpty;
                     drawActiveScreen();
                     break;
                 case ctlButtonDrumsStyle:
-                    if (_flags.drums_style_hold_detected){
-                        // Calling the melody selector screen
-                        _editor_status.screenMode = screenModeMelodyEdit;
-                        // Adjust a pointer to the current melody
-                        initMelodySelector();
-                        // *** ATTENTION! each time we change screens - we turn off the edit mode
-                        _editor_status.editMode = false;
-                        _inactivity_timer = millis();   // set inactivity timer for a non-Main screen
-                        // reset the long press flag (because we have just received the "released" event)
-                        _flags.drums_style_hold_detected = false;
-                    }
-                    else {
+                    {
                         bool was_playing = _mc->_auto_drums.isPlaying();
                         if ( was_playing ){
                             _mc->_auto_drums.stop();
@@ -204,9 +174,6 @@ void TesMidiUI::processCtlButtonEvent(tesEvent *event){
                         if ( was_playing ){
                             _mc->_auto_drums.start();
                         }
-                        drawActiveScreen();
-                        // clear the event to indicate it has been fully processed
-                        event->eventType = tesEmpty;
                     }
                     drawActiveScreen();
                     // clear the event to indicate it has been fully processed
@@ -223,23 +190,39 @@ void TesMidiUI::processCtlButtonEvent(tesEvent *event){
                     break;
                 }
             }
-            else if (event->buttonEvent == tesBeHold){
+            else if (event->buttonEvent == tesBeHoldReleased){
                 switch(event->buttonId){
                 case ctlButtonMenu:
-                    // register the long pressed key
-                    _flags.menu_hold_detected = true;
+                    // long press starts system parameters editor
+                    _editor_status.screenMode = screenModeSysParamEdit;
+                    // *** ATTENTION! each time we change screens - we turn off the edit mode
+                    _editor_status.editMode = false;
+                    _inactivity_timer = millis();   // set inactivity timer for a non-Main screen
+                    drawActiveScreen();
                     // clear the event to indicate it has been fully processed
                     event->eventType = tesEmpty;
                     break;
                 case ctlButtonDrumsControl:
-                    // register the long pressed key
-                    _flags.drums_control_hold_detected = true;
+                    // switch to the Manual mode
+                    setDrumMachineState(dmManual);
+                    // start drums parameters editing
+                    _editor_status.screenMode = screenModeDrumsEdit;
+                    // *** ATTENTION! each time we change screens - we turn off the edit mode
+                    _editor_status.editMode = false;
+                    _inactivity_timer = millis();   // set inactivity timer for a non-Main screen
                     // clear the event to indicate it has been fully processed
                     event->eventType = tesEmpty;
+                    drawActiveScreen();
                     break;
                 case ctlButtonDrumsStyle:
-                    // register the long pressed key
-                    _flags.drums_style_hold_detected = true;
+                    // Calling the melody selector screen
+                    _editor_status.screenMode = screenModeMelodyEdit;
+                    // Adjust a pointer to the current melody
+                    initMelodySelector();
+                    // *** ATTENTION! each time we change screens - we turn off the edit mode
+                    _editor_status.editMode = false;
+                    _inactivity_timer = millis();   // set inactivity timer for a non-Main screen
+                    drawActiveScreen();
                     // clear the event to indicate it has been fully processed
                     event->eventType = tesEmpty;
                     break;
@@ -1615,6 +1598,7 @@ void TesMidiUI::processCtlButtonEventMidiParamEditor(tesEvent *event){
 
     switch (event->buttonEvent){
     case tesBeReleased:
+    case tesBeStep:
         switch (event->buttonId){
         case ctlButtonUp:
             if (_editor_status.editMode){
@@ -1803,14 +1787,10 @@ void TesMidiUI::processCtlButtonEventSystemParamEditor(tesEvent *event){
 
     switch (event->buttonEvent){
     case tesBeReleased:
+    case tesBeStep:
         switch (event->buttonId){
         case ctlButtonUp:
             // move up
-            /*
-             *if( _editor_status.sysParSelector-- == 0){
-             *    _editor_status.sysParSelector = paramEditorRows - 1;
-             *}
-             */
             if(_editor_status.sysParSelector == 0){
                 // the first editor row
                 // Scroll the list down until topIndex == 0
@@ -1834,11 +1814,6 @@ void TesMidiUI::processCtlButtonEventSystemParamEditor(tesEvent *event){
             break;
         case ctlButtonDown:
             // move down
-            /*
-             *if( ++_editor_status.sysParSelector == paramEditorRows){
-             *    _editor_status.sysParSelector = 0;
-             *}
-             */
             if(_editor_status.sysParSelector == (paramEditorRows - 1)){
                 // the last editor row
                 // Scroll the list up until sysParTopIndex+sysParSelector == parNumberOfParameters-1
@@ -2018,6 +1993,7 @@ void TesMidiUI::processCtlButtonEventDrumsParamEditor(tesEvent *event){
 
     switch (event->buttonEvent){
     case tesBeReleased:
+    case tesBeStep:
         switch (event->buttonId){
         case ctlButtonUp:
             // move up
@@ -2184,6 +2160,7 @@ void TesMidiUI::processCtlButtonEventInstrumentEditor(tesEvent *event){
 
     switch (event->buttonEvent){
     case tesBeReleased:
+    case tesBeStep:
         switch (event->buttonId){
         case ctlButtonUp:
             // move up
@@ -2291,6 +2268,7 @@ void TesMidiUI::processCtlButtonEventMelodySelector(tesEvent *event){
 
     switch (event->buttonEvent){
     case tesBeReleased:
+    case tesBeStep:
         switch (event->buttonId){
         case ctlButtonUp:
             // move up
