@@ -51,7 +51,7 @@ static const uint8_t   ctlButtonFastRepeatBitmap[] = { 0b00001111, 0b00000000, 0
 //
 // The setting affects both "step released" and "hold released" events
 //                                                              7      0   15      8   23     16
-static const uint8_t   ctlButtonDoubleHoldReleaseBitmap[] = { 0b00000000, 0b00000000, 0b00000000};
+static const uint8_t   ctlButtonDoubleHoldReleaseBitmap[] = { 0b00000000, 0b11111111, 0b00000011};
 //                                                                                      ~~   <-- not used
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
