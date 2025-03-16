@@ -60,12 +60,7 @@ void TesLedSet::setLED(uint8_t led_index, uint8_t value){
     value = value ? 1 : 0;
     // now, we're sure that only the lowest bit is used
 
-    //calculate the chip index
-    uint8_t chipIndex = led_index / 8;
-    // calculate the bit index
-    int bitIndex = led_index % 8;
-    // set the bit
-    _buffer[chipIndex] = _buffer[chipIndex] & ~((uint8_t)1 << bitIndex) | (value << bitIndex);
+    bitmap_set(_buffer, led_index, value);
 
     // raise the update flag
     // (the actual update is done in tick() only)
@@ -75,13 +70,8 @@ void TesLedSet::setLED(uint8_t led_index, uint8_t value){
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Returns the status of the specified LED
 uint8_t TesLedSet::getLED(uint8_t led_index){
-    //calculate the chip index
-    uint8_t chipIndex = led_index / 8;
-    // calculate the bit index
-    int bitIndex = led_index % 8;
-
     // return the value
-    return (_buffer[chipIndex] & ((uint8_t)1 << bitIndex)) >> bitIndex;
+    return bitmap_get(_buffer, led_index);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

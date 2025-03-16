@@ -108,9 +108,7 @@ void TesKeyboard::init(void){
     // As the FreeBass sensor is part of the left keyboard, we already have it's status after 'readCascade()'.
     // Need to read its status from the buffer and send the very first FreeBass event, so that the MIDI Controller knows the status
     // of the Free Bass switch.
-    int chipIndex = freeBassSensorIndex / 8;
-    int bitIndex = freeBassSensorIndex % 8;
-    byte freeBassStatus = (_buffer[chipIndex] >> bitIndex) & (uint8_t)1;
+    byte freeBassStatus = bitmap_get(_buffer, freeBassSensorIndex);
     // compose and send a freeBass event
     tesEvent    event;
     event.eventType = tesEvFreeBass;
@@ -119,9 +117,7 @@ void TesKeyboard::init(void){
     
     // check if the "OK" button is pressed
     uint8_t buttonId = TES_FIRST_CONTROL_BUTTON + ctlButtonOk;
-    chipIndex = buttonId / 8;
-    bitIndex  = buttonId % 8;
-    uint8_t value = (_buffer[chipIndex] >> bitIndex) & (uint8_t)1;
+    uint8_t value = bitmap_get(_buffer, buttonId);
     if (value == getPressedLevel(buttonId)){
         // send Eeprom Reset message
         tesEvent    event;
@@ -148,11 +144,7 @@ void TesKeyboard::tick(void){
 ///////////////////////////////////////////////////////////////////////
 // Returns a "pressed" level for the specified button
 uint8_t TesKeyboard::getPressedLevel(uint8_t buttonId){
-    // calculating byteIndex and bitIndex for accessing the bitmap
-    uint8_t byteIndex = buttonId / 8;
-    uint8_t bitIndex  = buttonId % 8;
-    // return the value
-    return (tesButtonPressedLevels[byteIndex] & ((uint8_t)1 << bitIndex)) >> bitIndex;
+    return bitmap_get(tesButtonPressedLevels, buttonId);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -222,10 +214,8 @@ void TesKeyboard::processNewData(void){
     // *** we check bit by bit
     // this loop is global; i.e. for all buttons: music & control
     for (int currentButton = 0; currentButton < totalNumberOfButtons; currentButton++){
-        int chipIndex = currentButton / 8;
-        int bitIndex = currentButton % 8;
-        byte oldValue = (_previous_buffer[chipIndex] & ((uint8_t)1 << bitIndex)) >> bitIndex;
-        byte newValue = (_buffer[chipIndex] & ((uint8_t)1 << bitIndex)) >> bitIndex;
+        byte oldValue = bitmap_get(_previous_buffer, currentButton);
+        byte newValue = bitmap_get(_buffer, currentButton);
         if (oldValue != newValue){
             // got a change
 

@@ -212,10 +212,8 @@ void    TesMIDIController::tick(void){
                         // check if the selected parameter is marked for sending in the case of optimized update
                         if (_var.optimizedUpdate) {
                             uint8_t parId = kbdParameterOrder[_var.currentParameter];
-                            uint8_t byteIndex   = (_var.currentKbd * NUMBER_OF_KBD_PARAMETERS + parId) / 8;
-                            uint8_t bitIndex    = (_var.currentKbd * NUMBER_OF_KBD_PARAMETERS + parId) % 8;
                             // get the flag
-                            parameter_is_ok_for_sending = (_var.presetUpdateBitmap[byteIndex] >> bitIndex) & 1;
+                            parameter_is_ok_for_sending = bitmap_get(_var.presetUpdateBitmap, _var.currentKbd * NUMBER_OF_KBD_PARAMETERS + parId);
                         }
                         else {
                             // "not optimized" mode; we're sending everything
@@ -897,11 +895,9 @@ void TesMIDIController::readPresetFromEEPROM(uint8_t preset_id){
     // save the difference between the old and new presets in the bitmap
     for(int kbd=0; kbd<NUMBER_OF_KEYBOARDS; kbd++){
         for(int i=0; i<NUMBER_OF_KBD_PARAMETERS; i++){
-            uint8_t byteIndex   = (kbd * NUMBER_OF_KBD_PARAMETERS + i) / 8;
-            uint8_t bitIndex    = (kbd * NUMBER_OF_KBD_PARAMETERS + i) % 8;
             // set the bit value
             uint8_t value = (new_preset.kbdParameter[kbd][i] != _settings.preset.kbdParameter[kbd][i]);
-            _var.presetUpdateBitmap[byteIndex] = _var.presetUpdateBitmap[byteIndex] & ~((uint8_t)1 << bitIndex) | (value << bitIndex);
+            bitmap_set(_var.presetUpdateBitmap, kbd * NUMBER_OF_KBD_PARAMETERS + i, value);
         }
     }
     // replace the old preset with the new one
