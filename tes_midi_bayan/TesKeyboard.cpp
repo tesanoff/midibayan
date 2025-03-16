@@ -12,11 +12,8 @@
 
 #include "TesKeyboard.h"
 #include "swer.h"
-<<<<<<< HEAD
-=======
 #include "common.h"
 #include "TesCtlButtonController.h"
->>>>>>> cfd891f (Переделано на управляющие кнопки в стиле Gyver)
 
 //////////////////////////// settings for control buttons //////////////////////////////
 //
