@@ -89,9 +89,6 @@ TesKeyboard::TesKeyboard(TesEventQueue *queue)
     :_eventQueue(queue),
     _ctlButtonController(queue)
 {
-    // save the parameters
-    _eventQueue = queue;
-
     //set the pins up
     pinMode(latchPin, OUTPUT);
     pinMode(clockPin, OUTPUT);
