@@ -377,4 +377,91 @@ const char dxInstrumentNames[] =
 //
 #define dxNumberOfInstruments   318
 //
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// *** section for Pro.DX Synthesizer
+
+const uint8_t dxBanks0[] = {3, 0, 1, 2};
+const uint8_t dxBanks1[] = {2, 0, 8};
+const uint8_t dxBanks3[] = {2, 0, 8};
+const uint8_t dxBanks4[] = {7, 0, 1, 2, 3, 4, 8, 9};
+const uint8_t dxBanks5[] = {5, 0, 1, 2, 8, 9};
+const uint8_t dxBanks6[] = {3, 0, 1, 8};
+const uint8_t dxBanks7[] = {2, 0, 1};
+const uint8_t dxBanks12[] = {2, 0, 1};
+const uint8_t dxBanks14[] = {3, 0, 1, 2};
+const uint8_t dxBanks15[] = {2, 0, 1};
+const uint8_t dxBanks16[] = {8, 0, 1, 2, 8, 9, 16, 33, 40};
+const uint8_t dxBanks17[] = {6, 0, 1, 2, 8, 9, 16};
+const uint8_t dxBanks18[] = {4, 0, 8, 16, 24};
+const uint8_t dxBanks19[] = {7, 0, 1, 19, 3, 4, 5, 8};
+const uint8_t dxBanks21[] = {5, 0, 1, 2, 3, 8};
+const uint8_t dxBanks22[] = {2, 0, 1};
+const uint8_t dxBanks24[] = {8, 0, 1, 2, 8, 16, 24, 32, 40};
+const uint8_t dxBanks25[] = {7, 0, 1, 8, 16, 17, 18, 32};
+const uint8_t dxBanks26[] = {4, 0, 1, 2, 8};
+const uint8_t dxBanks27[] = {4, 0, 1, 2, 3};
+const uint8_t dxBanks29[] = {2, 0, 1};
+const uint8_t dxBanks30[] = {2, 0, 1};
+const uint8_t dxBanks31[] = {2, 0, 1};
+const uint8_t dxBanks32[] = {3, 0, 1, 2};
+const uint8_t dxBanks33[] = {5, 0, 1, 2, 3, 4};
+const uint8_t dxBanks38[] = {9, 0, 1, 2, 3, 4, 5, 6, 7, 8};
+const uint8_t dxBanks39[] = {11, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+const uint8_t dxBanks40[] = {2, 0, 1};
+const uint8_t dxBanks45[] = {2, 0, 1};
+const uint8_t dxBanks47[] = {2, 0, 1};
+const uint8_t dxBanks48[] = {4, 0, 1, 2, 3};
+const uint8_t dxBanks49[] = {2, 0, 1};
+const uint8_t dxBanks50[] = {3, 0, 1, 2};
+const uint8_t dxBanks51[] = {2, 0, 1};
+const uint8_t dxBanks52[] = {3, 0, 1, 2};
+const uint8_t dxBanks53[] = {3, 0, 1, 2};
+const uint8_t dxBanks55[] = {3, 0, 1, 2};
+const uint8_t dxBanks56[] = {3, 0, 1, 2};
+const uint8_t dxBanks58[] = {3, 0, 1, 2};
+const uint8_t dxBanks59[] = {2, 0, 1};
+const uint8_t dxBanks61[] = {6, 0, 1, 2, 3, 8, 16};
+const uint8_t dxBanks62[] = {5, 0, 1, 2, 8, 16};
+const uint8_t dxBanks63[] = {5, 0, 1, 2, 3, 8};
+const uint8_t dxBanks65[] = {3, 0, 1, 2};
+const uint8_t dxBanks66[] = {4, 0, 1, 2, 3};
+const uint8_t dxBanks71[] = {2, 0, 1};
+const uint8_t dxBanks73[] = {2, 0, 1};
+const uint8_t dxBanks74[] = {2, 0, 1};
+const uint8_t dxBanks80[] = {3, 0, 1, 2};
+const uint8_t dxBanks81[] = {3, 0, 1, 8};
+const uint8_t dxBanks88[] = {3, 0, 1, 2};
+const uint8_t dxBanks89[] = {5, 0, 1, 2, 3, 8};
+const uint8_t dxBanks90[] = {2, 0, 1};
+const uint8_t dxBanks91[] = {2, 0, 1};
+const uint8_t dxBanks102[] = {2, 0, 1};
+const uint8_t dxBanks107[] = {2, 0, 1};
+const uint8_t dxBanks114[] = {2, 0, 1};
+const uint8_t dxBanks115[] = {2, 0, 1};
+const uint8_t dxBanks116[] = {2, 0, 1};
+const uint8_t dxBanks117[] = {2, 0, 1};
+const uint8_t dxBanks118[] = {3, 0, 1, 2};
+const uint8_t dxBanks120[] = {5, 0, 1, 2, 3, 4};
+const uint8_t dxBanks121[] = {3, 0, 1, 5};
+const uint8_t dxBanks122[] = {5, 0, 1, 2, 3, 4};
+const uint8_t dxBanks123[] = {4, 0, 1, 2, 3};
+const uint8_t dxBanks124[] = {6, 0, 1, 2, 3, 4, 5};
+const uint8_t dxBanks125[] = {10, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+const uint8_t dxBanks126[] = {6, 0, 1, 2, 3, 4, 5};
+const uint8_t dxBanks127[] = {4, 0, 1, 2, 3};
+const uint8_t * const dxBanks[128] = {
+    dxBanks0, dxBanks1, NULL, dxBanks3, dxBanks4, dxBanks5, dxBanks6, dxBanks7, NULL, NULL, NULL, NULL, dxBanks12, NULL, dxBanks14,
+    dxBanks15, dxBanks16, dxBanks17, dxBanks18, dxBanks19, NULL, dxBanks21, dxBanks22, NULL, dxBanks24, dxBanks25, dxBanks26, dxBanks27,
+    NULL, dxBanks29, dxBanks30, dxBanks31, dxBanks32, dxBanks33, NULL, NULL, NULL, NULL, dxBanks38, dxBanks39, dxBanks40, NULL, NULL, NULL,
+    NULL, dxBanks45, NULL, dxBanks47, dxBanks48, dxBanks49, dxBanks50, dxBanks51, dxBanks52, dxBanks53, NULL, dxBanks55, dxBanks56, NULL,
+    dxBanks58, dxBanks59, NULL, dxBanks61, dxBanks62, dxBanks63, NULL, dxBanks65, dxBanks66, NULL, NULL, NULL, NULL, dxBanks71, NULL,
+    dxBanks73, dxBanks74, NULL, NULL, NULL, NULL, NULL, dxBanks80, dxBanks81, NULL, NULL, NULL, NULL, NULL, NULL, dxBanks88, dxBanks89,
+    dxBanks90, dxBanks91, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, dxBanks102, NULL, NULL, NULL, NULL, dxBanks107,
+    NULL, NULL, NULL, NULL, NULL, NULL, dxBanks114, dxBanks115, dxBanks116, dxBanks117, dxBanks118, NULL, dxBanks120, dxBanks121, dxBanks122,
+    dxBanks123, dxBanks124, dxBanks125, dxBanks126, dxBanks127
+};
+
+// A list of drumsets supproted by Pro.DX
+const uint8_t dxDrumSets[] = {15, 0, 1, 2, 3, 4, 5, 6, 8, 11, 16, 17, 24, 25, 40, 48};
+
 #endif

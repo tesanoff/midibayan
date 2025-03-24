@@ -318,5 +318,88 @@ const char atInstrumentNames[] =
 //
 #define atNumberOfInstruments   262
 //
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// *** section for ATEMP Synthesizer
+
+// Mapping of banks. Sounds are distributed among banks pretty chaotically, without any visible pattern.
+// We want to be able to skip banks which do not contain sounds. So, this is a mapping where we have a list of non-empty banks for each program (PC 0..127)
+// If only "General MIDI" sound is available for a program, then a respective pointer is NULL. Otherwise, it points to a vector of bank IDs.
+const uint8_t atBanks4[]  = {7, 0, 8, 9, 16, 24, 25, 126};
+const uint8_t atBanks5[]  = {6, 0, 8, 9, 16, 24, 126};
+const uint8_t atBanks6[]  = {2, 0, 8};
+const uint8_t atBanks12[] = {2, 0, 16};
+const uint8_t atBanks14[] = {3, 0, 8, 9};
+const uint8_t atBanks15[] = {2, 0, 1};
+const uint8_t atBanks16[] = {8, 0, 1, 8, 9, 16, 33, 40, 126};
+const uint8_t atBanks17[] = {5, 0, 1, 8, 9, 126};
+const uint8_t atBanks18[] = {4, 0, 8, 16, 24};
+const uint8_t atBanks19[] = {2, 0, 8};
+const uint8_t atBanks21[] = {2, 0, 8};
+const uint8_t atBanks24[] = {4, 0, 8, 16, 24};
+const uint8_t atBanks25[] = {7, 0, 7, 8, 9, 16, 32, 126};
+const uint8_t atBanks26[] = {2, 0, 8};
+const uint8_t atBanks27[] = {4, 0, 8, 9, 126};
+const uint8_t atBanks28[] = {2, 0, 8};
+const uint8_t atBanks29[] = {2, 0, 126};
+const uint8_t atBanks30[] = {2, 0, 8};
+const uint8_t atBanks31[] = {3, 0, 8, 16};
+const uint8_t atBanks36[] = {2, 0, 126};
+const uint8_t atBanks38[] = {6, 0, 8, 9, 10, 16, 126};
+const uint8_t atBanks39[] = {10, 0, 1, 2, 3, 8, 16, 17, 18, 19, 126};
+const uint8_t atBanks48[] = {2, 0, 8};
+const uint8_t atBanks49[] = {2, 0, 10};
+const uint8_t atBanks50[] = {2, 0, 8};
+const uint8_t atBanks55[] = {3, 0, 8, 9};
+const uint8_t atBanks56[] = {5, 0, 1, 8, 24, 126};
+const uint8_t atBanks59[] = {3, 0, 1, 126};
+const uint8_t atBanks61[] = {3, 0, 8, 16};
+const uint8_t atBanks62[] = {2, 0, 8};
+const uint8_t atBanks63[] = {2, 0, 8};
+const uint8_t atBanks64[] = {2, 0, 126};
+const uint8_t atBanks65[] = {3, 0, 8, 126};
+const uint8_t atBanks66[] = {2, 0, 8};
+const uint8_t atBanks67[] = {2, 0, 126};
+const uint8_t atBanks69[] = {2, 0, 126};
+const uint8_t atBanks70[] = {2, 0, 126};
+const uint8_t atBanks71[] = {2, 0, 8};
+const uint8_t atBanks80[] = {3, 0, 1, 8};
+const uint8_t atBanks81[] = {2, 0, 1};
+const uint8_t atBanks89[] = {2, 0, 3};
+const uint8_t atBanks102[] = {2, 0, 2};
+const uint8_t atBanks107[] = {2, 0, 8};
+const uint8_t atBanks115[] = {2, 0, 8};
+const uint8_t atBanks116[] = {2, 0, 8};
+const uint8_t atBanks117[] = {2, 0, 8};
+const uint8_t atBanks118[] = {3, 0, 8, 9};
+const uint8_t atBanks120[] = {5, 0, 1, 2, 5, 6};
+const uint8_t atBanks121[] = {2, 0, 1};
+const uint8_t atBanks122[] = {6, 0, 1, 2, 3, 4, 5};
+const uint8_t atBanks123[] = {4, 0, 1, 2, 3};
+const uint8_t atBanks124[] = {6, 0, 1, 2, 3, 4, 5};
+const uint8_t atBanks125[] = {10, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+const uint8_t atBanks126[] = {6, 0, 1, 2, 3, 4, 5};
+const uint8_t atBanks127[] = {4, 0, 1, 2, 3};
+const uint8_t * const  atBanks[128] = {
+//  0     1     2     3     4         5         6         7     8     9     10    11    12         13    14         15
+    NULL, NULL, NULL, NULL, atBanks4, atBanks5, atBanks6, NULL, NULL, NULL, NULL, NULL, atBanks12, NULL, atBanks14, atBanks15,
+//  16         17         18         19         20    21         22    23    24         25         26         27         28         29         30         31
+    atBanks16, atBanks17, atBanks18, atBanks19, NULL, atBanks21, NULL, NULL, atBanks24, atBanks25, atBanks26, atBanks27, atBanks28, atBanks29, atBanks30, atBanks31,
+//  32    33    34    35    36         37    38         39         40    41    42    43    44    45    46    47
+    NULL, NULL, NULL, NULL, atBanks36, NULL, atBanks38, atBanks39, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+//  48         49         50         51    52    53    54    55         56         57    58    59         60    61         62         63
+    atBanks48, atBanks49, atBanks50, NULL, NULL, NULL, NULL, atBanks55, atBanks56, NULL, NULL, atBanks59, NULL, atBanks61, atBanks62, atBanks63,
+//  64         65         66         67         68    69         70         71         72    73    74    75    76    77    78    79
+    atBanks64, atBanks65, atBanks66, atBanks67, NULL, atBanks69, atBanks70, atBanks71, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+//  80         81         82    83    84    85    86    87    88    89         90    91    92    93    94    95
+    atBanks80, atBanks81, NULL, NULL, NULL, NULL, NULL, NULL, NULL, atBanks89, NULL, NULL, NULL, NULL, NULL, NULL,
+//  96    97    98    99    100   101   102         103   104   105   106   107         108   109   110   111
+    NULL, NULL, NULL, NULL, NULL, NULL, atBanks102, NULL, NULL, NULL, NULL, atBanks107, NULL, NULL, NULL, NULL,
+//  112   113   114   115         116         117         118         119   120         121         122         123         124         125         126         127
+    NULL, NULL, NULL, atBanks115, atBanks116, atBanks117, atBanks118, NULL, atBanks120, atBanks121, atBanks122, atBanks123, atBanks124, atBanks125, atBanks126, atBanks127
+};
+
+// A list of drumsets supproted by ATEMP
+const uint8_t atDrumSets[] = {10, 0, 8, 16, 24, 25, 32, 40, 48, 56, 127};
+
 
 #endif
