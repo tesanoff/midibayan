@@ -31,9 +31,7 @@ struct TesCtlButtonStateMachineData {
                                             //        when a held button is released.
     };
     uint8_t         ctlButtonId;        // the ID of a control button being handled by this state machine
-    timer_t         holdTimer;          // this time is shared between the debouncer and hold functions
-    timer_t         stepTimer;
-    timer_t         clickTimer;         // waiting for the next click
+    timer_t         buttonTimer;        // this time is used for everything: the debouncer, "hold", "step" and "click" functions
 
     TesCtlButtonStateMachineData(void){
         clear();

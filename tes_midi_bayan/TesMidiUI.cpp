@@ -26,8 +26,6 @@ TesMidiUI::TesMidiUI(OledDisplay * oled, TesMIDIController * mc, TesLedSet * led
     _oled = oled;
     _mc = mc;
     _led_set = led;
-
-    memset(&_editor_status, 0, sizeof(_editor_status));
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -190,7 +188,7 @@ void TesMidiUI::processCtlButtonEvent(tesEvent *event){
                     break;
                 }
             }
-            else if (event->buttonEvent == tesBeHoldReleased){
+            else if (event->buttonEvent == tesBeHold){
                 switch(event->buttonId){
                 case ctlButtonMenu:
                     // long press starts system parameters editor

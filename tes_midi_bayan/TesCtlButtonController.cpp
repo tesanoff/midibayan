@@ -71,7 +71,7 @@ void    TesCtlButtonController::tick(void){
         // check if the SM is working
         if(sm->is_busy){
             if (sm->is_starting){
-                if(millis_snapshot - sm->holdTimer > DEBOUNCE_TIMEOUT){
+                if(millis_snapshot - sm->buttonTimer > DEBOUNCE_TIMEOUT){
                     // *** consider the button pressed
                     // send respective events ('pressed', etc.)
                     PRINT_2("Sending 'pressed' event for button #", sm->ctlButtonId);
@@ -83,12 +83,12 @@ void    TesCtlButtonController::tick(void){
                     PRINT_2("Switching to the 'is_pressing' state for button #", sm->ctlButtonId);
                     sm->is_pressing     = true;
                     PRINT_2("Starting the 'hold' timer for button #", sm->ctlButtonId);
-                    sm->holdTimer       = millis_snapshot;  // now - for the 'hold' function
+                    sm->buttonTimer     = millis_snapshot;  // now - for the 'hold' function
                     sm->numberOfClicks++;       // we count clicks when we're sure the button was pressed
                 }
             }
             else if(sm->is_waiting){
-                if(millis_snapshot - sm->clickTimer > CLICK_TIMEOUT){
+                if(millis_snapshot - sm->buttonTimer > CLICK_TIMEOUT){
                     PRINT_2("Click timeout for button #", sm->ctlButtonId);
                     PRINT_2("\tN of clicks = ", sm->numberOfClicks)
                     // send respective events
@@ -101,23 +101,23 @@ void    TesCtlButtonController::tick(void){
             }
             else if(sm->is_pressing){
                 if(sm->is_holding){
-                    if((sm->stepEnabled) && (millis_snapshot - sm->stepTimer > STEP_TIMEOUT)){
+                    if((sm->stepEnabled) && (millis_snapshot - sm->buttonTimer > STEP_TIMEOUT)){
                         sm->is_stepping     = true;
                         // send respective events
                         PRINT_1("sending 'step' event");
                         sendEvent(tesBeStep, sm);
-                        sm->stepTimer   = millis_snapshot;
+                        sm->buttonTimer = millis_snapshot;
                     }
                 }
                 else {
-                    if(millis_snapshot - sm->holdTimer > HOLD_TIMEOUT){
+                    if(millis_snapshot - sm->buttonTimer > HOLD_TIMEOUT){
                         PRINT_2("Hold timeout for button #", sm->ctlButtonId);
                         // send respective events
                         PRINT_1("sending 'hold' event");
                         sendEvent(tesBeHold, sm);
                         PRINT_2("\tN of clicks = ", sm->numberOfClicks)
                         sm->is_holding  = true;
-                        sm->stepTimer   = millis_snapshot;
+                        sm->buttonTimer = millis_snapshot;
                     }
                 }
             }
@@ -137,7 +137,7 @@ void    TesCtlButtonController::processCtlButton(uint8_t button_id, bool pressed
         sm->is_starting = true;
         // we do not set 'is_pressing' - it's set after the debounce timer
         PRINT_1("starting 'debounce/hold' timer");
-        sm->holdTimer   = millis_snapshot;
+        sm->buttonTimer = millis_snapshot;
     }
     else{
         // *** released
@@ -183,7 +183,7 @@ void    TesCtlButtonController::processCtlButton(uint8_t button_id, bool pressed
             else {
                 sm->is_waiting      = true;
                 PRINT_1("starting 'click' timer");
-                sm->clickTimer      = millis_snapshot;
+                sm->buttonTimer     = millis_snapshot;
             }
         }
     }

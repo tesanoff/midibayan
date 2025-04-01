@@ -31,23 +31,21 @@ struct  TesEditorStatus{
         uint8_t msSelector: 3;          // specifies the current row
     };
     uint8_t msTopIndex;                 // the index of a file shown in the top position
+
+    TesEditorStatus(void){
+        // all is set to 0 (by default)
+        memset(this, 0, sizeof(TesEditorStatus));
+    }
 };
 
+// This is a separate type, just in case if we need to store anything else apart from the Editor Status
 struct  TesFKeyProfile{
     TesEditorStatus     editorStatus;
 
     TesFKeyProfile(void){
-        // default settings
-        editorStatus.selectorX          = 0;
-        editorStatus.selectorY          = 0;
-        editorStatus.topIndex           = 0;
+        // default settings for activated F-keys
         editorStatus.editMode           = true;
         editorStatus.screenMode         = 1;
-        editorStatus.sysParSelector     = 0;
-        editorStatus.drumsParSelector   = 0;
-        editorStatus.instrumentSelector     = 1;
-        editorStatus.msSelector         = 0;
-        editorStatus.msTopIndex         = 0;
     }
 };
 
@@ -176,23 +174,23 @@ private:
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //  Draws the MIDI parameters editor screen
     void drawMidiParamEditorScreen(void);
-    
+
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //  Draws the System parameters editor screen
     void drawSystemParamEditorScreen(void);
-    
+
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //  Draws the Drums parameters editor screen
     void drawDrumsParamEditorScreen(void);
-    
+
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //  Draws the Synth-specific Instrument editor screen
     void drawInstrumentEditorScreen(void);
-    
+
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //  Draws the melody selector screen
     void drawMelodySelectorScreen(void);
-    
+
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //  control button event handler for Midi Param Editor mode
     void processCtlButtonEventMidiParamEditor(tesEvent *event);
