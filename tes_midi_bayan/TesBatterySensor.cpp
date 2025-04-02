@@ -61,8 +61,7 @@ void TesBatterySensor::tick(void){
 uint8_t TesBatterySensor::getBatteryValue(void){
     int tmpValue;
 
-    // Считать сырое (необработанное) значение датчика давления и вычесть из него среднее значение
-    // Значение должно быть положительным.
+    // Считать сырое (необработанное) значение датчика
     tmpValue = analogRead(batterySensorPin);
 
     // отфильтровать его
