@@ -44,6 +44,7 @@ struct  TesFKeyProfile{
 
     TesFKeyProfile(void){
         // default settings for activated F-keys
+        editorStatus.selectorY          = 3;        // Volume
         editorStatus.editMode           = true;
         editorStatus.screenMode         = 1;
     }

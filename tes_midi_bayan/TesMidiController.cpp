@@ -76,6 +76,7 @@ TesMIDIControllerSettings::TesMIDIControllerSettings (void){
     global.activePreset = 0;
     global.drumsMidiChannel = 9;    // I let this hardcode be here, because it's very unlikely that anybody will want to change this default value
     global.drumsAdditionalChannel = 8;  // channel for a melody that can be played together with drums
+    global.inactivityPeriod = TES_DEFAULT_INACTIVITY_PERIOD;
 
     // set default values for preset values
     preset.pressureSensorOn = false;

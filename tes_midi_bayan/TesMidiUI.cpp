@@ -11,8 +11,6 @@
 // period for updating the display (it takes too much time to update it in each work cycle)
 #define TES_DISPLAY_UPDATE_PERIOD   (1000 / 3)
 
-#define INACTIVITY_PERIOD       10000    // 10 seconds
-
 #define screenModeMain              0
 #define screenModeMidiParamEdit     1
 #define screenModeSysParamEdit      2
@@ -58,7 +56,8 @@ void TesMidiUI::tick(void){
 
     // check user activity
     if (_editor_status.screenMode != screenModeMain){
-        if (millis_snapshot - _inactivity_timer > INACTIVITY_PERIOD){
+        if ((_mc->_settings.global.inactivityPeriod != 0)
+                && (millis_snapshot - _inactivity_timer > (_mc->_settings.global.inactivityPeriod * 1000))){
             // switch the screen back to Main Screen
             _editor_status.screenMode = screenModeMain;
             // *** ATTENTION! each time we change screens - we turn off the edit mode
@@ -647,7 +646,7 @@ const char * const  parBooleanLabel[] = {
 #define parBooleanN             2       // the number of options
 
 // list of parameter IDs
-enum {parPresetPageId = 0, parRunningStatusId, parBassOctavesId, parSynthTypeId, parMasterVolumeId, parDrumsChannelId, parDrumsAdditionalChannelId};
+enum {parPresetPageId = 0, parRunningStatusId, parBassOctavesId, parSynthTypeId, parMasterVolumeId, parDrumsChannelId, parDrumsAdditionalChannelId, parInactivityPeriodId};
 
 /////////////////////////////////////////////////////////////////
 // specific data for the Master Volume parameter
@@ -683,6 +682,11 @@ const char parDrumsAdditionalChannelName[]    = "Канал мелодии";
 #define parDrumsAdditionalChannelMaxValue 15
 
 /////////////////////////////////////////////////////////////////
+// specific data for the Inactivity Period parameter
+const char parInactivityPeriodName[]    = "Автовыход (сек)";
+#define parInactivityPeriodMaxValue 60
+
+/////////////////////////////////////////////////////////////////
 // common data
 
 #define paramEditorFirstRow     1       // we start from this row
@@ -690,10 +694,10 @@ const char parDrumsAdditionalChannelName[]    = "Канал мелодии";
 #define paramEditorNameColumn   0       // where we start printing names
 #define paramEditorValueColumn  17      // where we start printing values
 
-#define parNumberOfParameters   7
+#define parNumberOfParameters   8
 const char * const  parParameterNames[parNumberOfParameters] = {
     parPresetPageName, parRunningStatusName, parBassOctavesName, parSynthTypeName, parMasterVolumeName, parDrumsChannelName,
-    parDrumsAdditionalChannelName
+    parDrumsAdditionalChannelName, parInactivityPeriodName
 };
 
 const char sys_param_screen_footer[] = "Настройки системы";
@@ -1222,6 +1226,9 @@ void TesMidiUI::drawSystemParamEditorScreen(void){
             case parDrumsAdditionalChannelId:
                 printFormatted(numFormat3R, _mc->_settings.global.drumsAdditionalChannel + 1);
                 break;
+            case parInactivityPeriodId:
+                printFormatted(numFormat3R, _mc->_settings.global.inactivityPeriod);
+                break;
             default:
                 SWER(swerGUI02);
         }
@@ -1529,7 +1536,7 @@ void TesMidiUI::processCtlButtonEventMidiParamEditor(tesEvent *event){
                             }
                             if (newValueIsOk){
                                 // check another Channels
-                                newValueIsOk = (new_channel != _mc->_settings.global.drumsMidiChannel) 
+                                newValueIsOk = (new_channel != _mc->_settings.global.drumsMidiChannel)
                                     && (new_channel != _mc->_settings.global.drumsAdditionalChannel);
                             }
                         }
@@ -1788,6 +1795,22 @@ void TesMidiUI::processCtlButtonEventSystemParamEditor(tesEvent *event){
                 // notify the controller about global settings change
                 _mc->globalSettingsChangeNotification();
                 break;
+            case parInactivityPeriodId:
+                if (event->buttonId == ctlButtonLeft){
+                    if (_mc->_settings.global.inactivityPeriod-- == 0){
+                        _mc->_settings.global.inactivityPeriod = parInactivityPeriodMaxValue;
+                    }
+                }
+                else {      // ctlButtonRight
+                    if (_mc->_settings.global.inactivityPeriod++ == parInactivityPeriodMaxValue){
+                        _mc->_settings.global.inactivityPeriod = 0;
+                    }
+                }
+                // notify the controller about global settings change
+                _mc->globalSettingsChangeNotification();
+                break;
+            default:
+                SWER(swerGUI14);
             }
             drawActiveScreen();
             break;
