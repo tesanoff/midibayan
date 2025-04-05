@@ -26,7 +26,7 @@
 #endif
 
 // key constants
-#define DEBOUNCE_TIMEOUT    35
+#define DEBOUNCE_TIMEOUT    20
 #define CLICK_TIMEOUT       250
 #define HOLD_TIMEOUT        (1000 * 3/4)
 #define STEP_TIMEOUT        (1000 * 1/10)
