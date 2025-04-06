@@ -76,12 +76,14 @@ struct  TesFKeyStateMachine{
     struct {
         uint8_t state: 2;
         uint8_t writeFKey: 2;           // the F-key being processed (F1 .. F4)
+        uint8_t writeFKeyPage: 2;       // the page to be used
     };
     timer_t     writeTimer;             // starts when the user holds the preset button
 
     TesFKeyStateMachine(void){
-        state       = psNormal;
-        writeFKey   = 0;
+        state           = psNormal;
+        writeFKey       = 0;
+        writeFKeyPage   = 0;
     }
 };
 
