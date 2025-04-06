@@ -89,7 +89,7 @@ void TesMidiUI::tick(void){
             // return back to the normal mode
             _fkey_sm.state = psNormal;
             // save the F-key settings
-            _mc->_settings.global.fkeyProfile[_fkey_sm.writeFKey].editorStatus = _editor_status;
+            _mc->_settings.global.fkeyProfile[_fkey_sm.writeFKey][_fkey_sm.writeFKeyPage].editorStatus = _editor_status;
             // notify the controller about global settings change
             _mc->globalSettingsChangeNotification();
 
@@ -308,42 +308,67 @@ void TesMidiUI::processCtlButtonEvent(tesEvent *event){
                 event->eventType = tesEmpty;
             }
             break;
+        }
+    }
+    else if (event->buttonEvent == tesBeHoldReleased) {
+        switch (event->buttonId) {
             case ctlButtonF1:
             case ctlButtonF2:
             case ctlButtonF3:
             case ctlButtonF4: {
-                // check if F-keys can work in the current _editor_status.screenMode
-                if ((_editor_status.screenMode != screenModeDrumsEdit)
-                        && (_editor_status.screenMode != screenModeMelodyEdit)){
-                    uint8_t fkey_id = event->buttonId - ctlButtonF1;
-                    switch ( _fkey_sm.state ){
-                        case psNormal: {
-                            // check if the F-key can be activated now
-                            if((_mc->_settings.global.fkeyProfile[fkey_id].editorStatus.screenMode == screenModeInstrumentEdit)
-                                    && ((_mc->_settings.global.synthType != stProDX) && (_mc->_settings.global.synthType != stAtemp))){
-                                // we cannot activate this F-key with the current synth type
-                                break;
-                            }
-                            // activate F-key
-                            _editor_status = _mc->_settings.global.fkeyProfile[fkey_id].editorStatus;
-                            drawActiveScreen();
-                        }
-                        break;
-                        case psWriteConfirmation: {
-                            // check if this button is for the F-key being processed
-                            if (fkey_id == _fkey_sm.writeFKey){
-                                // cancel the write confirmation mode, return to the normal mode
-                                _fkey_sm.state = psNormal;
-                                // stop blinking
-                                _led_set->resetLED(ledSystem);
-                            }
-                        }
-                        break;
-                        default:
-                            SWER(swerGUI07);    // incorrect state
+                uint8_t fkey_id = event->buttonId - ctlButtonF1;
+                switch ( _fkey_sm.state ){
+                    case psNormal: {
+                        // nothing to do (psNormal was set in tick())
                     }
-                    // clear the event to indicate it has been fully processed
-                    event->eventType = tesEmpty;
+                    break;
+                    case psWriteConfirmation: {
+                        // check if this button is for the F-key being processed
+                        if (fkey_id == _fkey_sm.writeFKey){
+                            // cancel the write confirmation mode, return to the normal mode
+                            _fkey_sm.state = psNormal;
+                            // stop blinking
+                            _led_set->resetLED(ledSystem);
+                        }
+                    }
+                    break;
+                    default:
+                        SWER(swerGUI07);    // incorrect state
+                }
+            }
+            break;
+        }
+    }
+    else if (event->buttonEvent == tesBeClick) {
+        // "click" can be received only before "hold". So, a "click" is always a normal click.
+        switch (event->buttonId) {
+            case ctlButtonF1:
+            case ctlButtonF2:
+            case ctlButtonF3:
+            case ctlButtonF4: {
+                uint8_t fkey_id = event->buttonId - ctlButtonF1;
+                uint8_t fkey_page = event->clicks - 1;
+                // check if the page is not out of range
+                if (fkey_page < NUMBER_OF_F_PAGES){
+                    // check if F-keys can work in the current _editor_status.screenMode
+                    if ((_editor_status.screenMode != screenModeDrumsEdit)
+                            && (_editor_status.screenMode != screenModeMelodyEdit)){
+                        // check if the F-key can be activated now
+                        if((_mc->_settings.global.fkeyProfile[fkey_id][fkey_page].editorStatus.screenMode == screenModeInstrumentEdit)
+                                && ((_mc->_settings.global.synthType != stProDX) && (_mc->_settings.global.synthType != stAtemp))){
+                            // we cannot activate this F-key with the current synth type
+                            break;
+                        }
+                        // activate F-key
+                        _editor_status = _mc->_settings.global.fkeyProfile[fkey_id][fkey_page].editorStatus;
+                        drawActiveScreen();
+                        // clear the event to indicate it has been fully processed
+                        event->eventType = tesEmpty;
+                    }
+                }
+                else {
+                    // just flash the LED to indicate an invalid condition
+                    _led_set->flashLED( ledSystem );
                 }
             }
             break;
@@ -382,17 +407,26 @@ void TesMidiUI::processCtlButtonEvent(tesEvent *event){
                         && (_editor_status.screenMode != screenModeMain)
                         && (_editor_status.screenMode != screenModeMelodyEdit)){
                     uint8_t fkey_id = event->buttonId - ctlButtonF1;
-                    // only one F-key may be stored at a time
-                    if (_preset_sm.state == psNormal){
-                        // start the confirmation timer
-                        _fkey_sm.writeTimer = millis();
-                        // change the state to "write confirmation"
-                        _fkey_sm.state = psWriteConfirmation;
-                        // remember the presetID being processed
-                        _fkey_sm.writeFKey = fkey_id;
-                        // start blinking the LED
-                        _led_set->setLED( ledSystem, true );
-                        _led_set->startBlink( ledSystem );
+                    uint8_t fkey_page = event->clicks - 1;
+                    // check if the page is within the range
+                    if (fkey_page < NUMBER_OF_F_PAGES){
+                        // only one F-key may be stored at a time
+                        if (_preset_sm.state == psNormal){
+                            // start the confirmation timer
+                            _fkey_sm.writeTimer = millis();
+                            // change the state to "write confirmation"
+                            _fkey_sm.state = psWriteConfirmation;
+                            // remember the presetID being processed
+                            _fkey_sm.writeFKey = fkey_id;
+                            _fkey_sm.writeFKeyPage = fkey_page;
+                            // start blinking the LED
+                            _led_set->setLED( ledSystem, true );
+                            _led_set->startBlink( ledSystem );
+                        }
+                    }
+                    else {
+                        // just flash the LED to indicate an invalid condition
+                        _led_set->flashLED( ledSystem );
                     }
                     // clear the event to indicate it has been fully processed
                     event->eventType = tesEmpty;
