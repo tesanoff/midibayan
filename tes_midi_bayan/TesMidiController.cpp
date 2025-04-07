@@ -578,16 +578,24 @@ void TesMIDIController::sendKbdParameter(uint8_t kbdId, uint8_t parameterIndex){
         break;
     case idxReverbType:
         if (_settings.global.synthType == stProDX){
-            // send a long SYSEX command in a Raw mode
-            // F0H 41H 00H 42H 12H 40H 01H 30H vv xx F7H
-            cmd.payload[0] = 0xF0; cmd.payload[1] = 0x41; cmd.payload[2] = 0x00;
-            _midi_queue.pushCommand(&cmd);
-            cmd.payload[0] = 0x42; cmd.payload[1] = 0x12; cmd.payload[2] = 0x40;
-            _midi_queue.pushCommand(&cmd);
-            cmd.payload[0] = 0x01; cmd.payload[1] = 0x30; cmd.payload[2] = _settings.preset.kbdParameter[kbdId][parameterIndex];
-            _midi_queue.pushCommand(&cmd);
-            cmd.payload[0] = 0x00; cmd.payload[1] = 0xF7; cmd.payload[2] = 0x00;
-            // the last payload will be sent below
+            // In this case we send this parameter for the right keyboard only.
+            // Changes made for other keyboards are just ignored.
+            if (kbdId == kbdRight){
+                // send a long SYSEX command in a Raw mode
+                // F0H 41H 00H 42H 12H 40H 01H 30H vv xx F7H
+                cmd.payload[0] = 0xF0; cmd.payload[1] = 0x41; cmd.payload[2] = 0x00;
+                _midi_queue.pushCommand(&cmd);
+                cmd.payload[0] = 0x42; cmd.payload[1] = 0x12; cmd.payload[2] = 0x40;
+                _midi_queue.pushCommand(&cmd);
+                cmd.payload[0] = 0x01; cmd.payload[1] = 0x30; cmd.payload[2] = _settings.preset.kbdParameter[kbdId][parameterIndex];
+                _midi_queue.pushCommand(&cmd);
+                cmd.payload[0] = 0x00; cmd.payload[1] = 0xF7; cmd.payload[2] = 0x00;
+                // the last payload will be put into the queue below
+            }
+            else {
+                // nothing to do
+                sendCommand = false;
+            }
         }
         else {
             // send CC 80 <val>
@@ -598,16 +606,24 @@ void TesMIDIController::sendKbdParameter(uint8_t kbdId, uint8_t parameterIndex){
         break;
     case idxChorusType:
         if (_settings.global.synthType == stProDX){
-            // send a long SYSEX command in a Raw mode
-            // F0H 41H 00H 42H 12H 40H 01H 38H vv xx F7H
-            cmd.payload[0] = 0xF0; cmd.payload[1] = 0x41; cmd.payload[2] = 0x00;
-            _midi_queue.pushCommand(&cmd);
-            cmd.payload[0] = 0x42; cmd.payload[1] = 0x12; cmd.payload[2] = 0x40;
-            _midi_queue.pushCommand(&cmd);
-            cmd.payload[0] = 0x01; cmd.payload[1] = 0x38; cmd.payload[2] = _settings.preset.kbdParameter[kbdId][parameterIndex];
-            _midi_queue.pushCommand(&cmd);
-            cmd.payload[0] = 0x00; cmd.payload[1] = 0xF7; cmd.payload[2] = 0x00;
-            // the last payload will be sent below
+            // In this case we send this parameter for the right keyboard only.
+            // Changes made for other keyboards are just ignored.
+            if (kbdId == kbdRight){
+                // send a long SYSEX command in a Raw mode
+                // F0H 41H 00H 42H 12H 40H 01H 38H vv xx F7H
+                cmd.payload[0] = 0xF0; cmd.payload[1] = 0x41; cmd.payload[2] = 0x00;
+                _midi_queue.pushCommand(&cmd);
+                cmd.payload[0] = 0x42; cmd.payload[1] = 0x12; cmd.payload[2] = 0x40;
+                _midi_queue.pushCommand(&cmd);
+                cmd.payload[0] = 0x01; cmd.payload[1] = 0x38; cmd.payload[2] = _settings.preset.kbdParameter[kbdId][parameterIndex];
+                _midi_queue.pushCommand(&cmd);
+                cmd.payload[0] = 0x00; cmd.payload[1] = 0xF7; cmd.payload[2] = 0x00;
+                // the last payload will be put into the queue below
+            }
+            else {
+                // nothing to do
+                sendCommand = false;
+            }
         }
         else {
             // send CC 81 <val>
