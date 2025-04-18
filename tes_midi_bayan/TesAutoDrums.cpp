@@ -41,8 +41,6 @@ void meta_handler_player(const meta_event *p){
 
 #define MAX_FILE_NAME_LENGTH    120
 
-#define defaultVolume   70
-
 #define defaultDrumset  0
 
 #define INIT_PERIOD     25  // ms
@@ -485,8 +483,9 @@ void TesAutoDrums::midiEventPlayer(midi_event *pev){
             }
             else if (cmd.channelId == _mc_settings->global.drumsAdditionalChannel){
                 if(cmd.data1 == 7){     // Volume
-                    // We allow volume change in the Additional channel but we scale this to the Master Volume
-                    cmd.data2 = map(cmd.data2, 0, 127, 0, _mc_settings->preset.masterVolume);
+                    // just return without sending this command
+                    // This command is not allowed in this channel
+                    return;
                 }
             }
             else{

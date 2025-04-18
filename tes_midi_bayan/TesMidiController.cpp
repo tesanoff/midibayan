@@ -825,7 +825,8 @@ void TesMIDIController::setDrumsVolume(void){
     cmd.channelId       = _settings.global.drumsAdditionalChannel;
     cmd.data1           = 7;        // Volume controller
     // just set it to the Master Volume
-    cmd.data2           = _settings.preset.masterVolume;
+    // make a proportional change (according to the fixed volume setting for the channel)
+    cmd.data2           = map(_settings.preset.masterVolume, 0, 127, 0, _settings.preset.drumsVolume);
     _midi_queue.pushCommand(&cmd);
 }
 

@@ -73,7 +73,7 @@ struct TesMIDICommand {
 
 //////////////////////////////////////////
 // MIDI-out queue
-#define TES_MIDI_QUEUE_SIZE     50
+#define TES_MIDI_QUEUE_SIZE     30  // the maximum actually measured size was 16
 class TesMIDIOutQueue {
 private:
     TesMIDICommand  _command[ TES_MIDI_QUEUE_SIZE  ];

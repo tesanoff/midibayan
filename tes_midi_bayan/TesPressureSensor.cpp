@@ -1,6 +1,6 @@
 #include "TesPressureSensor.h"
 
-#define PRESSURE_EVENT_PERIOD   25      // 40 events per second
+#define PRESSURE_EVENT_PERIOD   14      // 70 events per second
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // constructor
