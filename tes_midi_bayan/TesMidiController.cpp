@@ -54,13 +54,15 @@ const uint8_t   kbdParameterDefaultValue[NUMBER_OF_KBD_PARAMETERS] = {
     40,      // Reverbration
     0,      // Chorus
     4,      // Reverb Type
-    2       // Chorus Type
+    2,      // Chorus Type
+    0       // Octave Transpose
 };
 
 // sequence of sending Kbd Parameters
 // It looks like the order matters (PC cannot be sent right after "CC 0", i.e. bank change)
 const uint8_t   kbdParameterOrder[NUMBER_OF_KBD_PARAMETERS] = {
-    idxChannel, idxBank, idxVolume, idxVibrato, idxResonance, idxAttak, idxRelease, idxProgram, idxTimbre, idxDecay, idxReverbration, idxChorus, idxReverbType, idxChorusType
+    idxChannel, idxBank, idxVolume, idxVibrato, idxResonance, idxAttak, idxRelease, idxProgram, idxTimbre, idxDecay, idxReverbration, idxChorus, idxReverbType, idxChorusType,
+    idxOctTranspose
 };
 
 
@@ -263,6 +265,25 @@ TesMIDIController::TesMIDIController(TesLedSet *led_panel, OledDisplay  *oled)
 void TesMIDIController::processButtonEvent(tesEvent *event){
     bool    first_bass_pressed  = false;    // true when we detect the first lower bass note played
     bool    last_bass_released  = false;    // true when we detect the last lower bass note released
+    uint8_t kbdId = getKbdId(event->buttonId);
+    bool    previous_preset_was_activated = false;
+
+    // check if we have a released button that was pressed with the previoous preset
+    if((event->buttonEvent == tesBeReleased) && (_var.previousButtonsMap.get(event->buttonId))){
+        // *** the button was pressed with the previous preset. The "release" event should also be processed with the previous preset.
+        previous_preset_was_activated   = true;
+        // unregister the pressed button in the "previous" map
+        _var.previousButtonsMap.set(event->buttonId, 0);
+        // temporarily save the current preset
+        _var.savedPreset = _settings.preset;
+        // temporarily restore the previous preset
+        _settings.preset = _var.previousPreset;
+    }
+    else {
+        // *** the event is not related to the previous preset
+        // update the current button map
+        _var.currentButtonsMap.set(event->buttonId, ((event->buttonEvent == tesBePressed)? 1 : 0));
+    }
 
     // check if this is a lower-bass note (0 .. 11)
     if (event->buttonId < 12){
@@ -286,6 +307,10 @@ void TesMIDIController::processButtonEvent(tesEvent *event){
             if( lbstatus ){
                 // *** we don't play the high-bass note in this case
                 // clear the event (it's fully processed now)
+                // restore the current preset if required
+                if(previous_preset_was_activated){
+                    _settings.preset = _var.savedPreset;
+                }
                 event->eventType = tesEmpty;
                 return;
             }
@@ -295,8 +320,9 @@ void TesMIDIController::processButtonEvent(tesEvent *event){
     // Play the note
     TesMIDICommand  cmd;            // compose a MIDI command
     cmd.midiCommand = mcNoteOn;     // we use only this command for playing notes
-    cmd.channelId = _settings.preset.kbdParameter[getKbdId(event->buttonId)][idxChannel];
-    cmd.data1       = noteMap[event->buttonId]; // take a MIDI note from the mapping table
+    cmd.channelId = _settings.preset.kbdParameter[kbdId][idxChannel];
+    cmd.data1       = transposeNote(kbdId, noteMap[event->buttonId]); // take a MIDI note from the mapping table
+                                                                      // and transpose it, if required
     cmd.data2       = (event->buttonEvent == tesBePressed)  // assume that events can be
                       ? TES_DEFAULT_VELOCITY : 0;           // either "Pressed" or "Released"
     _midi_queue.pushCommand(&cmd);
@@ -357,6 +383,10 @@ void TesMIDIController::processButtonEvent(tesEvent *event){
         }
     }
 
+    // restore the current preset if required
+    if(previous_preset_was_activated){
+        _settings.preset = _var.savedPreset;
+    }
     // Clear the event. This means that the current event was fully processed and other event handlers
     // should ignore it.
     event->eventType = tesEmpty;
@@ -461,6 +491,7 @@ void TesMIDIController::processChangedKbdParameter(uint8_t kbdId, uint8_t    cha
     case idxChorus:
     case idxReverbType:
     case idxChorusType:
+    case idxOctTranspose:
         sendKbdParameter(kbdId, changedParameter);
         break;
     default:
@@ -631,6 +662,10 @@ void TesMIDIController::sendKbdParameter(uint8_t kbdId, uint8_t parameterIndex){
             cmd.data1 = 81;  // controller number
             cmd.data2 = _settings.preset.kbdParameter[kbdId][parameterIndex];
         }
+        break;
+    case idxOctTranspose:
+        // nothing to do
+        sendCommand = false;
         break;
     default:
         SWER(swerMidiController04);
@@ -943,6 +978,13 @@ void TesMIDIController::writePresetToEEPROM(uint8_t preset_id){
 //////////////////////////////////////////////////////////////////////////
 // Activates the specified preset
 void TesMIDIController::activatePreset(uint8_t preset_id){
+    // the "current" preset becomes the "previous" preset
+    _var.previousPreset = _settings.preset;
+    // Save the current map of pressed music buttons
+    // (Side effect: if there were pressed buttons in the "previous" map - this information will be lost)
+    _var.previousButtonsMap = _var.currentButtonsMap;
+    _var.currentButtonsMap.clear();     // nothing was pressed with the new preset yet
+
     // read the preset settings from EEPROM
     readPresetFromEEPROM(preset_id);
 
@@ -1007,4 +1049,16 @@ void TesMIDIController::globalSettingsChangeNotification(void){
     // start the timer for saving the global settings to EEPROM
     _var.globalSettingsSavingTimer = millis();
 }
+
+//////////////////////////////////////////////////////////////////////////
+// Returns a properly transposed note
+uint8_t TesMIDIController::transposeNote(uint8_t kbd_id, uint8_t note){
+
+    return (((int)note + ((int)_settings.preset.kbdParameter[kbd_id][idxOctTranspose] * 12)) < (int)C0)
+        ? (((int)note + (((int)_settings.preset.kbdParameter[kbd_id][idxOctTranspose] + 1) * 12) < (int)C0) ? note
+                : (((int)_settings.preset.kbdParameter[kbd_id][idxOctTranspose] + 1) * 12)) 
+        : (note + ((int)_settings.preset.kbdParameter[kbd_id][idxOctTranspose] * 12));
+}
+
+
 

@@ -18,6 +18,13 @@
 #define screenModeInstrumentEdit    4
 #define screenModeMelodyEdit        5
 
+////////////////////////////////////////////////////////////////////////////////////////////
+/// aux functions
+static bool isSigned(uint8_t parameter_id){
+    // it's a very simple logic for now
+    return (parameter_id == idxOctTranspose) ? true : false;
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // constructor
 TesMidiUI::TesMidiUI(OledDisplay * oled, TesMIDIController * mc, TesLedSet * led){
@@ -582,7 +589,7 @@ void TesMidiUI::setDrumMachineState(uint8_t new_state){
 const char numFormat3R[] = "%3d";       // 3 digits, right alignment
 const char auxFormat1[]  = " (%3d)";    // 3 digits, right alignment
 
-const char main_screen_footer[] = "MIDI баян v2.00b";
+const char main_screen_footer[] = "MIDI баян v2.01b";
 
 // for the header
 #define headerStartPosition 6
@@ -595,7 +602,7 @@ const char * const  headerSection[] = {
     "Выб"
 };
 
-#define theNumberOfMidiParameters   14
+#define theNumberOfMidiParameters   NUMBER_OF_KBD_PARAMETERS
 // labels for Kbd Parameters
 const char * const  parLabel[theNumberOfMidiParameters] = {
     "Канал",
@@ -611,7 +618,8 @@ const char * const  parLabel[theNumberOfMidiParameters] = {
     "Ревер.",
     "Хорус",
     "Р. тип",
-    "Х. тип"
+    "Х. тип",
+    "Окт +-"
 };
 // Hints for Kbd Parameters
 const char * const  parHint[theNumberOfMidiParameters] = {
@@ -628,11 +636,16 @@ const char * const  parHint[theNumberOfMidiParameters] = {
     "Ревербрация",
     "Хорус",
     "Тип ревербрации",
-    "Тип хоруса"
+    "Тип хоруса",
+    "Выше/ниже на октаву"
 };
 // Maximum possible values for Kbd Parameters
 const uint8_t parMaxValue[theNumberOfMidiParameters] = {
-    15, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 7, 7
+    15, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 7, 7, 2
+};
+// Minimum possible values for Kbd Parameters
+const int8_t parMinValue[theNumberOfMidiParameters] = {
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -2
 };
 
 // definitions for printing the preset page ID on the main screen
@@ -1082,7 +1095,7 @@ void TesMidiUI::drawMainScreen(void){
         // print parameters here
         for(int kbd=0; kbd<4; kbd++){
             setTextCursor(6 + kbd*4, idx+1);
-            printFormatted(numFormat3R, _mc->_settings.preset.kbdParameter[kbd][parameter_id]);
+            printFormatted(numFormat3R, _mc->_settings.preset.kbdParameter[kbd][parameter_id], isSigned(parameter_id));
         }
     }
     // print the Id of the current preset page
@@ -1140,10 +1153,15 @@ void TesMidiUI::setTextCursor(uint8_t X, uint8_t Y){
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 //  prints a number according to the specified format string
-void TesMidiUI::printFormatted(PGM_P format, uint16_t value){
+void TesMidiUI::printFormatted(const char * format, uint16_t value, bool sgnd){
     char buf[maxFormattedStringLength];     // for a properly aligned number
-    char fmt[maxFormatDescriptorLength];    // for a format descriptor string
-    sprintf(buf, strcpy_P(fmt, format), value);
+
+    if (sgnd){
+        sprintf(buf, format, (int8_t)value);
+    }
+    else{
+        sprintf(buf, format, value);
+    }
     _oled->print(buf);
 }
 
@@ -1201,7 +1219,7 @@ void TesMidiUI::drawMidiParamEditorScreen(void){
                 printFormatted(numFormat3R, _mc->_settings.preset.kbdParameter[kbd][currentParameterIndex] + 1);
             }
             else{
-                printFormatted(numFormat3R, _mc->_settings.preset.kbdParameter[kbd][currentParameterIndex]);
+                printFormatted(numFormat3R, _mc->_settings.preset.kbdParameter[kbd][currentParameterIndex], isSigned(currentParameterIndex));
             }
         }
         //reset text inversion (just in case...)
@@ -1541,20 +1559,30 @@ void TesMidiUI::processCtlButtonEventMidiParamEditor(tesEvent *event){
                     do {
                         if(event->buttonId == ctlButtonLeft){
                             newValueIsOk = true;
-                            if (_mc->_settings.preset.kbdParameter[_editor_status.selectorX][parameterIndex] == 0){
+                            if (*(int8_t *)(&_mc->_settings.preset.kbdParameter[_editor_status.selectorX][parameterIndex]) == parMinValue[parameterIndex]){
                                 _mc->_settings.preset.kbdParameter[_editor_status.selectorX][parameterIndex] = parMaxValue[parameterIndex];
                             }
                             else {
-                                _mc->_settings.preset.kbdParameter[_editor_status.selectorX][parameterIndex]--;
+                                if(isSigned(parameterIndex)){
+                                    *(int8_t *)(&_mc->_settings.preset.kbdParameter[_editor_status.selectorX][parameterIndex]) -= 1;
+                                }
+                                else {
+                                    _mc->_settings.preset.kbdParameter[_editor_status.selectorX][parameterIndex]--;
+                                }
                             }
                         }
                         else {      // ctlButtonRight
                             newValueIsOk = true;
-                            if (_mc->_settings.preset.kbdParameter[_editor_status.selectorX][parameterIndex] == parMaxValue[parameterIndex]){
-                                _mc->_settings.preset.kbdParameter[_editor_status.selectorX][parameterIndex] = 0;
+                            if (*(int8_t *)(&_mc->_settings.preset.kbdParameter[_editor_status.selectorX][parameterIndex]) == parMaxValue[parameterIndex]){
+                                *(int8_t *)(&_mc->_settings.preset.kbdParameter[_editor_status.selectorX][parameterIndex]) = parMinValue[parameterIndex];
                             }
                             else {
-                                _mc->_settings.preset.kbdParameter[_editor_status.selectorX][parameterIndex]++;
+                                if(isSigned(parameterIndex)){
+                                    *(int8_t *)(&_mc->_settings.preset.kbdParameter[_editor_status.selectorX][parameterIndex]) += 1;
+                                }
+                                else {
+                                    _mc->_settings.preset.kbdParameter[_editor_status.selectorX][parameterIndex]++;
+                                }
                             }
                         }
                         // check the special case: each keyboard should play into a unique MIDI channel

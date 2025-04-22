@@ -8,6 +8,7 @@
 #include "TesAutoDrums.h"
 #include "swer.h"
 #include "common.h"
+#include "TesKeyboard.h"
 
 //#define TES_MIDI_DEBUG
 
@@ -166,11 +167,12 @@ public:
 #define idxChorus           11
 #define idxReverbType       12
 #define idxChorusType       13
+#define idxOctTranspose     14
 
-#define NUMBER_OF_KBD_PARAMETERS    14
+#define NUMBER_OF_KBD_PARAMETERS    15
 #define NUMBER_OF_PRESETS           6           // 6 presets in 1 page
 #define NUMBER_OF_PRESET_PAGES      4
-#define TES_EEPROM_SIGNATURE 0x5A15             // 0x5Avv, where: 5A - signature, vv - version
+#define TES_EEPROM_SIGNATURE 0x5A17             // 0x5Avv, where: 5A - signature, vv - version
 #define GLOBAL_SETTINGS_SAVING_TIMEOUT  8000    // changes are saved to EEPROM in 8 seconds after the last change
 
 #define SIZE_OF_PRESET_UPDATE_BITMAP    (((NUMBER_OF_KEYBOARDS * NUMBER_OF_KBD_PARAMETERS) -  1) / 8 + 1)
@@ -222,6 +224,32 @@ struct TesMIDIControllerSettings {
 // drums mode IDs
 enum {dmOff = 0, dmManual, dmStandby, dmPlaying};
 
+// bitmap for storing information about pressed music physical buttons
+class TesPressedButtonsMap {
+public:
+    TesPressedButtonsMap(void){
+        clear();
+    }
+    void set(uint8_t id, uint8_t value){
+        // calculating byteIndex and bitIndex for accessing the bitmap
+        uint8_t byteIndex = id / 8;
+        uint8_t bitIndex  = id % 8;
+        map[byteIndex] = (map[byteIndex] & ~((uint8_t)1 << bitIndex)) | (value << bitIndex);
+    }
+    uint8_t get(uint8_t id){
+        // calculating byteIndex and bitIndex for accessing the bitmap
+        uint8_t byteIndex = id / 8;
+        uint8_t bitIndex  = id % 8;
+        // return the value
+        return (map[byteIndex] >> bitIndex) & (uint8_t)1;
+    }
+    void    clear(void){
+        memset(&map, 0, sizeof(map));
+    }
+private:
+    uint8_t     map[ (TES_NUMBER_OF_ALL_MUSIC_BUTTONS-1) / 8 + 1 ];
+};
+
 // Some parameters stored in MIDI controller, but not stored in EEPROM
 struct TesMIDIControllerRunTimeData {
     uint8_t     lastPressureValue;          // the last value received from the Pressure Sensor
@@ -245,6 +273,11 @@ struct TesMIDIControllerRunTimeData {
                                                 // used when preset parameters are sent to the synth to minimize 
                                                 // the number of MIDI commands
     uint8_t         currentBatteryLevel;        // 0..100%
+
+    TesMIDIControllerSettings::TesMIDIControllerPreset previousPreset;     // a copy of a preset that was active before another preset was activated
+    TesMIDIControllerSettings::TesMIDIControllerPreset savedPreset;        // we save the current preset here when we temporarily restore the previous one
+    TesPressedButtonsMap    previousButtonsMap; // keeps information about music buttons pressed when the previous preset was active
+    TesPressedButtonsMap    currentButtonsMap;  // information about music buttons pressed while the current preset is active
 
     TesMIDIControllerRunTimeData(void){
         currentPresetNotSaved = false;
@@ -389,6 +422,10 @@ private:
     //////////////////////////////////////////////////////////////////////////
     // This menthod should be called each time whe global settings are changed
     void globalSettingsChangeNotification(void);
+
+    //////////////////////////////////////////////////////////////////////////
+    // Returns a properly transposed note
+    uint8_t transposeNote(uint8_t kbd_id, uint8_t note);
 };
 
 extern TesMIDIController theMIDIController;
