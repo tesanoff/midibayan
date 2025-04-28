@@ -949,7 +949,8 @@ void TesMIDIController::readPresetFromEEPROM(uint8_t preset_id){
     for(int kbd=0; kbd<NUMBER_OF_KEYBOARDS; kbd++){
         for(int i=0; i<NUMBER_OF_KBD_PARAMETERS; i++){
             // set the bit value
-            uint8_t value = (new_preset.kbdParameter[kbd][i] != _settings.preset.kbdParameter[kbd][i]);
+            uint8_t value = (new_preset.kbdParameter[kbd][i] != _settings.preset.kbdParameter[kbd][i])
+                || ((i == idxProgram) && (new_preset.kbdParameter[kbd][idxBank] != _settings.preset.kbdParameter[kbd][idxBank]));
             bitmap_set(_var.presetUpdateBitmap, kbd * NUMBER_OF_KBD_PARAMETERS + i, value);
         }
     }
