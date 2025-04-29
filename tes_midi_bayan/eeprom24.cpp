@@ -307,8 +307,8 @@ int eeprom24::update(EepromAddress address, void *buffer, int size){
         // If the last byte also differs, then we didn't find the end of a chunk in the loop above.
         // This means, we may need to write the last chunk
         if (write_is_required){
-            // we know the chunk_start, and the last byte of the buffer is the last byte of the chunk
-            write(address + chunk_start, ((uint8_t *)buffer + chunk_start), updateBufferSize -chunk_start);
+            // we know the chunk_start, and the last byte of the current portion is the last byte of the chunk
+            write(address + chunk_start, ((uint8_t *)buffer + chunk_start), size_to_write_now - chunk_start);
         }
 
         // adjust pointers & counters
