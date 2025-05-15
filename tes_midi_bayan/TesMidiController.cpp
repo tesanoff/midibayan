@@ -6,6 +6,9 @@
 #include "swer.h"
 #include "eeprom24.h"
 
+// the MIDI controller
+TesMIDIController   theMIDIController;
+
 //////////////////////////////////////////
 // Mapping between buttons and notes.
 /*
@@ -49,8 +52,9 @@ const uint8_t   kbdParameterDefaultValue[NUMBER_OF_KBD_PARAMETERS] = {
     64,      // Resonance
     64,      // Attak
     64,      // Release
-    64,      // Timbre
+    120,     // Timbre
     64,      // Decay
+    35,     // Portamento Time
     40,      // Reverbration
     0,      // Chorus
     4,      // Reverb Type
@@ -61,8 +65,8 @@ const uint8_t   kbdParameterDefaultValue[NUMBER_OF_KBD_PARAMETERS] = {
 // sequence of sending Kbd Parameters
 // It looks like the order matters (PC cannot be sent right after "CC 0", i.e. bank change)
 const uint8_t   kbdParameterOrder[NUMBER_OF_KBD_PARAMETERS] = {
-    idxChannel, idxBank, idxVolume, idxVibrato, idxResonance, idxAttak, idxRelease, idxProgram, idxTimbre, idxDecay, idxReverbration, idxChorus, idxReverbType, idxChorusType,
-    idxOctTranspose
+    idxChannel, idxBank, idxVolume, idxVibrato, idxResonance, idxAttak, idxRelease, idxProgram, idxTimbre, idxDecay, idxPortamentoTime, idxReverbration, idxChorus,
+    idxReverbType, idxChorusType, idxOctTranspose
 };
 
 
@@ -72,8 +76,8 @@ const uint8_t   kbdParameterOrder[NUMBER_OF_KBD_PARAMETERS] = {
 
 TesMIDIControllerSettings::TesMIDIControllerSettings (void){
     // set default values for global parameters
-    global.runningStatus = false;   // ATEMP synth. doesn't work well with RS
-    global.synthType = stAtemp;
+    global.runningStatus = true;   // ATEMP synth. doesn't work well with RS
+    global.synthType = stProDX;
     global.activePresetPage = 0;
     global.activePreset = 0;
     global.drumsMidiChannel = 9;    // I let this hardcode be here, because it's very unlikely that anybody will want to change this default value
@@ -81,8 +85,13 @@ TesMIDIControllerSettings::TesMIDIControllerSettings (void){
     global.inactivityPeriod = TES_DEFAULT_INACTIVITY_PERIOD;
 
     // set default values for preset values
-    preset.pressureSensorOn = false;
-    preset.bassOctavesOn = true;
+    preset.pressureSensorOn             = false;
+    preset.bassOctavesOn                = true;
+    preset.gyroOn                       = false;
+    preset.gyroMode                     = gyroModeY;
+    preset.gyroXCtrl                    = gyroCtrlVibrato;
+    preset.gyroYCtrl                    = gyroCtrlPitchUp;
+    preset.gyroPitchDepth               = 2;    // 2 semi-tones
     preset.masterVolume = TES_DEFAULT_MASTER_VOLUME;
     preset.drumsVolume                  = 127;  // it's relative to the master volume
     preset.drumsetNumber                = 0;    // the default drumset
@@ -132,6 +141,15 @@ void TesMIDIController::processEvent(tesEvent *event){
         // make the UI re-draw the screen, if required
         _ui.processBatteryEvent(event);
         break;
+    case tesEvGyro:
+        // save the event for possible future use
+        _var.lastGyroEvent  = *event;
+        // for our purpose, we assume that both X and Y are valid changed values
+        // (so that we can use them in the future as if they were jusr received)
+        _var.lastGyroEvent.g.changedX = _var.lastGyroEvent.g.changedY = true;
+        // dispatch the event to the right handler
+        gyroProcess(event);
+        break;
     }
 }
 
@@ -160,7 +178,7 @@ void    TesMIDIController::init(void){
         initializeEEPROM();
     }
     // indicate the active preset
-    _led_set->setLED( _settings.global.activePreset + ledPreset1, 1);   // the assumption is that Led IDs are sorted (like 0, 1, 2, etc.)
+    ledSet.setLED( _settings.global.activePreset + ledPreset1, 1);   // the assumption is that Led IDs are sorted (like 0, 1, 2, etc.)
 
     // initialize the GUI
     _ui.init();
@@ -225,6 +243,21 @@ void    TesMIDIController::tick(void){
                     }
                 } while ( (_var.sendingParameters) && ( ! parameter_is_ok_for_sending) );
             }
+            // check if we finished sending the main block of parameters
+            if (!_var.sendingParameters){
+                // *** it's time to send extra parameters, if required
+                if (_var.needUpdateGyro && (!_var.optimizedUpdate || bitmap_get(_var.presetUpdateBitmap, idxGyroSettings))){
+                    // *** gyro settings require updating
+                    if(_var.previousPreset.gyroOn){
+                        // *** need to turn Gyro OFF for the previous preset
+                        turnGyroOnOff(_var.previousPreset, false, false);   // we always turn off all possible controllers
+                    }
+                    if(_settings.preset.gyroOn){
+                        // *** need to turn Gyro ON for the current preset
+                        turnGyroOnOff(_settings.preset, true);
+                    }
+                }
+            }
             // start the timer for the next parameter
             _var.sendParamTimer   = millis();
         }
@@ -252,12 +285,10 @@ void    TesMIDIController::tick(void){
 
 ///////////////////////////////////////////////////////////////////////////
 // constructor
-TesMIDIController::TesMIDIController(TesLedSet *led_panel, OledDisplay  *oled)
-    :_ui(oled, this, led_panel),
+TesMIDIController::TesMIDIController(void)
+    :_ui(this),
     _auto_drums(&_midi_queue, &_settings)
 {
-    // store parameters
-    _led_set      = led_panel;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -448,7 +479,7 @@ void TesMIDIController::processSystemControlEvent(tesEvent *event){
     switch (event->command){
     case scEepromReset:
         // clear indication of the current active preset
-        _led_set->setLED( _settings.global.activePreset + ledPreset1, 0);   // the assumption is that Led IDs are sorted (like 0, 1, 2, etc.)
+        ledSet.setLED( _settings.global.activePreset + ledPreset1, 0);   // the assumption is that Led IDs are sorted (like 0, 1, 2, etc.)
         {
             // create a brand new copy of settings with default values (yes, that a heavy stack usage)
             TesMIDIControllerSettings   default_settings;
@@ -458,9 +489,11 @@ void TesMIDIController::processSystemControlEvent(tesEvent *event){
         // now - initialize EEPROM again
         initializeEEPROM();
         // indicate the new active preset
-        _led_set->setLED( _settings.global.activePreset + ledPreset1, 1);   // the assumption is that Led IDs are sorted (like 0, 1, 2, etc.)
+        ledSet.setLED( _settings.global.activePreset + ledPreset1, 1);   // the assumption is that Led IDs are sorted (like 0, 1, 2, etc.)
         // redraw the screen
         _ui.processSystemControlEvent(event);
+        // flash the System LED
+        ledSet.flashLED(ledSystem);
         // clear the event
         event->eventType = tesEmpty;
         break;
@@ -487,6 +520,7 @@ void TesMIDIController::processChangedKbdParameter(uint8_t kbdId, uint8_t    cha
     case idxRelease:
     case idxTimbre:
     case idxDecay:
+    case idxPortamentoTime:
     case idxReverbration:
     case idxChorus:
     case idxReverbType:
@@ -593,6 +627,12 @@ void TesMIDIController::sendKbdParameter(uint8_t kbdId, uint8_t parameterIndex){
         // send CC 75 <val>
         cmd.midiCommand = mcControlChange;
         cmd.data1 = 75;  // controller number
+        cmd.data2 = _settings.preset.kbdParameter[kbdId][parameterIndex];
+        break;
+    case idxPortamentoTime:
+        // send CC 5 <val>
+        cmd.midiCommand = mcControlChange;
+        cmd.data1 = 5;  // controller number
         cmd.data2 = _settings.preset.kbdParameter[kbdId][parameterIndex];
         break;
     case idxReverbration:
@@ -753,7 +793,7 @@ void TesMIDIController::sendMIDICommand(TesMIDICommand *cmd){
 #endif
 
     // blink the LED
-    _led_set->flashLED(ledMidiOut);
+    ledSet.flashLED(ledMidiOut);
 }
 
 #define firstRightButton    52
@@ -954,6 +994,12 @@ void TesMIDIController::readPresetFromEEPROM(uint8_t preset_id){
             bitmap_set(_var.presetUpdateBitmap, kbd * NUMBER_OF_KBD_PARAMETERS + i, value);
         }
     }
+    // set extra bits in the update bitmap, if required
+    bool    need_to_update_gyro = (_settings.preset.gyroOn != new_preset.gyroOn)
+        || (new_preset.gyroOn && ((_settings.preset.gyroMode != new_preset.gyroMode)
+                    || (_settings.preset.gyroXCtrl != new_preset.gyroXCtrl)
+                    || (_settings.preset.gyroYCtrl != new_preset.gyroYCtrl)));
+    bitmap_set(_var.presetUpdateBitmap, idxGyroSettings, need_to_update_gyro);
     // replace the old preset with the new one
     _settings.preset = new_preset;
     if (need_to_update_expression) {
@@ -1028,6 +1074,7 @@ void TesMIDIController::sendCurrentPresetToSynthesizer(uint8_t kbd_map, bool opt
     // set the flag
     _var.sendingParameters = 1;
     _var.optimizedUpdate = optimized;
+    _var.needUpdateGyro = (1 == (kbd_map & 0x01));   // i.e. if the right kbd is in the list
     // initialize aux variables
     _var.currentKbd       = 0;
     // find the first marked kbd
@@ -1061,5 +1108,194 @@ uint8_t TesMIDIController::transposeNote(uint8_t kbd_id, uint8_t note){
         : (note + ((int)_settings.preset.kbdParameter[kbd_id][idxOctTranspose] * 12));
 }
 
+#define PITCH_MID_VALUE 8192
+#define PITCH_MAX_SHIFT 8191
 
+//////////////////////////////////////////////////////////////////////////
+// processes an event from Gyro
+void    TesMIDIController::gyroProcess(tesEvent * event){
+    bool    can_process_X = event->g.changedX && ((_settings.preset.gyroMode == gyroModeX) || (_settings.preset.gyroMode == gyroModeXY));
+    bool    can_process_Y = event->g.changedY && ((_settings.preset.gyroMode == gyroModeY) || (_settings.preset.gyroMode == gyroModeXY));
+
+    if(!_settings.preset.gyroOn || !(can_process_X || can_process_Y)){
+        // it's either turned off or the Gyro won't handle the event due to the current mode
+        return;
+    }
+
+    uint8_t gyro_value[2];  // this is sort of a small local queue...
+    uint8_t gyro_ctrl[2];
+    uint8_t N = 0;
+    if(can_process_X){
+        gyro_value[N]   = event->g.valueX;
+        gyro_ctrl[N]    = _settings.preset.gyroXCtrl;
+        N++;
+    }
+    if(can_process_Y){
+        gyro_value[N]   = event->g.valueY;
+        gyro_ctrl[N]    = _settings.preset.gyroYCtrl;
+        N++;
+    }
+
+    // process incoming event(s)
+    for(int i=0; i<N; i++){
+        switch(gyro_ctrl[i]){
+        case gyroCtrlPitchUp:
+        case gyroCtrlPitchDown:
+            {
+                // translate the angle to the shift
+                // (we assume, the value comes normalized to 0..127)
+                int pitch_shift = map(gyro_value[i], 0, 127, 0, PITCH_MAX_SHIFT);
+                int new_pitch   = PITCH_MID_VALUE + ((gyro_ctrl[i] == gyroCtrlPitchUp) ? pitch_shift : -pitch_shift);
+
+                // compose the command
+                TesMIDICommand  cmd;
+                cmd.midiCommand = mcPitchBandChange;
+                cmd.channelId   = _settings.preset.kbdParameter[kbdRight][idxChannel];
+                cmd.data1       = new_pitch & 0x7F;
+                cmd.data2       = (new_pitch >> 7) & 0x7F;
+                _midi_queue.pushCommand(&cmd);
+            }
+            break;
+        case gyroCtrlVibrato:
+            {
+                // compose the command
+                TesMIDICommand  cmd;
+                cmd.midiCommand = mcControlChange;
+                cmd.channelId   = _settings.preset.kbdParameter[kbdRight][idxChannel];
+                cmd.data1       = 1;    // "modulation"
+                cmd.data2       = gyro_value[i];
+                _midi_queue.pushCommand(&cmd);
+            }
+            break;
+        case gyroCtrlPortamento:
+            {
+                // compose the command
+                TesMIDICommand  cmd;
+                cmd.midiCommand = mcControlChange;
+                cmd.channelId   = _settings.preset.kbdParameter[kbdRight][idxChannel];
+                cmd.data1       = 65;   // "portamento on/off"
+                cmd.data2       = gyro_value[i];
+                _midi_queue.pushCommand(&cmd);
+            }
+            break;
+        }
+    }
+    // clear the event (fully processed)
+    event->eventType = tesEmpty;
+}
+
+//////////////////////////////////////////////////////////////////////////
+// turns Gyro on/off using settings in the specified preset
+void    TesMIDIController::turnGyroOnOff(TesMIDIControllerSettings::TesMIDIControllerPreset & preset, bool on, bool optimized){
+    // compose the queue - it will contain controllers that we will be truning on/off
+    uint8_t gyro_ctrl[GYRO_NUMBER_OF_CONTROLLERS];
+    uint8_t N = 0;
+    if (on || optimized){
+        if((preset.gyroMode == gyroModeX) || (preset.gyroMode == gyroModeXY)){
+            gyro_ctrl[N]    = preset.gyroXCtrl;
+            N++;
+        }
+        if((preset.gyroMode == gyroModeY) || (preset.gyroMode == gyroModeXY)){
+            gyro_ctrl[N]    = preset.gyroYCtrl;
+            N++;
+        }
+    }
+    else {
+        // the process is not optimized, we turn off all possible controllers
+        gyro_ctrl[N++] = gyroCtrlPitchUp;
+        gyro_ctrl[N++] = gyroCtrlVibrato;
+        gyro_ctrl[N++] = gyroCtrlPortamento;
+    }
+    // *** now we know which controllers to turn on/off
+
+    // process all controllers
+    for(int i=0; i<N; i++){
+        if(on){
+            switch(gyro_ctrl[i]){
+            case gyroCtrlPitchUp:
+            case gyroCtrlPitchDown:
+                {
+                    // Set the Pitch sensitivity (in semi-tones).
+                    TesMIDICommand  cmd;
+                    cmd.midiCommand = mcControlChange;
+                    cmd.channelId   = _settings.preset.kbdParameter[kbdRight][idxChannel];
+                    cmd.data1       = 101;  // RPN high
+                    cmd.data2       = 0;    // selector MSB
+                    _midi_queue.pushCommand(&cmd);
+                    cmd.data1       = 100;  // RPN low
+                    cmd.data2       = 0;    // selector LSB
+                    _midi_queue.pushCommand(&cmd);
+                    cmd.data1       = 6;    // data
+                    cmd.data2       = _settings.preset.gyroPitchDepth;
+                    _midi_queue.pushCommand(&cmd);
+                    cmd.data1       = 101;  // RPN high
+                    cmd.data2       = 127;  // NULL
+                    _midi_queue.pushCommand(&cmd);
+                    cmd.data1       = 100;  // RPN low
+                    cmd.data2       = 127;  // NULL
+                    _midi_queue.pushCommand(&cmd);
+                    // Adjust the pitch according to the latest available Gyro event
+                    gyroProcess(&_var.lastGyroEvent);
+                }
+                break;
+            case gyroCtrlVibrato:
+                {
+                    // Set Vibrato according to the latest available Gyro event
+                    gyroProcess(&_var.lastGyroEvent);
+                }
+                break;
+            case gyroCtrlPortamento:
+                {
+                    // Set Portamento On according to the latest available Gyro event
+                    gyroProcess(&_var.lastGyroEvent);
+                }
+                break;
+            default:
+                SWER(swerMidiController08);
+            }
+        }
+        else {
+            switch(gyro_ctrl[i]){
+            case gyroCtrlPitchUp:
+            case gyroCtrlPitchDown:
+                {
+                    // set the Pitch to the middle point
+                    TesMIDICommand  cmd;
+                    cmd.midiCommand = mcPitchBandChange;
+                    cmd.channelId   = preset.kbdParameter[kbdRight][idxChannel];
+                    cmd.data1       = PITCH_MID_VALUE & 0x7F;
+                    cmd.data2       = (PITCH_MID_VALUE >> 7) & 0x7F;
+                    _midi_queue.pushCommand(&cmd);
+                    // Note: we don't touch pitch sensitivity which was set when the controller was turned on
+                    // (no reason to do that)
+                }
+                break;
+            case gyroCtrlVibrato:
+                {
+                    // We set the value of the "Vibrato" parameter to the value configured in the current preset
+                    TesMIDICommand  cmd;
+                    cmd.midiCommand = mcControlChange;
+                    cmd.channelId   = preset.kbdParameter[kbdRight][idxChannel];
+                    cmd.data1       = 1;    // "modulation"
+                    cmd.data2       = preset.kbdParameter[kbdRight][idxVibrato];
+                    _midi_queue.pushCommand(&cmd);
+                }
+                break;
+            case gyroCtrlPortamento:
+                {
+                    // we just set Portamento OFF
+                    TesMIDICommand  cmd;
+                    cmd.midiCommand = mcControlChange;
+                    cmd.channelId   = preset.kbdParameter[kbdRight][idxChannel];
+                    cmd.data1       = 65;   // "portamento on/off"
+                    cmd.data2       = 0;
+                    _midi_queue.pushCommand(&cmd);
+                }
+                break;
+            default:
+                SWER(swerMidiController08);
+            }
+        }
+    }
+}
 

@@ -50,7 +50,7 @@
 // now the class itself
 class TesKeyboard {
 public:
-    TesKeyboard(TesEventQueue *queue);
+    TesKeyboard(void);
 
     ///////////////////////////////////////////////////////////
     // Initializes the keyboard
@@ -64,7 +64,6 @@ private:
     // for operations with registers
     uint8_t _buffer [ TES_KEYBOARD_CASCADE_SIZE ];  // The input buffer
     uint8_t _previous_buffer [ TES_KEYBOARD_CASCADE_SIZE ]; // This is for comparing old and new values
-    TesEventQueue   * _eventQueue;                      // the queue to work with
     ////////// for control buttons /////////
     TesCtlButtonController  _ctlButtonController;
 
@@ -96,6 +95,9 @@ private:
     // i.e. into ID of a button from left/right music keyboard (not from the control panel)
     uint8_t getMusicButtonId(uint8_t  globalButtonId);
 };
+
+// There's the only Keyboard
+extern  TesKeyboard     theKeyboard;
 
 #endif
 

@@ -118,4 +118,6 @@ private:
     bool ledIsFlashing(uint8_t led_index);
 };
 
+extern  TesLedSet   ledSet;
+
 #endif

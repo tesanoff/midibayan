@@ -44,7 +44,7 @@ struct TesCtlButtonStateMachineData {
 
 class TesCtlButtonController {
 public:
-    TesCtlButtonController(TesEventQueue *queue);
+    TesCtlButtonController(void);
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
     // the standard tick() method
@@ -55,7 +55,6 @@ public:
     void    processCtlButton(uint8_t button_id, bool pressed);
 
 private:
-    TesEventQueue                   * _queue;
     TesCtlButtonStateMachineData    _sm[NUMBER_OF_SUMULTANEOUSLY_HANDLED_CONTROL_BUTTONS];
 
     ///////////////////////////////////////////////////////////////////////////////////////////////

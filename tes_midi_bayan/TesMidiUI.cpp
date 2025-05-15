@@ -8,6 +8,11 @@
 #include "prodx.h"
 #include "atemp_hw.h"
 
+
+// the OLED display
+OledDisplay oled;
+
+
 // period for updating the display (it takes too much time to update it in each work cycle)
 #define TES_DISPLAY_UPDATE_PERIOD   (1000 / 3)
 
@@ -17,6 +22,7 @@
 #define screenModeDrumsEdit         3
 #define screenModeInstrumentEdit    4
 #define screenModeMelodyEdit        5
+#define screenModeGyroEdit          6
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 /// aux functions
@@ -27,10 +33,8 @@ static bool isSigned(uint8_t parameter_id){
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // constructor
-TesMidiUI::TesMidiUI(OledDisplay * oled, TesMIDIController * mc, TesLedSet * led){
-    _oled = oled;
+TesMidiUI::TesMidiUI(TesMIDIController * mc){
     _mc = mc;
-    _led_set = led;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -38,7 +42,7 @@ TesMidiUI::TesMidiUI(OledDisplay * oled, TesMIDIController * mc, TesLedSet * led
 // Should be called from setup()
 void    TesMidiUI::init(void){
     // initialize the display
-    _oled->init();
+    oled.init();
 
     // draw the active screen
     drawActiveScreen();
@@ -53,7 +57,7 @@ void TesMidiUI::tick(void){
     if (millis_snapshot - _display_update_timer > TES_DISPLAY_UPDATE_PERIOD){
         // update the display if required
         if ( _flags.display_update_is_required ){
-            _oled->update();    // partial update doesn't work for SSH1106 yet :(
+            oled.update();    // partial update doesn't work for SSH1106 yet :(
             // reset the display update request
             _flags.display_update_is_required = false;
         }
@@ -83,8 +87,8 @@ void TesMidiUI::tick(void){
             // write the preset to EEPROM
             _mc->writePresetToEEPROM(_preset_sm.writePreset);
             // stop blinking
-            _led_set->resetLED(_preset_sm.writePreset + ledPreset1);
-            _led_set->setLED(_preset_sm.writePreset + ledPreset1, (_preset_sm.writePreset == _mc->_settings.global.activePreset) );
+            ledSet.resetLED(_preset_sm.writePreset + ledPreset1);
+            ledSet.setLED(_preset_sm.writePreset + ledPreset1, (_preset_sm.writePreset == _mc->_settings.global.activePreset) );
         }
     }
 
@@ -101,9 +105,9 @@ void TesMidiUI::tick(void){
             _mc->globalSettingsChangeNotification();
 
             // stop blinking
-            _led_set->resetLED(ledSystem);
+            ledSet.resetLED(ledSystem);
             // and flash once
-            _led_set->flashLED(ledSystem);
+            ledSet.flashLED(ledSystem);
         }
     }
 }
@@ -249,6 +253,9 @@ void TesMidiUI::processCtlButtonEvent(tesEvent *event){
     case screenModeMelodyEdit:
         processCtlButtonEventMelodySelector( event );
         break;
+    case screenModeGyroEdit:
+        processCtlButtonEventGyroEditor( event );
+        break;
     default:
         SWER(swerGUI06);
     }
@@ -297,13 +304,13 @@ void TesMidiUI::processCtlButtonEvent(tesEvent *event){
                             // cancel the write confirmation mode, return to the normal mode
                             _preset_sm.state = psNormal;
                             // stop blinking
-                            _led_set->resetLED(preset_id + ledPreset1);
+                            ledSet.resetLED(preset_id + ledPreset1);
                             if (_mc->_var.currentPresetNotSaved && (_preset_sm.writePreset == _mc->_settings.global.activePreset)){
                                 // the current preset is still not saved, and the LED should return to the slow blinking mode
-                                _led_set->startBlink(preset_id + ledPreset1, teslpSlowBlink);
+                                ledSet.startBlink(preset_id + ledPreset1, teslpSlowBlink);
                             }
                             else {
-                                _led_set->setLED(preset_id + ledPreset1, (_preset_sm.writePreset == _mc->_settings.global.activePreset) );
+                                ledSet.setLED(preset_id + ledPreset1, (_preset_sm.writePreset == _mc->_settings.global.activePreset) );
                             }
                         }
                     }
@@ -335,7 +342,7 @@ void TesMidiUI::processCtlButtonEvent(tesEvent *event){
                             // cancel the write confirmation mode, return to the normal mode
                             _fkey_sm.state = psNormal;
                             // stop blinking
-                            _led_set->resetLED(ledSystem);
+                            ledSet.resetLED(ledSystem);
                         }
                     }
                     break;
@@ -375,7 +382,7 @@ void TesMidiUI::processCtlButtonEvent(tesEvent *event){
                 }
                 else {
                     // just flash the LED to indicate an invalid condition
-                    _led_set->flashLED( ledSystem );
+                    ledSet.flashLED( ledSystem );
                 }
             }
             break;
@@ -399,7 +406,7 @@ void TesMidiUI::processCtlButtonEvent(tesEvent *event){
                     // remember the presetID being processed
                     _preset_sm.writePreset = preset_id;
                     // start blinking the LED
-                    _led_set->startBlink( preset_id + ledPreset1 );
+                    ledSet.startBlink( preset_id + ledPreset1 );
                 }
                 // clear the event to indicate it has been fully processed
                 event->eventType = tesEmpty;
@@ -427,13 +434,13 @@ void TesMidiUI::processCtlButtonEvent(tesEvent *event){
                             _fkey_sm.writeFKey = fkey_id;
                             _fkey_sm.writeFKeyPage = fkey_page;
                             // start blinking the LED
-                            _led_set->setLED( ledSystem, true );
-                            _led_set->startBlink( ledSystem );
+                            ledSet.setLED( ledSystem, true );
+                            ledSet.startBlink( ledSystem );
                         }
                     }
                     else {
                         // just flash the LED to indicate an invalid condition
-                        _led_set->flashLED( ledSystem );
+                        ledSet.flashLED( ledSystem );
                     }
                     // clear the event to indicate it has been fully processed
                     event->eventType = tesEmpty;
@@ -493,7 +500,7 @@ void TesMidiUI::setDrumMachineState(uint8_t new_state){
             // change the state
             _mc->_var.drumsMode = dmManual;
             // set the LED
-            _led_set->setLED(ledDrums, true);
+            ledSet.setLED(ledDrums, true);
             // send settings of manual drums to the synth.
             _mc->sendDrumsSettings();
             // now - ready to play
@@ -508,15 +515,15 @@ void TesMidiUI::setDrumMachineState(uint8_t new_state){
             // change the state
             _mc->_var.drumsMode = dmStandby;
             // set the LED
-            _led_set->resetLED(ledDrums);  // turn it off first
-            _led_set->startBlink(ledDrums);
+            ledSet.resetLED(ledDrums);  // turn it off first
+            ledSet.startBlink(ledDrums);
             // a melody is always ready to play
             break;
         case dmOff:
             // change the state
             _mc->_var.drumsMode = dmOff;
             // set the LED
-            _led_set->resetLED(ledDrums);  // turn it off
+            ledSet.resetLED(ledDrums);  // turn it off
             break;
         default:
             SWER(swerGUI05);
@@ -528,9 +535,9 @@ void TesMidiUI::setDrumMachineState(uint8_t new_state){
             // change the state
             _mc->_var.drumsMode = dmPlaying;
             // set the LED
-            _led_set->resetLED(ledDrums);       // reset possible blinking
-            _led_set->setLED(ledDrums, true);   // turn it on, so the ti's the staring state of the LED
-            _led_set->startBlink(ledDrums, teslpSlowBlink);
+            ledSet.resetLED(ledDrums);       // reset possible blinking
+            ledSet.setLED(ledDrums, true);   // turn it on, so the ti's the staring state of the LED
+            ledSet.startBlink(ledDrums, teslpSlowBlink);
             // send settings of manual drums to the synth.
             _mc->sendDrumsSettings();
             // start the melody
@@ -540,8 +547,8 @@ void TesMidiUI::setDrumMachineState(uint8_t new_state){
             // change the state
             _mc->_var.drumsMode = dmManual;
             // set the LED
-            _led_set->resetLED(ledDrums);
-            _led_set->setLED(ledDrums, true);
+            ledSet.resetLED(ledDrums);
+            ledSet.setLED(ledDrums, true);
             // send settings of manual drums to the synth.
             _mc->sendDrumsSettings();
             break;
@@ -557,14 +564,14 @@ void TesMidiUI::setDrumMachineState(uint8_t new_state){
             // change the state
             _mc->_var.drumsMode = dmOff;
             // set the LED
-            _led_set->resetLED(ledDrums);  // turn it off
+            ledSet.resetLED(ledDrums);  // turn it off
             break;
         case dmManual:
             // change the state
             _mc->_var.drumsMode = dmManual;
             // set the LED
-            _led_set->resetLED(ledDrums);
-            _led_set->setLED(ledDrums, true);
+            ledSet.resetLED(ledDrums);
+            ledSet.setLED(ledDrums, true);
             // send settings of manual drums to the synth.
             _mc->sendDrumsSettings();
             break;
@@ -589,7 +596,7 @@ void TesMidiUI::setDrumMachineState(uint8_t new_state){
 const char numFormat3R[] = "%3d";       // 3 digits, right alignment
 const char auxFormat1[]  = " (%3d)";    // 3 digits, right alignment
 
-const char main_screen_footer[] = "MIDI баян v2.01b";
+const char main_screen_footer[] = "MIDI баян v2.02b";
 
 // for the header
 #define headerStartPosition 6
@@ -615,6 +622,7 @@ const char * const  parLabel[theNumberOfMidiParameters] = {
     "Спад",
     "Тембр",
     "Затух.",
+    "Порт.",
     "Ревер.",
     "Хорус",
     "Р. тип",
@@ -633,6 +641,7 @@ const char * const  parHint[theNumberOfMidiParameters] = {
     "Спад",
     "Тембр",
     "Затухание",
+    "Время Портаменто",
     "Ревербрация",
     "Хорус",
     "Тип ревербрации",
@@ -641,16 +650,23 @@ const char * const  parHint[theNumberOfMidiParameters] = {
 };
 // Maximum possible values for Kbd Parameters
 const uint8_t parMaxValue[theNumberOfMidiParameters] = {
-    15, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 7, 7, 2
+    15, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 7, 7, 2
 };
 // Minimum possible values for Kbd Parameters
 const int8_t parMinValue[theNumberOfMidiParameters] = {
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -2
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -2
 };
 
 // definitions for printing the preset page ID on the main screen
 #define ppY ((3<<3) + (symbolHeight/2))
-const char ppText[] = "Набор пресетов %1d";
+const char ppText[] = "Пресеты #%1d";
+
+const char * const  indGyroModeLabel[] = {
+    "G:--",  // General MIDI
+    "G:X",   // ATemp
+    "G: Y",  // Atemp Pro.DX
+    "G:XY"   // not used yet
+};
 
 // "Indicators" showing values of the MIDI controller local settings
 #define indRow                  5
@@ -693,7 +709,8 @@ const char * const  parBooleanLabel[] = {
 #define parBooleanN             2       // the number of options
 
 // list of parameter IDs
-enum {parPresetPageId = 0, parRunningStatusId, parBassOctavesId, parSynthTypeId, parMasterVolumeId, parDrumsChannelId, parDrumsAdditionalChannelId, parInactivityPeriodId};
+enum {parPresetPageId = 0, parRunningStatusId, parBassOctavesId, parGyroId, parSynthTypeId, parMasterVolumeId, parDrumsChannelId, parDrumsAdditionalChannelId,
+    parInactivityPeriodId};
 
 /////////////////////////////////////////////////////////////////
 // specific data for the Master Volume parameter
@@ -707,6 +724,10 @@ const char parRunningStatusName[]   = "Running Status";
 /////////////////////////////////////////////////////////////////
 // specific data forn the Bass Octaves parameter
 const char parBassOctavesName[]   = "Октавы в басах";
+
+/////////////////////////////////////////////////////////////////
+// specific data forn the Running Status parameter
+const char parGyroName[]   = "G-датчик Вкл   >";
 
 /////////////////////////////////////////////////////////////////
 // specific data for the Synth Type parameter
@@ -736,14 +757,14 @@ const char parInactivityPeriodName[]    = "Автовыход (сек)";
 /////////////////////////////////////////////////////////////////
 // common data
 
-#define paramEditorFirstRow     1       // we start from this row
-#define paramEditorRows         5       // 5 rows in the scroll area
+#define paramEditorFirstRow     0       // we start from this row
+#define paramEditorRows         7       // 7 rows in the scroll area
 #define paramEditorNameColumn   0       // where we start printing names
 #define paramEditorValueColumn  17      // where we start printing values
 
-#define parNumberOfParameters   8
+#define parNumberOfParameters   9
 const char * const  parParameterNames[parNumberOfParameters] = {
-    parPresetPageName, parRunningStatusName, parBassOctavesName, parSynthTypeName, parMasterVolumeName, parDrumsChannelName,
+    parPresetPageName, parRunningStatusName, parBassOctavesName, parGyroName, parSynthTypeName, parMasterVolumeName, parDrumsChannelName,
     parDrumsAdditionalChannelName, parInactivityPeriodName
 };
 
@@ -832,6 +853,62 @@ const char instrument_edit_screen_footer[] = "Выбор инструмента"
 
 //                                            123456789-123456789-1
 const char melody_selector_screen_footer[] = "Выбор мелодии";
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// section for the editor of Gyro parameters
+
+// list of parameter IDs
+enum {gpModeId = 0, gpXCtrlId, gpYCtrlId, gpPitchDepthId};
+
+/////////////////////////////////////////////////////////////////
+// specific data for the Gyro Mode parameter
+const char gpModeName[]    = "Активные оси";
+#define gpModeMaxValue 2
+
+const char * const  gpModeLabel[] = {
+    " X ",
+    " Y ",
+    "X+Y",
+    "-O-"     // not used
+};
+
+/////////////////////////////////////////////////////////////////
+// specific data for the X Controller parameter
+const char gpXCtrlName[]    = "Контроллер X";
+#define gpXCtrlMaxValue 3
+
+const char * const  gpCtrlLabel[] = {
+    "Б ^",
+    "Б v",
+    "Виб",
+    "Прт"
+};
+/////////////////////////////////////////////////////////////////
+// specific data for the X Controller parameter
+const char gpYCtrlName[]    = "Контроллер Y";
+#define gpYCtrlMaxValue 3
+
+/////////////////////////////////////////////////////////////////
+// specific data for the Pitch Depth parameter
+const char gpPitchDepthName[]    = "Глубина бенда";
+#define gpPitchDepthMaxValue 6
+#define gpPitchDepthMinValue 1
+
+/////////////////////////////////////////////////////////////////
+// common data
+
+#define gpEditorFirstRow     1       // we start from this row
+#define gpEditorRows         4       // number of rows in the scroll area
+#define gpEditorRowIncrement 1       // 0 empty row between parameters
+#define gpEditorNameColumn   0       // where we start printing names
+#define gpEditorValueColumn  17      // where we start printing values
+
+#define gpNumberOfParameters   4
+const char * const  gpParameterNames[gpNumberOfParameters] = {
+    gpModeName, gpXCtrlName, gpYCtrlName, gpPitchDepthName
+};
+
+const char gyro_param_screen_footer[] = "Настройки G-датчика";
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////// private methods //////////////////////////////////////////
@@ -1031,11 +1108,11 @@ void TesMidiUI::drawKbdHeader(void){
     };
     for(int i=0; i<headerSections; i++){
         setTextCursor(headerStartPosition + i*headerIncrement, 0);
-        _oled->invertText(headerHighlight[i]);
-        _oled->print(headerSection[i]);
+        oled.invertText(headerHighlight[i]);
+        oled.print(headerSection[i]);
     }
     // turn inversion off
-    _oled->invertText(false);
+    oled.invertText(false);
 }
 
 // Bitmaps for the battery level indicator
@@ -1067,13 +1144,13 @@ void TesMidiUI::drawBatteryIndicator(void){
     else if (_mc->_var.currentBatteryLevel > 20){
         selected_bitmap = battery_025;
     }
-    _oled->drawBitmap(0, 0, bat_bitmap[selected_bitmap], 17, 8, BITMAP_INVERT, BUF_REPLACE);
+    oled.drawBitmap(0, 0, bat_bitmap[selected_bitmap], 17, 8, BITMAP_INVERT, BUF_REPLACE);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 //  Draws the main screen
 void TesMidiUI::drawMainScreen(void){
-    _oled->clear();
+    oled.clear();
 
     // print the header
     drawKbdHeader();
@@ -1091,7 +1168,7 @@ void TesMidiUI::drawMainScreen(void){
                 parameter_id    = idxProgram;
                 break;
         }
-        _oled->print(parLabel[parameter_id]);
+        oled.print(parLabel[parameter_id]);
         // print parameters here
         for(int kbd=0; kbd<4; kbd++){
             setTextCursor(6 + kbd*4, idx+1);
@@ -1099,47 +1176,58 @@ void TesMidiUI::drawMainScreen(void){
         }
     }
     // print the Id of the current preset page
-    _oled->setCursorXY( 2 * symbolWidth , ppY);
+    oled.setCursorXY( 2, ppY);
     printFormatted(ppText, _mc->_settings.global.activePresetPage + 1);     // we show preset page numbers starting from "1"
+    // print a frame around the preset info
+    // calculate graphical X and Y
+    uint8_t frameX1 = 0;
+    uint8_t frameX2 = 6*(mb_strlen_P(ppText)-2) + 3;
+    uint8_t frameY1 = ppY - 2;
+    uint8_t frameY2 = ppY + 8;
+    oled.roundRect(frameX1, frameY1, frameX2, frameY2, OLED_STROKE);
     // print Indicators
     {
         // Indicator's logic is different, so, print them onr-by-one (not in a cycle)
+        // *** G-sensor status -- on a separate line!
+        oled.setCursorXY( 14*symbolWidth, ppY);
+        oled.print(indGyroModeLabel[((!_mc->_settings.preset.gyroOn)? 0 : _mc->_settings.preset.gyroMode+1)]);
         // *** Bass Octaves
         setTextCursor(indBassOctavesPos, indRow);
-        _oled->invertText( _mc->_settings.preset.bassOctavesOn );
-        _oled->print(indBassOctavesLabel);
-        _oled->invertText(false);
+        oled.invertText( _mc->_settings.preset.bassOctavesOn );
+        oled.print(indBassOctavesLabel);
+        oled.invertText(false);
         // *** Pressure Sensor
         setTextCursor(indPressureSensorOnPos, indRow);
-        _oled->invertText( _mc->_settings.preset.pressureSensorOn );
-        _oled->print(indPressureSensorLabel);
-        _oled->invertText(false);
+        oled.invertText( _mc->_settings.preset.pressureSensorOn );
+        oled.print(indPressureSensorLabel);
+        oled.invertText(false);
         // *** Synthesizer Type
         setTextCursor(indSynthTypePos, indRow);
-        _oled->print(indSynthTypeLabel[_mc->_settings.global.synthType]);
+        oled.print(indSynthTypeLabel[_mc->_settings.global.synthType]);
         // *** Running Status
         setTextCursor(indRunningStatusPos, indRow);
-        _oled->invertText( _mc->_settings.global.runningStatus );
-        _oled->print(FPSTR(indRunningStatusLabel));
-        _oled->invertText(false);
+        oled.invertText( _mc->_settings.global.runningStatus );
+        oled.print(FPSTR(indRunningStatusLabel));
+        oled.invertText(false);
     }
     // print the bottom
-    _oled->fastLineH(7*symbolHeight-2, 3, 124, OLED_FILL);
+    oled.fastLineH(7*symbolHeight-2, 3, 124, OLED_FILL);
     // If a melody is not played - print a banner
     PGM_P   melodyName  = _mc->_auto_drums.getCurrentMelodyName();
     switch(_mc->_var.drumsMode){
     case dmOff:
     case dmManual:
-        _oled->setCursor( (128 - mb_strlen_P(FPSTR(main_screen_footer))*symbolWidth)/2, 7);
-        _oled->print(FPSTR(main_screen_footer));
+        oled.setCursor( (128 - mb_strlen_P(FPSTR(main_screen_footer))*symbolWidth)/2, 7);
+        oled.print(FPSTR(main_screen_footer));
         break;
     case dmStandby:
     case dmPlaying:
-        _oled->setCursor( (128 - (mb_strlen_P(FPSTR(melodyName)) + 6)*symbolWidth)/2, 7);
-        _oled->print(FPSTR(melodyName));
+        oled.setCursor( (128 - (mb_strlen_P(FPSTR(melodyName)) + 6)*symbolWidth)/2, 7);
+        oled.print(FPSTR(melodyName));
         printFormatted(auxFormat1, _mc->_auto_drums.getTempo());
         break;
     }
+
     _flags.display_update_is_required = true;
 }
 
@@ -1148,7 +1236,7 @@ void TesMidiUI::drawMainScreen(void){
 void TesMidiUI::setTextCursor(uint8_t X, uint8_t Y){
     // the original method uses pixels for X instead of sympols.
     // (6 pixels per symbol)
-    _oled->setCursor( X*symbolWidth , Y);
+    oled.setCursor( X*symbolWidth , Y);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1162,7 +1250,7 @@ void TesMidiUI::printFormatted(const char * format, uint16_t value, bool sgnd){
     else{
         sprintf(buf, format, value);
     }
-    _oled->print(buf);
+    oled.print(buf);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1187,6 +1275,9 @@ void TesMidiUI::drawActiveScreen(void){
     case screenModeMelodyEdit:
         drawMelodySelectorScreen();
         break;
+    case screenModeGyroEdit:
+        drawGyroEditorScreen();
+        break;
     default:
         SWER(swerGUI08);
     }
@@ -1196,7 +1287,7 @@ void TesMidiUI::drawActiveScreen(void){
 //  Draws the MIDI parameters editor screen
 void TesMidiUI::drawMidiParamEditorScreen(void){
     // clear work area
-    _oled->clear();
+    oled.clear();
     // print the header
     drawKbdHeader();
     // print the battery level Indicator
@@ -1205,11 +1296,11 @@ void TesMidiUI::drawMidiParamEditorScreen(void){
     for (int editorRow=0; editorRow<editorRows; editorRow++ ){
         setTextCursor(0, editorRow+editorFirstRow);
         uint8_t currentParameterIndex = editorRow + _editor_status.topIndex;
-        _oled->print( parLabel[currentParameterIndex] );
+        oled.print( parLabel[currentParameterIndex] );
         // print values
         for(int kbd=0; kbd<4; kbd++){
             // decide text inversion - select the value being edited
-            _oled->invertText(
+            oled.invertText(
                 _editor_status.editMode
                 && (_editor_status.selectorX == kbd)
                 && (_editor_status.selectorY == editorRow)
@@ -1223,7 +1314,7 @@ void TesMidiUI::drawMidiParamEditorScreen(void){
             }
         }
         //reset text inversion (just in case...)
-        _oled->invertText(false);
+        oled.invertText(false);
     }
     // draw the selector (frame around the current value)
     // calculate graphical X and Y
@@ -1231,13 +1322,13 @@ void TesMidiUI::drawMidiParamEditorScreen(void){
     uint8_t selX2 = 6*symbolWidth +_editor_status.selectorX*4*symbolWidth +symbolWidth*3 +1;
     uint8_t selY1 = symbolHeight*editorFirstRow -1 +_editor_status.selectorY*symbolHeight;
     uint8_t selY2 = symbolHeight*editorFirstRow +7 +_editor_status.selectorY*symbolHeight;
-    _oled->roundRect(selX1, selY1, selX2, selY2, OLED_STROKE);
+    oled.roundRect(selX1, selY1, selX2, selY2, OLED_STROKE);
 
     // print the bottom
-    _oled->fastLineH(7*symbolHeight-1, 3, 124, OLED_FILL);
+    oled.fastLineH(7*symbolHeight-1, 3, 124, OLED_FILL);
     uint8_t selectedParameterIndex = _editor_status.topIndex + _editor_status.selectorY;
-    _oled->setCursor( (128 - mb_strlen_P(parHint[selectedParameterIndex])*symbolWidth)/2, 7);
-    _oled->print(parHint[selectedParameterIndex]);
+    oled.setCursor( (128 - mb_strlen_P(parHint[selectedParameterIndex])*symbolWidth)/2, 7);
+    oled.print(parHint[selectedParameterIndex]);
 
     _flags.display_update_is_required = true;
 }
@@ -1246,28 +1337,31 @@ void TesMidiUI::drawMidiParamEditorScreen(void){
 //  Draws the System parameters editor screen
 void TesMidiUI::drawSystemParamEditorScreen(void){
     // clear work area
-    _oled->clear();
+    oled.clear();
     // print rows in the work area
     for (int editorRow=0; editorRow<paramEditorRows; editorRow++){
         setTextCursor(paramEditorNameColumn, editorRow + paramEditorFirstRow);
         uint8_t currentSystemParameterIndex = editorRow + _editor_status.sysParTopIndex;
-        _oled->print( parParameterNames [currentSystemParameterIndex] );
+        oled.print( parParameterNames [currentSystemParameterIndex] );
         // print the value
         setTextCursor(paramEditorValueColumn, editorRow + paramEditorFirstRow);
         // decide text inversion - select the value being edited
-        _oled->invertText(editorRow == _editor_status.sysParSelector);
+        oled.invertText(editorRow == _editor_status.sysParSelector);
         switch(currentSystemParameterIndex){
             case parPresetPageId:
                 printFormatted(numFormat3R, _mc->_settings.global.activePresetPage + 1);
                 break;
             case parRunningStatusId:
-                _oled->print( parBooleanLabel[_mc->_settings.global.runningStatus] );
+                oled.print( parBooleanLabel[_mc->_settings.global.runningStatus] );
                 break;
             case parBassOctavesId:
-                _oled->print( parBooleanLabel[_mc->_settings.preset.bassOctavesOn] );
+                oled.print( parBooleanLabel[_mc->_settings.preset.bassOctavesOn] );
+                break;
+            case parGyroId:
+                oled.print( parBooleanLabel[_mc->_settings.preset.gyroOn] );
                 break;
             case parSynthTypeId:
-                _oled->print( parSynthTypeLabel[_mc->_settings.global.synthType] );
+                oled.print( parSynthTypeLabel[_mc->_settings.global.synthType] );
                 break;
             case parMasterVolumeId:
                 printFormatted(numFormat3R, _mc->_settings.preset.masterVolume);
@@ -1285,7 +1379,7 @@ void TesMidiUI::drawSystemParamEditorScreen(void){
                 SWER(swerGUI02);
         }
         //reset text inversion (just in case...)
-        _oled->invertText(false);
+        oled.invertText(false);
     }
 
     // draw the selector (frame around the current value)
@@ -1293,13 +1387,16 @@ void TesMidiUI::drawSystemParamEditorScreen(void){
     uint8_t selX1 = paramEditorValueColumn*symbolWidth -3;
     uint8_t selX2 = paramEditorValueColumn*symbolWidth +symbolWidth*3 +1;
     uint8_t selY1 = symbolHeight*paramEditorFirstRow -1 +_editor_status.sysParSelector*symbolHeight;
+    if (selY1 == 255){
+        selY1 = 0;
+    }
     uint8_t selY2 = symbolHeight*paramEditorFirstRow +7 +_editor_status.sysParSelector*symbolHeight;
-    _oled->roundRect(selX1, selY1, selX2, selY2, OLED_STROKE);
+    oled.roundRect(selX1, selY1, selX2, selY2, OLED_STROKE);
 
     // print the bottom
-    _oled->fastLineH(7*symbolHeight-1, 3, 124, OLED_FILL);
-    _oled->setCursor( (128 - mb_strlen_P(FPSTR(sys_param_screen_footer))*symbolWidth)/2, 7);
-    _oled->print(FPSTR(sys_param_screen_footer));
+    oled.fastLineH(7*symbolHeight-1, 3, 124, OLED_FILL);
+    oled.setCursor( (128 - mb_strlen_P(FPSTR(sys_param_screen_footer))*symbolWidth)/2, 7);
+    oled.print(FPSTR(sys_param_screen_footer));
 
     _flags.display_update_is_required = true;
 }
@@ -1308,15 +1405,15 @@ void TesMidiUI::drawSystemParamEditorScreen(void){
 //  Draws the Drums parameters editor screen
 void TesMidiUI::drawDrumsParamEditorScreen(void){
     // clear work area
-    _oled->clear();
+    oled.clear();
     // print rows in the work area
     for (int param_number=0; param_number < dpNumberOfParameters; param_number++){
         setTextCursor(dpEditorNameColumn, param_number * dpEditorRowIncrement + dpEditorFirstRow);
-        _oled->print( dpParameterNames[param_number] );
+        oled.print( dpParameterNames[param_number] );
         // print the value
         setTextCursor(dpEditorValueColumn, param_number * dpEditorRowIncrement + dpEditorFirstRow);
         // decide text inversion - select the value being edited
-        _oled->invertText(param_number == _editor_status.drumsParSelector);
+        oled.invertText(param_number == _editor_status.drumsParSelector);
         switch(param_number){
             case dpDrumsVolume:
                 printFormatted(numFormat3R, _mc->_settings.preset.drumsVolume);
@@ -1340,7 +1437,7 @@ void TesMidiUI::drawDrumsParamEditorScreen(void){
                 SWER(swerGUI03);
         }
         //reset text inversion (just in case...)
-        _oled->invertText(false);
+        oled.invertText(false);
     }
 
     // draw the selector (frame around the current value)
@@ -1352,12 +1449,12 @@ void TesMidiUI::drawDrumsParamEditorScreen(void){
         selY1 = 0;
     }
     uint8_t selY2 = symbolHeight*dpEditorFirstRow +7 +_editor_status.drumsParSelector*dpEditorRowIncrement*symbolHeight;
-    _oled->roundRect(selX1, selY1, selX2, selY2, OLED_STROKE);
+    oled.roundRect(selX1, selY1, selX2, selY2, OLED_STROKE);
 
     // print the bottom
-    _oled->fastLineH(7*symbolHeight-1, 3, 124, OLED_FILL);
-    _oled->setCursor( (128 - mb_strlen_P(FPSTR(drums_param_screen_footer))*symbolWidth)/2, 7);
-    _oled->print(FPSTR(drums_param_screen_footer));
+    oled.fastLineH(7*symbolHeight-1, 3, 124, OLED_FILL);
+    oled.setCursor( (128 - mb_strlen_P(FPSTR(drums_param_screen_footer))*symbolWidth)/2, 7);
+    oled.print(FPSTR(drums_param_screen_footer));
 
     _flags.display_update_is_required = true;
 }
@@ -1395,22 +1492,22 @@ void TesMidiUI::drawInstrumentEditorScreen(void){
     uint16_t    instrument_index = getInstrumentIndex(_Banks, bank_id, program_id);
 
     // clear work area
-    _oled->clear();
+    oled.clear();
 
     // Print the title of Instrument group
-    _oled->setCursor((128 - mb_strlen_P(ieInstrumentGroupTitle)*symbolWidth)/2, ieInstrumentGroupTitlePos);
-    _oled->print(FPSTR(ieInstrumentGroupTitle));
+    oled.setCursor((128 - mb_strlen_P(ieInstrumentGroupTitle)*symbolWidth)/2, ieInstrumentGroupTitlePos);
+    oled.print(FPSTR(ieInstrumentGroupTitle));
     // Print the Instrument group name
-    _oled->setCursor((128 - mb_strlen_P(_GroupName[instrument_group])*symbolWidth)/2, ieInstrumentGroupNamePos);
-    _oled->print(_GroupName[instrument_group]);
+    oled.setCursor((128 - mb_strlen_P(_GroupName[instrument_group])*symbolWidth)/2, ieInstrumentGroupNamePos);
+    oled.print(_GroupName[instrument_group]);
 
     // Print the title of Instrument
-    _oled->setCursor((128 - mb_strlen_P(ieInstrumentTitle)*symbolWidth)/2, ieInstrumentTitlePos);
-    _oled->print(ieInstrumentTitle);
+    oled.setCursor((128 - mb_strlen_P(ieInstrumentTitle)*symbolWidth)/2, ieInstrumentTitlePos);
+    oled.print(ieInstrumentTitle);
     // Print the Instrument name
     PGM_P   str = getSubString_P(_InstrumentNames, instrument_index);
-    _oled->setCursor((128 - mb_strlen_P(str)*symbolWidth)/2, ieInstrumentNamePos);
-    _oled->print(FPSTR(str));
+    oled.setCursor((128 - mb_strlen_P(str)*symbolWidth)/2, ieInstrumentNamePos);
+    oled.print(FPSTR(str));
 
     // draw the selector
     // calculate graphical X and Y
@@ -1427,22 +1524,22 @@ void TesMidiUI::drawInstrumentEditorScreen(void){
     }
     uint8_t selY1 = symbolHeight*selRow -1;
     uint8_t selY2 = symbolHeight*selRow +7;
-    _oled->roundRect(selX1, selY1, selX2, selY2, OLED_STROKE);
+    oled.roundRect(selX1, selY1, selX2, selY2, OLED_STROKE);
 
     // Print instrument IDs
-    _oled->setCursor(0, ieInstrumentIDsLinePos);    // to the very beginning of the line
-    _oled->print(ieInstrumentIDsLine);
-    _oled->setCursor(ieBankIdColumn*symbolWidth, ieInstrumentIDsLinePos);
+    oled.setCursor(0, ieInstrumentIDsLinePos);    // to the very beginning of the line
+    oled.print(ieInstrumentIDsLine);
+    oled.setCursor(ieBankIdColumn*symbolWidth, ieInstrumentIDsLinePos);
     // print the Bank ID
     printFormatted(numFormat3R, bank_id);
-    _oled->setCursor(ieProgramIdColumn*symbolWidth, ieInstrumentIDsLinePos);
+    oled.setCursor(ieProgramIdColumn*symbolWidth, ieInstrumentIDsLinePos);
     // print the Program ID
     printFormatted(numFormat3R, program_id);
 
     // print the bottom
-    _oled->fastLineH(7*symbolHeight-1, 3, 124, OLED_FILL);
-    _oled->setCursor( (128 - mb_strlen_P(instrument_edit_screen_footer)*symbolWidth)/2, 7);
-    _oled->print(instrument_edit_screen_footer);
+    oled.fastLineH(7*symbolHeight-1, 3, 124, OLED_FILL);
+    oled.setCursor( (128 - mb_strlen_P(instrument_edit_screen_footer)*symbolWidth)/2, 7);
+    oled.print(instrument_edit_screen_footer);
 
     _flags.display_update_is_required = true;
 }
@@ -1451,7 +1548,7 @@ void TesMidiUI::drawInstrumentEditorScreen(void){
 //  Draws the Instrument selector/editor screen
 void TesMidiUI::drawMelodySelectorScreen(void){
     // clear work area
-    _oled->clear();
+    oled.clear();
 
     // See how many rows we need to print
     uint8_t rows_for_printing   = min(msEditorRows, _mc->_auto_drums.getNumberOfMelodies());
@@ -1462,17 +1559,70 @@ void TesMidiUI::drawMelodySelectorScreen(void){
         // calculate the index of a melody to be printed here
         uint8_t currentMelodyIndex  = editorRow + _editor_status.msTopIndex;
         // decide if we need to inverse text for this melody name
-        _oled->invertText(editorRow == _editor_status.msSelector);
+        oled.invertText(editorRow == _editor_status.msSelector);
         // print the melody name
-        _oled->print(_mc->_auto_drums.getMelodyName(currentMelodyIndex));
+        oled.print(_mc->_auto_drums.getMelodyName(currentMelodyIndex));
         //reset text inversion (just in case...)
-        _oled->invertText(false);
+        oled.invertText(false);
     }
 
     // print the bottom
-    _oled->fastLineH(7*symbolHeight-1, 3, 124, OLED_FILL);
-    _oled->setCursor( (128 - mb_strlen_P(melody_selector_screen_footer)*symbolWidth)/2, 7);
-    _oled->print(FPSTR(melody_selector_screen_footer));
+    oled.fastLineH(7*symbolHeight-1, 3, 124, OLED_FILL);
+    oled.setCursor( (128 - mb_strlen_P(melody_selector_screen_footer)*symbolWidth)/2, 7);
+    oled.print(FPSTR(melody_selector_screen_footer));
+
+    _flags.display_update_is_required = true;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+//  Draws the Instrument selector/editor screen
+void TesMidiUI::drawGyroEditorScreen(void){
+    // clear work area
+    oled.clear();
+
+    // print rows in the work area
+    for (int param_number=0; param_number < gpNumberOfParameters; param_number++){
+        setTextCursor(gpEditorNameColumn, param_number * gpEditorRowIncrement + gpEditorFirstRow);
+        oled.print( gpParameterNames[param_number] );
+        // print the value
+        setTextCursor(gpEditorValueColumn, param_number * gpEditorRowIncrement + gpEditorFirstRow);
+        // decide text inversion - select the value being edited
+        oled.invertText(param_number == _editor_status.gyroParSelector);
+        switch(param_number){
+            case gpModeId:
+                oled.print(gpModeLabel[_mc->_settings.preset.gyroMode]);
+                break;
+            case gpXCtrlId:
+                oled.print(gpCtrlLabel[_mc->_settings.preset.gyroXCtrl]);
+                break;
+            case gpYCtrlId:
+                oled.print(gpCtrlLabel[_mc->_settings.preset.gyroYCtrl]);
+                break;
+            case gpPitchDepthId:
+                printFormatted(numFormat3R, _mc->_settings.preset.gyroPitchDepth);
+                break;
+            default:
+                SWER(swerGUI15);
+        }
+        //reset text inversion (just in case...)
+        oled.invertText(false);
+    }
+
+    // draw the selector (frame around the current value)
+    // calculate graphical X and Y
+    uint8_t selX1 = gpEditorValueColumn*symbolWidth -3;
+    uint8_t selX2 = gpEditorValueColumn*symbolWidth +symbolWidth*3 +1;
+    uint8_t selY1 = symbolHeight*gpEditorFirstRow -1 +_editor_status.gyroParSelector*gpEditorRowIncrement*symbolHeight;
+    if (selY1 == 255){
+        selY1 = 0;
+    }
+    uint8_t selY2 = symbolHeight*gpEditorFirstRow +7 +_editor_status.gyroParSelector*gpEditorRowIncrement*symbolHeight;
+    oled.roundRect(selX1, selY1, selX2, selY2, OLED_STROKE);
+
+    // print the bottom
+    oled.fastLineH(7*symbolHeight-1, 3, 124, OLED_FILL);
+    oled.setCursor( (128 - mb_strlen_P(gyro_param_screen_footer)*symbolWidth)/2, 7);
+    oled.print(gyro_param_screen_footer);
 
     _flags.display_update_is_required = true;
 }
@@ -1686,6 +1836,15 @@ void TesMidiUI::processCtlButtonEventSystemParamEditor(tesEvent *event){
     case tesBeReleased:
     case tesBeStep:
         switch (event->buttonId){
+        case ctlButtonOk:
+            if((_editor_status.sysParSelector + _editor_status.sysParTopIndex) == parGyroId){
+                // enter Gyro Editor
+                _editor_status.screenMode = screenModeGyroEdit;
+                // *** ATTENTION! each time we change screens - we turn off the edit mode
+                _editor_status.editMode = false;
+                drawActiveScreen();
+            }
+            break;
         case ctlButtonUp:
             // move up
             if(_editor_status.sysParSelector == 0){
@@ -1762,6 +1921,14 @@ void TesMidiUI::processCtlButtonEventSystemParamEditor(tesEvent *event){
             case parBassOctavesId:
                 // toggle the value
                 _mc->_settings.preset.bassOctavesOn = ! _mc->_settings.preset.bassOctavesOn;
+                // notify the controller about preset change
+                indicatePresetChange();
+                break;
+            case parGyroId:
+                // toggle the value
+                _mc->_settings.preset.gyroOn = ! _mc->_settings.preset.gyroOn;
+                // turn the Gyro on/off
+                _mc->turnGyroOnOff(_mc->_settings.preset, _mc->_settings.preset.gyroOn);
                 // notify the controller about preset change
                 indicatePresetChange();
                 break;
@@ -2266,6 +2433,137 @@ void TesMidiUI::processCtlButtonEventMelodySelector(tesEvent *event){
     }
 }
 
+static bool twoCtrlsAreOk(uint8_t ctrl1, uint8_t ctrl2){
+    bool pitch_clash = ((ctrl1 == gyroCtrlPitchUp) || (ctrl1 == gyroCtrlPitchDown)) 
+        && ((ctrl2 == gyroCtrlPitchUp) || (ctrl2 == gyroCtrlPitchDown));
+    return (!pitch_clash) && (ctrl1 != ctrl2);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+//  control button event handler for Melody Selector mode
+void TesMidiUI::processCtlButtonEventGyroEditor(tesEvent *event){
+    // as this is a Control Button event, event->buttonId already contains Ctl Button ID
+    bool    needToClearTheEvent = true; // by default we clear the event
+
+    switch (event->buttonEvent){
+    case tesBeReleased:
+    case tesBeStep:
+        switch (event->buttonId){
+        case ctlButtonUp:
+            // move up
+            if( _editor_status.gyroParSelector-- == 0){
+                _editor_status.gyroParSelector = gpEditorRows - 1;
+            }
+            drawActiveScreen();
+            break;
+        case ctlButtonDown:
+            // move down
+            if( ++_editor_status.gyroParSelector == gpEditorRows){
+                _editor_status.gyroParSelector = 0;
+            }
+            drawActiveScreen();
+            break;
+        case ctlButtonLeft:
+        case ctlButtonRight:
+            // *** the approach is simpified: we just:
+            //  - turn Gyro off, if required
+            //  - change the Gyro parameter
+            //  - turn Gyro on again with new settings (if required)
+            if(_mc->_settings.preset.gyroOn){
+                _mc->turnGyroOnOff(_mc->_settings.preset, false);
+            }
+            switch(_editor_status.gyroParSelector){
+            case gpModeId:
+                if (event->buttonId == ctlButtonLeft){
+                    if (_mc->_settings.preset.gyroMode-- == 0){
+                        _mc->_settings.preset.gyroMode = gpModeMaxValue;
+                    }
+                }
+                else {      // ctlButtonRight
+                    if (_mc->_settings.preset.gyroMode++ == gpModeMaxValue){
+                        _mc->_settings.preset.gyroMode = 0;
+                    }
+                }
+                // start indicating a "not saved preset", if required
+                indicatePresetChange();
+                break;
+            case gpXCtrlId:
+                do {
+                    if (event->buttonId == ctlButtonLeft){
+                        if (_mc->_settings.preset.gyroXCtrl-- == 0){
+                            _mc->_settings.preset.gyroXCtrl = gpXCtrlMaxValue;
+                        }
+                    }
+                    else {      // ctlButtonRight
+                        if (_mc->_settings.preset.gyroXCtrl++ == gpXCtrlMaxValue){
+                            _mc->_settings.preset.gyroXCtrl = 0;
+                        }
+                    }
+                } while ( !twoCtrlsAreOk(_mc->_settings.preset.gyroXCtrl, _mc->_settings.preset.gyroYCtrl) );
+                // start indicating a "not saved preset", if required
+                indicatePresetChange();
+                break;
+            case gpYCtrlId:
+                do {
+                    if (event->buttonId == ctlButtonLeft){
+                        if (_mc->_settings.preset.gyroYCtrl-- == 0){
+                            _mc->_settings.preset.gyroYCtrl = gpYCtrlMaxValue;
+                        }
+                    }
+                    else {      // ctlButtonRight
+                        if (_mc->_settings.preset.gyroYCtrl++ == gpYCtrlMaxValue){
+                            _mc->_settings.preset.gyroYCtrl = 0;
+                        }
+                    }
+                } while ( !twoCtrlsAreOk(_mc->_settings.preset.gyroXCtrl, _mc->_settings.preset.gyroYCtrl) );
+                // start indicating a "not saved preset", if required
+                indicatePresetChange();
+                break;
+            case gpPitchDepthId:
+                if (event->buttonId == ctlButtonLeft){
+                    if (_mc->_settings.preset.gyroPitchDepth-- == gpPitchDepthMinValue){
+                        _mc->_settings.preset.gyroPitchDepth = gpPitchDepthMaxValue;
+                    }
+                }
+                else {      // ctlButtonRight
+                    if (_mc->_settings.preset.gyroPitchDepth++ == gpPitchDepthMaxValue){
+                        _mc->_settings.preset.gyroPitchDepth = gpPitchDepthMinValue;
+                    }
+                }
+                // start indicating a "not saved preset", if required
+                indicatePresetChange();
+                break;
+            default:
+                SWER(swerGUI16);
+            }
+            // and turn Gyro on again, if required
+            if(_mc->_settings.preset.gyroOn){
+                _mc->turnGyroOnOff(_mc->_settings.preset, true);
+            }
+            drawActiveScreen();
+            break;
+        case ctlButtonMenu:
+            // return back to the System Parameter Editor screen
+            _editor_status.screenMode = screenModeSysParamEdit;
+            // *** ATTENTION! each time we change screens - we turn off the edit mode
+            _editor_status.editMode = false;
+            drawActiveScreen();
+            break;
+        default:
+            // not handled ctl button; don't clear the event
+            needToClearTheEvent = false;
+            break;
+        }
+    default:
+        // not handled ctl button event; don't clear the event
+        needToClearTheEvent = false;
+        break;
+    }
+    if (needToClearTheEvent){
+        event->eventType = tesEmpty;
+    }
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////
 //  Activates the specified preset
 void TesMidiUI::activatePreset(uint8_t preset_id){
@@ -2276,11 +2574,11 @@ void TesMidiUI::activatePreset(uint8_t preset_id){
     }
 
     // clear indication of the old preset
-    _led_set->resetLED( _mc->_settings.global.activePreset + ledPreset1);    // the assumption is that Led IDs are sorted (like 0, 1, 2, etc.)
+    ledSet.resetLED( _mc->_settings.global.activePreset + ledPreset1);    // the assumption is that Led IDs are sorted (like 0, 1, 2, etc.)
     // activate the new preset
     _mc->activatePreset(preset_id);
     // indicate the active preset
-    _led_set->setLED( _mc->_settings.global.activePreset + ledPreset1, 1);   // the assumption is that Led IDs are sorted (like 0, 1, 2, etc.)
+    ledSet.setLED( _mc->_settings.global.activePreset + ledPreset1, 1);   // the assumption is that Led IDs are sorted (like 0, 1, 2, etc.)
     // redraw the active screen
     drawActiveScreen();
     // Active preset ID - is a part of global settings
@@ -2436,7 +2734,7 @@ void TesMidiUI::indicatePresetChange(void){
     // check if this is the 1st change of the current preset
     if ( ! _mc->_var.currentPresetNotSaved ){
         // make the respective LED blinking
-        _led_set->startBlink(_mc->_settings.global.activePreset + ledPreset1, teslpSlowBlink);
+        ledSet.startBlink(_mc->_settings.global.activePreset + ledPreset1, teslpSlowBlink);
         // set the "preset not saved" flag
         _mc->_var.currentPresetNotSaved = 1;
     }

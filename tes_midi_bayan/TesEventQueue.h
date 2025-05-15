@@ -10,13 +10,13 @@
 /////// We need to define some aux stuff first. ///////
 // "Empty" means there's no event here (it was cleared by an event handler
 // who decided that the event was fully processed and nobody needs it anymore).
-enum {tesEmpty, tesEvButton, tesEvPressure, tesEvFreeBass, tesEvSystemControl, tesEvBattery, tesEvGyverButton};
+enum {tesEmpty, tesEvButton, tesEvPressure, tesEvFreeBass, tesEvSystemControl, tesEvBattery, tesEvGyverButton, tesEvGyro};
 
 // button-related events
 enum {tesBeReleased, tesBePressed, tesBeClick, tesBeHold, tesBeStep, tesBeHoldReleased, tesBeStepReleased};
 
 // System Control messages
-enum {scNoCommand = 0, scEepromReset};
+enum {scNoCommand = 0, scEepromReset, scRecalibrateGyroSensor};
 
 struct tesEvent {
     uint8_t eventType;
@@ -44,6 +44,15 @@ struct tesEvent {
         struct {
             uint8_t newBatteryValue;      // normalized to 0..100 (%)
         };
+        // tesEvGyro
+        struct {
+            uint8_t     valueX;         // normalized to 0 .. 127
+            uint8_t     valueY;         //
+            struct {
+                uint8_t changedX: 1;
+                uint8_t changedY: 1;
+            };
+        } g;
     };
 };
 
@@ -79,6 +88,9 @@ private:
     uint8_t     _tail;
     uint8_t     _size;
 };
+
+// there's the only queue
+extern  TesEventQueue   theQueue;
 
 #endif
 
