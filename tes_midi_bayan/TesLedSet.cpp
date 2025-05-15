@@ -1,6 +1,11 @@
 #include "TesLedSet.h"
 #include "swer.h"
 
+#define ledLatchPin     2     // Pin connected to ST_CP of 74HC595
+#define ledClockPin     3     // Pin connected to SH_CP of 74HC595
+#define ledDataPin      6     // Pin connected to DS of 74HC595
+TesLedSet ledSet(ledLatchPin, ledClockPin, ledDataPin, 9);
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // constructor
 TesLedSet::TesLedSet(uint8_t latchPin, uint8_t clockPin, uint8_t dataPin, uint8_t num_of_LEDs ){

@@ -2,6 +2,11 @@
 #include "TesEventQueue.h"
 #include "swer.h"
 
+
+// there's the only queue
+TesEventQueue   theQueue;
+
+
 // construstor
 TesEventQueue::TesEventQueue(void){
     _head = 0;

@@ -2,10 +2,12 @@
 
 #define PRESSURE_EVENT_PERIOD   14      // 70 events per second
 
+TesPressureSensor   pressureSensor;
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // constructor
-TesPressureSensor::TesPressureSensor(TesEventQueue *queue){
-    _event_queue = queue;
+TesPressureSensor::TesPressureSensor(void)
+{
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -32,7 +34,7 @@ void TesPressureSensor::tick(void){
             tesEvent    event;
             event.eventType         = tesEvPressure;
             event.newPressureValue  = lastSentValue = freshValue;
-            _event_queue->pushEvent(&event);
+            theQueue.pushEvent(&event);
         }
         //reset the timer
         _event_timer = millis();

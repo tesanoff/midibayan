@@ -18,7 +18,7 @@ class TesPressureSensor {
 public:
     ///////////////////////////////////////////////////////////////////////////////////////////////
     // constructor
-    TesPressureSensor(TesEventQueue * queue);
+    TesPressureSensor(void);
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
     // Initializes the instance
@@ -32,13 +32,15 @@ public:
 private:
     int             filteredValue;          // keeps this value to enable the RA data filter
     uint8_t         lastSentValue;          // the last value sent to the event queue
-    TesEventQueue   * _event_queue;
     timer_t         _event_timer;           // we send events by a timer
 
     /////////////////////////////////////////////////////////////////////////////////////////////
     // reads raw data from the sensor and converts it to the 0..127 range
     uint8_t getPressureValue(void);
 };
+
+// There's the only pressure sensor
+extern  TesPressureSensor   pressureSensor;
 
 
 #endif

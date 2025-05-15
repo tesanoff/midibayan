@@ -18,7 +18,7 @@ class TesBatterySensor {
 public:
     ///////////////////////////////////////////////////////////////////////////////////////////////
     // constructor
-    TesBatterySensor(TesEventQueue * queue);
+    TesBatterySensor(void);
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
     // Initializes the instance
@@ -32,7 +32,6 @@ public:
 private:
     int             filteredValue;          // keeps this value to enable the RA data filter
     uint8_t         lastSentValue;          // the last value sent to the event queue
-    TesEventQueue   * _event_queue;
     timer_t         _event_timer;           // we send events by a timer
 
     /////////////////////////////////////////////////////////////////////////////////////////////
@@ -40,6 +39,8 @@ private:
     uint8_t getBatteryValue(void);
 };
 
+// There's the only battery sensor
+extern  TesBatterySensor   batterySensor;
 
 #endif
 

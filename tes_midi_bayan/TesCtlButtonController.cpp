@@ -55,8 +55,7 @@ static const uint8_t   ctlButtonDoubleHoldReleaseBitmap[] = { 0b00000000, 0b0011
 //                                                                                      ~~   <-- not used
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-TesCtlButtonController::TesCtlButtonController(TesEventQueue *queue)
-    :_queue(queue)
+TesCtlButtonController::TesCtlButtonController(void)
 {
 }
 
@@ -233,6 +232,6 @@ void TesCtlButtonController::sendEvent(uint8_t  event_type, TesCtlButtonStateMac
     ev.buttonEvent      = event_type;
     ev.buttonId         = sm->ctlButtonId;
     ev.clicks           = sm->numberOfClicks;
-    _queue->pushEvent(&ev);
+    theQueue.pushEvent(&ev);
 }
 

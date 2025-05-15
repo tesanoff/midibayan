@@ -8,6 +8,9 @@
 // specify the OLED display model just in one place, here.
 typedef GyverOLED<SSH1106_128x64>   OledDisplay;
 
+// the OLED display
+extern  OledDisplay oled;
+
 // forward declaration
 class TesMIDIController;
 
@@ -27,6 +30,7 @@ struct  TesEditorStatus{
         uint8_t sysParSelector: 3;      // specifies the active system parameter
         uint8_t sysParTopIndex: 3;      // the index of a row  which is shown in the top position
         uint8_t drumsParSelector: 3;    // specifies the active drums parameter
+        uint8_t gyroParSelector: 3;     // specifies the active Gyro parameter
         uint8_t instrumentSelector :1;  // 0 .. 1 (just 2 parameters)
         uint8_t msSelector: 3;          // specifies the current row
     };
@@ -108,7 +112,7 @@ class TesMidiUI {
 public:
     ///////////////////////////////////////////////////////////////////////////////////////////////
     // constructor
-    TesMidiUI(OledDisplay * oled, TesMIDIController * mc, TesLedSet * led);
+    TesMidiUI(TesMIDIController * mc);
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
     // Initializes the instance.
@@ -134,7 +138,7 @@ public:
     ///////////////////////////////////////////////////////////////////////////////////////////////
     // This method processes events from the Battery Sensor
     void processBatteryEvent(tesEvent *event);
-
+    
     ///////////////////////////////////////////////////////////////////////////////////////////////
     // Changes the state of the Drum Machine
     void setDrumMachineState(uint8_t new_state);
@@ -144,7 +148,6 @@ private:
     TesMIDIController           * _mc;      // MIDI Controller instance
     TesUIFlags                  _flags;     // aux flags
     timer_t                     _display_update_timer;      // we update display by a timer, not in each work cycle
-    TesLedSet                   * _led_set;                 // the LED panel to be used
     TesEditorStatus             _editor_status;
     timer_t                     _inactivity_timer;          // if no user activity - each editor switches back to Main Screen
     TesPresetStateMachine       _preset_sm;                 // all data required to work with presets
@@ -195,6 +198,10 @@ private:
     void drawMelodySelectorScreen(void);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
+    //  Draws the gyro editor screen
+    void drawGyroEditorScreen(void);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
     //  control button event handler for Midi Param Editor mode
     void processCtlButtonEventMidiParamEditor(tesEvent *event);
 
@@ -213,6 +220,10 @@ private:
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //  control button event handler for Melody Selector mode
     void processCtlButtonEventMelodySelector(tesEvent *event);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    //  control button event handler for Gyro Editor mode
+    void processCtlButtonEventGyroEditor(tesEvent *event);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //  Activates the specified preset

@@ -9,38 +9,12 @@
 #include "TesKeyboard.h"
 #include "TesPressureSensor.h"
 #include "TesBatterySensor.h"
+#include "TesGyroSensor.h"
 #include "TesMidiController.h"
 #include "swer.h"
 #include "common.h"
 #include "eeprom24.h"
 
-
-////////////////////////////////////////////////////////////////////////////////////////
-// The LED set stuff
-//
-#define ledLatchPin     2     // Pin connected to ST_CP of 74HC595
-#define ledClockPin     3     // Pin connected to SH_CP of 74HC595
-#define ledDataPin      6     // Pin connected to DS of 74HC595
-TesLedSet ledSet(ledLatchPin, ledClockPin, ledDataPin, 9);
-
-
-// there's the only queue
-TesEventQueue   theQueue;
-
-// There's the only Keyboard
-TesKeyboard     theKeyboard(&theQueue);
-
-// There's the only pressure sensor
-TesPressureSensor   pressureSensor(&theQueue);
-
-// There's the only battery sensor
-TesBatterySensor   batterySensor(&theQueue);
-
-// the OLED display
-OledDisplay oled;
-
-// the MIDI controller
-TesMIDIController   theMIDIController(&ledSet, &oled);
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Shows an error code on LEDs and goes into an infinite loop,
@@ -84,6 +58,8 @@ void setup() {
     pressureSensor.init();
     // Initialize the battery sensor
     batterySensor.init();
+    // Initialize the Gyro sensor
+    gyroSensor.init();
     // Initialize the MIDI controller
     theMIDIController.init();
 }
@@ -95,6 +71,7 @@ void loop() {
     theKeyboard.tick();
     pressureSensor.tick();
     batterySensor.tick();
+    gyroSensor.tick();
     theMIDIController.tick();
 
     // very simplified event dispatcher
@@ -103,6 +80,7 @@ void loop() {
         
         // call all event processors here
         theMIDIController.processEvent(event);
+        gyroSensor.processEvent(event);
     }
 }
 

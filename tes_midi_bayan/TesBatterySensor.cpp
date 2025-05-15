@@ -1,5 +1,8 @@
 #include "TesBatterySensor.h"
 
+// There's the only battery sensor
+TesBatterySensor   batterySensor;
+
 #define BATTERY_EVENT_PERIOD    30000   // twice per minute
 #define FIRST_MEASUREMENT_DELAY 500     // let the relay connect the battery to the "measurement" pin
 
@@ -14,8 +17,8 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // constructor
-TesBatterySensor::TesBatterySensor(TesEventQueue *queue){
-    _event_queue = queue;
+TesBatterySensor::TesBatterySensor(void)
+{
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -45,7 +48,7 @@ void TesBatterySensor::tick(void){
             tesEvent    event;
             event.eventType         = tesEvBattery;
             event.newBatteryValue  = lastSentValue = freshValue;
-            _event_queue->pushEvent(&event);
+            theQueue.pushEvent(&event);
         }
         //reset the timer
         _event_timer = millis();

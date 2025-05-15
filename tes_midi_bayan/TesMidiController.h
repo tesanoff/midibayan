@@ -163,19 +163,25 @@ public:
 #define idxRelease          7
 #define idxTimbre           8
 #define idxDecay            9
-#define idxReverbration     10
-#define idxChorus           11
-#define idxReverbType       12
-#define idxChorusType       13
-#define idxOctTranspose     14
+#define idxPortamentoTime   10
+#define idxReverbration     11
+#define idxChorus           12
+#define idxReverbType       13
+#define idxChorusType       14
+#define idxOctTranspose     15
 
-#define NUMBER_OF_KBD_PARAMETERS    15
+#define NUMBER_OF_KBD_PARAMETERS    16
 #define NUMBER_OF_PRESETS           6           // 6 presets in 1 page
 #define NUMBER_OF_PRESET_PAGES      4
-#define TES_EEPROM_SIGNATURE 0x5A17             // 0x5Avv, where: 5A - signature, vv - version
+#define TES_EEPROM_SIGNATURE        0x5A1B      // 0x5Avv, where: 5A - signature, vv - version
 #define GLOBAL_SETTINGS_SAVING_TIMEOUT  8000    // changes are saved to EEPROM in 8 seconds after the last change
 
-#define SIZE_OF_PRESET_UPDATE_BITMAP    (((NUMBER_OF_KEYBOARDS * NUMBER_OF_KBD_PARAMETERS) -  1) / 8 + 1)
+// We need to include Gyro settings into the preset update bitmap.
+// Just adding 1 bit to the tail
+#define PRESET_UPDATE_EXTRA_BITS    1
+#define idxGyroSettings     ((NUMBER_OF_KEYBOARDS * NUMBER_OF_KBD_PARAMETERS + PRESET_UPDATE_EXTRA_BITS) - 1)
+
+#define SIZE_OF_PRESET_UPDATE_BITMAP    (((NUMBER_OF_KEYBOARDS * NUMBER_OF_KBD_PARAMETERS + PRESET_UPDATE_EXTRA_BITS) -  1) / 8 + 1)
 
 #define TES_DEFAULT_INACTIVITY_PERIOD   10      // seconds
 
@@ -185,6 +191,12 @@ public:
 
 // synthesizer types
 enum    {stGeneralMidi = 0, stAtemp, stProDX};
+
+// gyroMode
+enum    {gyroModeX = 0, gyroModeY, gyroModeXY};
+// gyroCtrl
+enum    {gyroCtrlPitchUp = 0, gyroCtrlPitchDown, gyroCtrlVibrato, gyroCtrlPortamento,
+            GYRO_NUMBER_OF_CONTROLLERS};    // this name must always be the last one in the list
 
 struct TesMIDIControllerSettings {
    struct TesMIDIControllerGlobalSettings { 
@@ -204,6 +216,11 @@ struct TesMIDIControllerSettings {
         struct {
             uint8_t     pressureSensorOn: 1;    // true - the pressure sensor is enabled; false - disabled
             uint8_t     bassOctavesOn: 1;       // true - if octaves are allowed for bass keyboard
+            uint8_t     gyroOn: 1;              // true - if the gyro sensor is active
+            uint8_t     gyroMode: 2;            // X only, Y only or X+Y
+            uint8_t     gyroXCtrl: 2;           // 0 - Pitch, 1 - Vibrato (Modulation) Wheel, 2 & 3 - reserved
+            uint8_t     gyroYCtrl: 2;           // 0 - Pitch, 1 - Vibrato (Modulation) Wheel, 2 & 3 - reserved
+            uint8_t     gyroPitchDepth: 3;      // pitch sensitivity (depth) in semi-tones
         };
         uint8_t         masterVolume;           // the master volume setting
         uint8_t         drumsVolume;            // volume for drums
@@ -265,6 +282,7 @@ struct TesMIDIControllerRunTimeData {
         uint8_t     globalSettingsNotSaved: 1;  // true - if global settings were changed, but not yet saved to EEPROM
         uint8_t     numberOfActiveChordNotes: 4;    // this is for correct playing "drums for chords"
         uint8_t     drumsMode: 2;               // 0 - off, 1 - manual, 2 - standby, 3 - playing
+        uint8_t     needUpdateGyro: 1;         // true - if we need to update Gyro parameters
     };
     timer_t         sendParamTimer;             // to measure intwervals between sending each parameter of the preset
     timer_t         globalSettingsSavingTimer;  // for saving global settings to EEPROM
@@ -273,6 +291,7 @@ struct TesMIDIControllerRunTimeData {
                                                 // used when preset parameters are sent to the synth to minimize 
                                                 // the number of MIDI commands
     uint8_t         currentBatteryLevel;        // 0..100%
+    tesEvent        lastGyroEvent;              // The last event received from Gyro
 
     TesMIDIControllerSettings::TesMIDIControllerPreset previousPreset;     // a copy of a preset that was active before another preset was activated
     TesMIDIControllerSettings::TesMIDIControllerPreset savedPreset;        // we save the current preset here when we temporarily restore the previous one
@@ -287,6 +306,7 @@ struct TesMIDIControllerRunTimeData {
         bassNotesStatus = 0;
         numberOfActiveChordNotes = 0;
         drumsMode = dmOff;
+        needUpdateGyro = false;
         currentBatteryLevel = 0;
     }
 };
@@ -317,12 +337,11 @@ public:
 
     ///////////////////////////////////////////////////////////////////////////
     // constructor
-    TesMIDIController(TesLedSet *led_panel, OledDisplay *oled);
+    TesMIDIController(void);
 
 private:
     TesMidiUI              _ui;           // a class responsible for processing control button events
     TesAutoDrums            _auto_drums;    // a class playing auto drums
-    TesLedSet               * _led_set;     // the LED panel to be used
     TesMIDIOutQueue         _midi_queue;    // the queue of ougtoing MIDI commands
     TesMIDIControllerSettings   _settings;  // the current settings of the controller
     TesMIDIControllerRunTimeData    _var;   // run-time data (not stored in EEPROM), like /var folder in unix
@@ -426,6 +445,15 @@ private:
     //////////////////////////////////////////////////////////////////////////
     // Returns a properly transposed note
     uint8_t transposeNote(uint8_t kbd_id, uint8_t note);
+
+    //////////////////////////////////////////////////////////////////////////
+    // processes an event from Gyro
+    void    gyroProcess(tesEvent * event);
+
+
+    //////////////////////////////////////////////////////////////////////////
+    // turns Gyro on/off using settings in the specified preset
+    void    turnGyroOnOff(TesMIDIControllerSettings::TesMIDIControllerPreset & preset, bool on, bool optimized = true);
 };
 
 extern TesMIDIController theMIDIController;

@@ -15,6 +15,9 @@
 #include "common.h"
 #include "TesCtlButtonController.h"
 
+// There's the only Keyboard
+TesKeyboard     theKeyboard;
+
 //////////////////////////// settings for control buttons //////////////////////////////
 //
 
@@ -85,9 +88,7 @@ const uint8_t   tesButtonPressedLevels[] = {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Constructor
-TesKeyboard::TesKeyboard(TesEventQueue *queue)
-    :_eventQueue(queue),
-    _ctlButtonController(queue)
+TesKeyboard::TesKeyboard(void)
 {
     //set the pins up
     pinMode(latchPin, OUTPUT);
@@ -100,7 +101,8 @@ TesKeyboard::TesKeyboard(TesEventQueue *queue)
 // Initializes the keyboard
 void TesKeyboard::init(void){
     // read the current input data for future comparison
-    readCascade();
+    readCascade();  // garbage
+    readCascade();  // real data
 
     // As the FreeBass sensor is part of the left keyboard, we already have it's status after 'readCascade()'.
     // Need to read its status from the buffer and send the very first FreeBass event, so that the MIDI Controller knows the status
@@ -110,7 +112,7 @@ void TesKeyboard::init(void){
     tesEvent    event;
     event.eventType = tesEvFreeBass;
     event.freeBassOn = (freeBassStatus == getPressedLevel(freeBassSensorIndex));    // "pressed" means "turned on" in this context
-    _eventQueue->pushEvent(&event);
+    theQueue.pushEvent(&event);
     
     // check if the "OK" button is pressed
     uint8_t buttonId = TES_FIRST_CONTROL_BUTTON + ctlButtonOk;
@@ -120,7 +122,18 @@ void TesKeyboard::init(void){
         tesEvent    event;
         event.eventType = tesEvSystemControl;
         event.command   = scEepromReset;
-        _eventQueue->pushEvent(&event);
+        theQueue.pushEvent(&event);
+    }
+
+    // check if the "UP" button is pressed
+    buttonId = TES_FIRST_CONTROL_BUTTON + ctlButtonUp;
+    value = bitmap_get(_buffer, buttonId);
+    if (value == getPressedLevel(buttonId)){
+        // send Recalibrate Gyro message
+        tesEvent    event;
+        event.eventType = tesEvSystemControl;
+        event.command   = scRecalibrateGyroSensor;
+        theQueue.pushEvent(&event);
     }
 }
 
@@ -223,7 +236,7 @@ void TesKeyboard::processNewData(void){
                 tesEvent    event;
                 event.eventType = tesEvFreeBass;
                 event.freeBassOn = (newValue == getPressedLevel(currentButton));    // "pressed" means "turned on" in this context
-                _eventQueue->pushEvent(&event);
+                theQueue.pushEvent(&event);
 	    }
             else if ( isCtlButton(currentButton) ){ // check if this is a control button
                 // this is all we need to do for coltrol buttons here
@@ -236,7 +249,7 @@ void TesKeyboard::processNewData(void){
                 event.eventType = tesEvButton;
                 event.buttonEvent = (newValue != getPressedLevel(currentButton)) ? tesBeReleased : tesBePressed;
                 event.buttonId = getMusicButtonId(currentButton);
-                _eventQueue->pushEvent(&event);
+                theQueue.pushEvent(&event);
             }
         }
     }
