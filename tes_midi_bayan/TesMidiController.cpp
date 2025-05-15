@@ -5,6 +5,7 @@
 #include "TesMidiController.h"
 #include "swer.h"
 #include "eeprom24.h"
+#include "eeprom_usage.h"
 
 // the MIDI controller
 TesMIDIController   theMIDIController;
@@ -153,11 +154,6 @@ void TesMIDIController::processEvent(tesEvent *event){
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-//  EEPROM-specific constants and variables
-
-#define signatureAddress    (2048 - 2)
-#define eepromBaseAddress   0
 
 
 ///////////////////////////////////////////////////////////////////////////

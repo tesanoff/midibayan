@@ -11,6 +11,17 @@
 #include <MPU6050_6Axis_MotionApps20.h>
 #include "TesEventQueue.h"
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// auxiliary type
+struct TesMpu6050Profile{
+    int16_t offsetAX;
+    int16_t offsetAY;
+    int16_t offsetAZ;
+    int16_t offsetGX;
+    int16_t offsetGY;
+    int16_t offsetGZ;
+};
+
 class   TesGyroSensor {
 public:
     ///////////////////////////////////////////////////////////////////////////////////////////////

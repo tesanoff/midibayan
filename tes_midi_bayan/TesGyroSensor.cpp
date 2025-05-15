@@ -3,6 +3,7 @@
 #include "eeprom24.h"
 #include "swer.h"
 #include "TesLedSet.h"
+#include "eeprom_usage.h"
 
 // There's the only Gyro sensor
 TesGyroSensor       gyroSensor;
@@ -16,21 +17,6 @@ TesGyroSensor       gyroSensor;
 #define TES_GYRO_MIN_ANGLE          0       // 0 degrees
 #define TES_GYRO_MAX_OUT_VALUE      127     // the output value that corresponds to the Max Angle
 #define TES_GYRO_MIN_OUT_VALUE      0       //    -- "" -- "" -- "" -- "" -- "" --      Min Angle
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// auxiliary type
-struct TesMpu6050Profile{
-    int16_t offsetAX;
-    int16_t offsetAY;
-    int16_t offsetAZ;
-    int16_t offsetGX;
-    int16_t offsetGY;
-    int16_t offsetGZ;
-};
-
-#define GYRO_CALIBRATION_SIGNATURE          0x2015
-#define GYRO_CALIBRATION_SIGNATURE_ADDRESS  (2048 - 2 - 2)
-#define GYRO_CALIBRATION_DATA_ADDRESS       (GYRO_CALIBRATION_SIGNATURE_ADDRESS - sizeof(TesMpu6050Profile))
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Constructor
