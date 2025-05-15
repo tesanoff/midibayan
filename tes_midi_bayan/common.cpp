@@ -1,5 +1,8 @@
 #include <string.h>
 #include "common.h"
+#include "BUILD_ID.hpp"
+
+const   uint32_t    build_id    = BUILD_ID;
 
 ///////////////////////////////////////////////////////////////////////////
 // Functions for manipulating with bitmaps

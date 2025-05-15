@@ -6,6 +6,10 @@
 
 #include <stdint.h>
 
+// a constant that keeps a unique ID of the build
+// it's calculated as a check sum of all md5 hashes of all files *.cpp *.h *.ino
+extern  const   uint32_t    build_id;
+
 // timer - for implementing millis()-based timers
 // 16-bit timers would be enough, but they require type casting like "(uint16_t)(millis() - timestamp)", which may be forgotten.
 // So, I'm using 32-bit timers in order to avoid potential mistakes.
