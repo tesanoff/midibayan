@@ -710,7 +710,8 @@ const char * const  parBooleanLabel[] = {
 
 // list of parameter IDs
 enum {parPresetPageId = 0, parRunningStatusId, parBassOctavesId, parGyroId, parSynthTypeId, parMasterVolumeId, parDrumsChannelId, parDrumsAdditionalChannelId,
-    parInactivityPeriodId};
+    parInactivityPeriodId,
+    parBuildId};    // <-- this parameter must be the last one
 
 /////////////////////////////////////////////////////////////////
 // specific data for the Master Volume parameter
@@ -755,6 +756,12 @@ const char parInactivityPeriodName[]    = "Автовыход (сек)";
 #define parInactivityPeriodMaxValue 60
 
 /////////////////////////////////////////////////////////////////
+// specific data for the Inactivity Period parameter
+//                              01234567
+const char parBuildName[]    = "Сборка";
+#define parBuildIdColumn    10
+
+/////////////////////////////////////////////////////////////////
 // common data
 
 #define paramEditorFirstRow     0       // we start from this row
@@ -762,10 +769,11 @@ const char parInactivityPeriodName[]    = "Автовыход (сек)";
 #define paramEditorNameColumn   0       // where we start printing names
 #define paramEditorValueColumn  17      // where we start printing values
 
-#define parNumberOfParameters   9
+#define parNumberOfParameters   10
 const char * const  parParameterNames[parNumberOfParameters] = {
     parPresetPageName, parRunningStatusName, parBassOctavesName, parGyroName, parSynthTypeName, parMasterVolumeName, parDrumsChannelName,
-    parDrumsAdditionalChannelName, parInactivityPeriodName
+    parDrumsAdditionalChannelName, parInactivityPeriodName,
+    parBuildName    // <-- keep this one the last
 };
 
 const char sys_param_screen_footer[] = "Настройки системы";
@@ -1375,6 +1383,10 @@ void TesMidiUI::drawSystemParamEditorScreen(void){
             case parInactivityPeriodId:
                 printFormatted(numFormat3R, _mc->_settings.global.inactivityPeriod);
                 break;
+            case parBuildId:
+                setTextCursor(parBuildIdColumn, editorRow + paramEditorFirstRow);
+                oled.print(build_id);
+                break;
             default:
                 SWER(swerGUI02);
         }
@@ -1382,16 +1394,18 @@ void TesMidiUI::drawSystemParamEditorScreen(void){
         oled.invertText(false);
     }
 
-    // draw the selector (frame around the current value)
-    // calculate graphical X and Y
-    uint8_t selX1 = paramEditorValueColumn*symbolWidth -3;
-    uint8_t selX2 = paramEditorValueColumn*symbolWidth +symbolWidth*3 +1;
-    uint8_t selY1 = symbolHeight*paramEditorFirstRow -1 +_editor_status.sysParSelector*symbolHeight;
-    if (selY1 == 255){
-        selY1 = 0;
+    if((_editor_status.sysParTopIndex + _editor_status.sysParSelector) != parBuildId){
+        // draw the selector (frame around the current value)
+        // calculate graphical X and Y
+        uint8_t selX1 = paramEditorValueColumn*symbolWidth -3;
+        uint8_t selX2 = paramEditorValueColumn*symbolWidth +symbolWidth*3 +1;
+        uint8_t selY1 = symbolHeight*paramEditorFirstRow -1 +_editor_status.sysParSelector*symbolHeight;
+        if (selY1 == 255){
+            selY1 = 0;
+        }
+        uint8_t selY2 = symbolHeight*paramEditorFirstRow +7 +_editor_status.sysParSelector*symbolHeight;
+        oled.roundRect(selX1, selY1, selX2, selY2, OLED_STROKE);
     }
-    uint8_t selY2 = symbolHeight*paramEditorFirstRow +7 +_editor_status.sysParSelector*symbolHeight;
-    oled.roundRect(selX1, selY1, selX2, selY2, OLED_STROKE);
 
     // print the bottom
     oled.fastLineH(7*symbolHeight-1, 3, 124, OLED_FILL);
@@ -2037,6 +2051,9 @@ void TesMidiUI::processCtlButtonEventSystemParamEditor(tesEvent *event){
                 }
                 // notify the controller about global settings change
                 _mc->globalSettingsChangeNotification();
+                break;
+            case parBuildId:
+                // do nothing
                 break;
             default:
                 SWER(swerGUI14);
