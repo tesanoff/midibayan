@@ -4,36 +4,6 @@
 #include "TesMidiController.h"
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-/// callback functions for MD_MIDIFIle
-///
-
-// MIDI handler for scanning
-void midi_handler_scanner(midi_event *pev){
-    // pass the event to the AutoDrums class for processing
-    theMIDIController._auto_drums.midiEventScanner(pev);
-}
-
-// META handler for scanning
-void meta_handler_scanner(const meta_event *p){
-    // pass the event to the AutoDrums class for processing
-    theMIDIController._auto_drums.metaEventScanner(p);
-}
-
-// MIDI handler for playing
-void midi_handler_player(midi_event *pev){
-    // pass the event to the AutoDrums class for processing
-    theMIDIController._auto_drums.midiEventPlayer(pev);
-}
-
-// META handler for playing
-void meta_handler_player(const meta_event *p){
-    // pass the event to the AutoDrums class for processing
-    theMIDIController._auto_drums.metaEventPlayer(p);
-}
-///
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
 // Settings
 
 #define SD_CARD_CS  26   // for the real version
@@ -52,11 +22,22 @@ String  fileExtension(".mid");
 
 const   char    drumFillLabel[] =   "FILL-START";
 
+// DANGER! this is a badly implemented "sort of a singletone"
+// (for the sake of simplicity)
+TesAutoDrums * TesAutoDrums::_self = nullptr;
+
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // constructor
 TesAutoDrums::TesAutoDrums(TesMIDIOutQueue * midi_queue, TesMIDIControllerSettings * mc_settings){
     _midi_queue = midi_queue;
     _mc_settings = mc_settings;
+    // DANGER!!! we assume that the only instance is created in the application
+    if(_self == nullptr){
+        _self   = this;
+    }
+    else {
+        SWER(swerAutoDrums07);
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -120,8 +101,8 @@ void    TesAutoDrums::init(void){
         //     Now, it's time to start validating those files.
         _var.init_in_progress   = true;
         _var.melodyId           = 0;    // we start with this one
-        _SMF.setMidiHandler(midi_handler_scanner);
-        _SMF.setMetaHandler(meta_handler_scanner);
+        _SMF.setMidiHandler(midiEventScanner);
+        _SMF.setMetaHandler(metaEventScanner);
     }
     else{
         // *** No MIDI files detected
@@ -406,14 +387,14 @@ void    TesAutoDrums::requestDrumsFill(void){
 // receives MIDI events during MIDI files scanning
 void TesAutoDrums::midiEventScanner(midi_event *pev){
     // check if the MIDI channel is correct
-    if((pev->channel != _mc_settings->global.drumsMidiChannel)
-            && (pev->channel != _mc_settings->global.drumsAdditionalChannel)){
+    if((pev->channel != _self->_mc_settings->global.drumsMidiChannel)
+            && (pev->channel != _self->_mc_settings->global.drumsAdditionalChannel)){
         // the file cannot send MIDI commands to non-drums channels
-        _var.validation_data.is_valid = false;
+        _self->_var.validation_data.is_valid = false;
     }
 
     // count MIDI commands
-    _var.validation_data.number_of_commands++;
+    _self->_var.validation_data.number_of_commands++;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -433,13 +414,13 @@ void TesAutoDrums::metaEventScanner(const meta_event *pmev){
             // when we get here, the SMF object has already been adjusted to the new tempo.
             // so, just read new values, if this is track #0
             if (pmev->track == 0){
-                _var.validation_data.tempo_set_in_track_0   = true;
-                _var.validation_data.tick_time              = _SMF.getTickTime();               // us / tick
-                _var.validation_data.tempo                  = _SMF.getTempo();                  // beats / min
-                _var.validation_data.ticks_per_quarter_note = _SMF.getTicksPerQuarterNote();    // tick / quarter
+                _self->_var.validation_data.tempo_set_in_track_0   = true;
+                _self->_var.validation_data.tick_time              = _self->_SMF.getTickTime();               // us / tick
+                _self->_var.validation_data.tempo                  = _self->_SMF.getTempo();                  // beats / min
+                _self->_var.validation_data.ticks_per_quarter_note = _self->_SMF.getTicksPerQuarterNote();    // tick / quarter
             }
             else {
-                _var.validation_data.tempo_set_in_track_n   = true;
+                _self->_var.validation_data.tempo_set_in_track_n   = true;
             }
         }
         break;
@@ -449,7 +430,7 @@ void TesAutoDrums::metaEventScanner(const meta_event *pmev){
             // so, just read new values
             // NOTE: this doesn't change the tempo
             if (pmev->track == 0){
-                _var.validation_data.time_signature     = _SMF.getTimeSignature();
+                _self->_var.validation_data.time_signature     = _self->_SMF.getTimeSignature();
             }
         }
         break;
@@ -472,7 +453,7 @@ void TesAutoDrums::midiEventPlayer(midi_event *pev){
     switch (cmd.midiCommand){
     case mcControlChange:
         {
-            if(cmd.channelId == _mc_settings->global.drumsMidiChannel){
+            if(cmd.channelId == _self->_mc_settings->global.drumsMidiChannel){
                 switch(cmd.data1){
                 case 7:         // Volume
                 case 11:        // Expression
@@ -481,7 +462,7 @@ void TesAutoDrums::midiEventPlayer(midi_event *pev){
                     return;
                 }
             }
-            else if (cmd.channelId == _mc_settings->global.drumsAdditionalChannel){
+            else if (cmd.channelId == _self->_mc_settings->global.drumsAdditionalChannel){
                 if(cmd.data1 == 7){     // Volume
                     // just return without sending this command
                     // This command is not allowed in this channel
@@ -496,7 +477,7 @@ void TesAutoDrums::midiEventPlayer(midi_event *pev){
     }
     // *** all other MIDI commands are allowed
 
-    _midi_queue->pushCommand(&cmd);
+    _self->_midi_queue->pushCommand(&cmd);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -511,11 +492,12 @@ void TesAutoDrums::metaEventPlayer(const meta_event *pmev){
             // when we get here, the SMF object has already been adjusted to the new tempo.
 
             // a new native tempo was set to the _SMF already; so, just get it from there
-            _var.native_tempo   =   _SMF.getTempo();
+            _self->_var.native_tempo   =   _self->_SMF.getTempo();
             // The new value of the current tempo should be adjusted according to the difference
             // between the user-defined tempo and the "native" MIDI file tempo stored in the MIDI file attributes.
-            uint16_t    new_tempo   = map(_var.native_tempo, 0, _var.file_attributes[_var.melodyId].tempo, 0, _var.user_defined_tempo);
-            _SMF.setTempo(new_tempo);
+            uint16_t    new_tempo   = map(_self->_var.native_tempo, 0, _self->_var.file_attributes[_self->_var.melodyId].tempo,
+                    0, _self->_var.user_defined_tempo);
+            _self->_SMF.setTempo(new_tempo);
         }
         break;
     case 0x58:      // time signature
@@ -529,12 +511,12 @@ void TesAutoDrums::metaEventPlayer(const meta_event *pmev){
     case 0x01:      // text
         {
             if((pmev->size == strlen(drumFillLabel)) && (0 == strcmp(pmev->chars, drumFillLabel))){
-                if ((_var.file_attributes[_var.melodyId].has_fill)
-                        && (! _var.playing_drums_fill)
-                        && (_var.drums_fill_requested)){
+                if ((_self->_var.file_attributes[_self->_var.melodyId].has_fill)
+                        && (! _self->_var.playing_drums_fill)
+                        && (_self->_var.drums_fill_requested)){
                     // the actual start will be done in tick()
                     PRINT_1("triggering Drums Fill");
-                    _var.drums_fill_starting = true;
+                    _self->_var.drums_fill_starting = true;
                 }
             }
         }
@@ -614,8 +596,8 @@ void    TesAutoDrums::validateMidiFile(void){
             // set flags & variables up
             _var.init_in_progress   = false;
             _var.is_initialized     = true;
-            _SMF.setMidiHandler(midi_handler_player);
-            _SMF.setMetaHandler(meta_handler_player);
+            _SMF.setMidiHandler(midiEventPlayer);
+            _SMF.setMetaHandler(metaEventPlayer);
             // set the default melodyId
             _var.melodyId           = 0;
             _var.user_defined_tempo  = _var.file_attributes[_var.melodyId].tempo;    // don't forget about the tempo

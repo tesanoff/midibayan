@@ -43,6 +43,7 @@
 #define swerGUI15               0xA3
 #define swerGUI16               0xA4
 #define swerMidiController08    0xA5
+#define swerAutoDrums07         0xA6
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Shows an error code on LEDs and goes into an infinite loop,

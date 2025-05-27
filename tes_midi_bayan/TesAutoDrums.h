@@ -82,10 +82,6 @@ class TesMIDIOutQueue;
 struct TesMIDIControllerSettings;
 
 class TesAutoDrums {
-    friend void midi_handler_scanner(midi_event *pev);
-    friend void meta_handler_scanner(const meta_event *p);
-    friend void midi_handler_player(midi_event *pev);
-    friend void meta_handler_player(const meta_event *p);
 public:
     TesAutoDrums(TesMIDIOutQueue * midi_queue, TesMIDIControllerSettings * mc_settings);
 
@@ -161,17 +157,18 @@ private:
     AutoDrumsRuntimeData        _var;
     SDFAT                       _SD;
     MD_MIDIFile                 _SMF;
+    static TesAutoDrums         * _self;    // this is for accessing class data from callbacks
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
 
     // receives MIDI events during MIDI files scanning
-    void midiEventScanner(midi_event *pev);
+    static void midiEventScanner(midi_event *pev);
     // receives META events during MIDI files scanning
-    void metaEventScanner(const meta_event *pmev);
+    static void metaEventScanner(const meta_event *pmev);
     // receives MIDI events during MIDI files playing
-    void midiEventPlayer(midi_event *pev);
+    static void midiEventPlayer(midi_event *pev);
     // receives META events during MIDI files playing
-    void metaEventPlayer(const meta_event *pmev);
+    static void metaEventPlayer(const meta_event *pmev);
     
     ///////////////////////////////////////////////////////////////////////////////////////////////
     // Validates the current MIDI file
