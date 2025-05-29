@@ -2,6 +2,7 @@
 #include "TesAutoDrums.h"
 #include "midi_note_names.h"
 #include "TesMidiController.h"
+#include <bits/stdc++.h>
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Settings
@@ -98,6 +99,8 @@ void    TesAutoDrums::init(void){
 
     if(_var.file_names.size() > 0){
         // *** The initial list of file names has been composed.
+        // Sort the list
+        sort(_var.file_names.begin(), _var.file_names.end());
         //     Now, it's time to start validating those files.
         _var.init_in_progress   = true;
         _var.melodyId           = 0;    // we start with this one
