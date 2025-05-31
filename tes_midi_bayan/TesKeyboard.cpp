@@ -18,6 +18,8 @@
 // There's the only Keyboard
 TesKeyboard     theKeyboard;
 
+#define DELAYED_INIT_TIMEOUT    50  // in milliseconds
+
 //////////////////////////// settings for control buttons //////////////////////////////
 //
 
@@ -95,6 +97,9 @@ TesKeyboard::TesKeyboard(void)
     pinMode(clockPin, OUTPUT);
     pinMode(dataPinR, INPUT);
     pinMode(dataPinL, INPUT);
+
+    // flags
+    _delayed_init_done  = false;
 }
 
 ///////////////////////////////////////////////////////////
@@ -103,43 +108,51 @@ void TesKeyboard::init(void){
     // read the current input data for future comparison
     readCascade();  // garbage
     readCascade();  // real data
-
-    // As the FreeBass sensor is part of the left keyboard, we already have it's status after 'readCascade()'.
-    // Need to read its status from the buffer and send the very first FreeBass event, so that the MIDI Controller knows the status
-    // of the Free Bass switch.
-    byte freeBassStatus = bitmap_get(_buffer, freeBassSensorIndex);
-    // compose and send a freeBass event
-    tesEvent    event;
-    event.eventType = tesEvFreeBass;
-    event.freeBassOn = (freeBassStatus == getPressedLevel(freeBassSensorIndex));    // "pressed" means "turned on" in this context
-    theQueue.pushEvent(&event);
-    
-    // check if the "OK" button is pressed
-    uint8_t buttonId = TES_FIRST_CONTROL_BUTTON + ctlButtonOk;
-    uint8_t value = bitmap_get(_buffer, buttonId);
-    if (value == getPressedLevel(buttonId)){
-        // send Eeprom Reset message
-        tesEvent    event;
-        event.eventType = tesEvSystemControl;
-        event.command   = scEepromReset;
-        theQueue.pushEvent(&event);
-    }
-
-    // check if the "UP" button is pressed
-    buttonId = TES_FIRST_CONTROL_BUTTON + ctlButtonUp;
-    value = bitmap_get(_buffer, buttonId);
-    if (value == getPressedLevel(buttonId)){
-        // send Recalibrate Gyro message
-        tesEvent    event;
-        event.eventType = tesEvSystemControl;
-        event.command   = scRecalibrateGyroSensor;
-        theQueue.pushEvent(&event);
-    }
 }
 
 ///////////////////////////////////////////////////////////
 // tick method
 void TesKeyboard::tick(void){
+    // process delayed init, if required
+    if(!_delayed_init_done){
+        if(millis() > DELAYED_INIT_TIMEOUT){
+            // As the FreeBass sensor is part of the left keyboard, we already have it's status after 'readCascade()'.
+            // Need to read its status from the buffer and send the very first FreeBass event, so that the MIDI Controller knows the status
+            // of the Free Bass switch.
+            byte freeBassStatus = bitmap_get(_buffer, freeBassSensorIndex);
+            // compose and send a freeBass event
+            tesEvent    event;
+            event.eventType = tesEvFreeBass;
+            event.freeBassOn = (freeBassStatus == getPressedLevel(freeBassSensorIndex));    // "pressed" means "turned on" in this context
+            theQueue.pushEvent(&event);
+            
+            // check if the "OK" button is pressed
+            uint8_t buttonId = TES_FIRST_CONTROL_BUTTON + ctlButtonOk;
+            uint8_t value = bitmap_get(_buffer, buttonId);
+            if (value == getPressedLevel(buttonId)){
+                // send Eeprom Reset message
+                tesEvent    event;
+                event.eventType = tesEvSystemControl;
+                event.command   = scEepromReset;
+                theQueue.pushEvent(&event);
+            }
+
+            // check if the "UP" button is pressed
+            buttonId = TES_FIRST_CONTROL_BUTTON + ctlButtonUp;
+            value = bitmap_get(_buffer, buttonId);
+            if (value == getPressedLevel(buttonId)){
+                // send Recalibrate Gyro message
+                tesEvent    event;
+                event.eventType = tesEvSystemControl;
+                event.command   = scRecalibrateGyroSensor;
+                theQueue.pushEvent(&event);
+            }
+
+            _delayed_init_done  = true;
+        }
+    }
+
+
     // read data
     readCascade();
 

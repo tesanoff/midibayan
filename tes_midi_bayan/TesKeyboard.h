@@ -66,6 +66,9 @@ private:
     uint8_t _previous_buffer [ TES_KEYBOARD_CASCADE_SIZE ]; // This is for comparing old and new values
     ////////// for control buttons /////////
     TesCtlButtonController  _ctlButtonController;
+    struct {
+        uint8_t     _delayed_init_done: 1;
+    };
 
     ///////////////////////////////////////////////////////////////////////
     // Returns a "pressed" level for the specified button
