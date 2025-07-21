@@ -331,7 +331,8 @@ void TesMIDIController::processButtonEvent(tesEvent *event){
             // get the status of the low-bass note
             uint8_t lbstatus = (_var.bassNotesStatus >> lbass) & 1;
             // check if bass octaves are disabled and the low-bass note is pressed
-            if( lbstatus ){
+            //      or if the Free Bass mode is off and we can always ignore high-bass notes
+            if((lbstatus) || (kbdId == kbdBass)){
                 // *** we don't play the high-bass note in this case
                 // clear the event (it's fully processed now)
                 // restore the current preset if required
