@@ -27,8 +27,8 @@
 #define swerGUI07               0x93
 #define swerGUI08               0x94
 #define swerGUI09               0x95
-#define swerGUI10               0x96
-#define swerGUI11               0x97
+//#define swerGUI10               0x96
+//#define swerGUI11               0x97
 #define swerGUI12               0x98
 #define swerGUI13               0x99
 #define swerMidiController07    0x9A

@@ -976,8 +976,9 @@ uint8_t getInstrumentGroupId(const uint8_t * group_map, uint8_t program_id){
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Helper function returns the global instrument index (as defined in )
-uint16_t getInstrumentIndex(const uint8_t * const * bank_map, uint8_t bank_id, uint8_t program_id){
+uint16_t getInstrumentIndex(bool * need_to_reset_bank_id, const uint8_t * const * bank_map, uint8_t bank_id, uint8_t program_id){
     uint16_t instrument_index = 0;
+    *need_to_reset_bank_id = false;
 
     // count all instruments BEFORE program_id
     for(int i=0; i<program_id; i++){
@@ -1000,12 +1001,13 @@ uint16_t getInstrumentIndex(const uint8_t * const * bank_map, uint8_t bank_id, u
         // there's nothing to add; instrument_index is already pointing to {bank_id}:{program_id}
         if(bank_id != 0){
             // if ptr == NULL then the bank_id is expected to be 0
-            SWER(swerGUI10);
+            *need_to_reset_bank_id = true;
         }
     }
     else {
         // count prior variations of program_id
         uint8_t N = ptr[0];
+        uint16_t    saved_instrument_index = instrument_index;
         bool was_found = false;
         for(int i=1; i<=N; i++){
             if (ptr[i] != bank_id){
@@ -1021,7 +1023,11 @@ uint16_t getInstrumentIndex(const uint8_t * const * bank_map, uint8_t bank_id, u
         }
         if ( !was_found ){
             // bank_id is not listed for program_id in bank_map
-            SWER(swerGUI11);
+
+            // restore the saved value of the instrument_index
+            instrument_index = saved_instrument_index;
+            // raise the flag
+            *need_to_reset_bank_id = true;
         }
     }
 
@@ -1503,7 +1509,18 @@ void TesMidiUI::drawInstrumentEditorScreen(void){
     uint8_t     bank_id = _mc->_settings.preset.kbdParameter[_editor_status.selectorX][idxBank];
     uint8_t     program_id = _mc->_settings.preset.kbdParameter[_editor_status.selectorX][idxProgram];
     uint8_t     instrument_group = getInstrumentGroupId(_GroupMap, program_id);
-    uint16_t    instrument_index = getInstrumentIndex(_Banks, bank_id, program_id);
+    bool        need_to_reset_bank_id = false;
+    uint16_t    instrument_index = getInstrumentIndex(&need_to_reset_bank_id, _Banks, bank_id, program_id);
+    if (need_to_reset_bank_id){
+        // the specified instrument variation (AKA "bank") was not found.
+        // Let's reset it to 0
+        bank_id = 0;
+        _mc->_settings.preset.kbdParameter[_editor_status.selectorX][idxBank] = 0;
+        // notify the MIDI controller about this change
+        _mc->processChangedKbdParameter(_editor_status.selectorX, idxBank);
+        // mark the current presed and "changed and not saved"
+        indicatePresetChange();
+    }
 
     // clear work area
     oled.clear();
