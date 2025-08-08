@@ -148,6 +148,17 @@ void TesKeyboard::tick(void){
                 theQueue.pushEvent(&event);
             }
 
+            // check if the "RIGHT" button is pressed
+            buttonId = TES_FIRST_CONTROL_BUTTON + ctlButtonRight;
+            value = bitmap_get(_buffer, buttonId);
+            if (value == getPressedLevel(buttonId)){
+                // draw the Easter Egg screen
+                tesEvent    event;
+                event.eventType = tesEvSystemControl;
+                event.command   = scEasterEgg;
+                theQueue.pushEvent(&event);
+            }
+
             _delayed_init_done  = true;
         }
     }

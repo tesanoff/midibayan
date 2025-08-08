@@ -494,6 +494,10 @@ void TesMIDIController::processSystemControlEvent(tesEvent *event){
         // clear the event
         event->eventType = tesEmpty;
         break;
+    case scEasterEgg:
+        // that's for the UI only
+        _ui.processSystemControlEvent(event);
+        break;
     }
 }
 

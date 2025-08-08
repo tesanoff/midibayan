@@ -16,7 +16,7 @@ enum {tesEmpty, tesEvButton, tesEvPressure, tesEvFreeBass, tesEvSystemControl, t
 enum {tesBeReleased, tesBePressed, tesBeClick, tesBeHold, tesBeStep, tesBeHoldReleased, tesBeStepReleased};
 
 // System Control messages
-enum {scNoCommand = 0, scEepromReset, scRecalibrateGyroSensor};
+enum {scNoCommand = 0, scEepromReset, scRecalibrateGyroSensor, scEasterEgg};
 
 struct tesEvent {
     uint8_t eventType;
