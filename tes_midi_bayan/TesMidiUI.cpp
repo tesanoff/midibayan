@@ -272,6 +272,8 @@ void TesMidiUI::processCtlButtonEvent(tesEvent *event){
         break;
     case screenModeEasterEgg:
         // we don't process buttons here
+        // ... and clear the "control button" event
+        event->eventType = tesEmpty;
         break;
     default:
         SWER(swerGUI06);
